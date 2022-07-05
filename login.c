@@ -51,11 +51,8 @@ bool comprobar(char *email, char *password)
                         }
                 }
 
-                printf("Hola\n");
-
                 if (!strcmp(password, passwordDB) && !strcmp(email, emailDB))
                 {
-                        printf("\nCoincide\n");
                         fclose(input_file);
                         free(contents);
                         return true;
