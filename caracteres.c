@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdarg.h>
+#include <conio.h>
+
+#define COLOR_OPTION_SELECT "\x1b[35;40m"
+#define COLOR_RESET "\x1b[0m"
 // #include "caracteres.h"
 
 int lenghtStr(char *str)
@@ -54,4 +59,64 @@ char *subString(const char *str, int from, int to)
         }
         dest[length] = '\0';
         return dest;
+}
+
+void cls()
+{
+        printf("\e[1;1H\e[2J");
+}
+
+int select(int len, char *enunciado, ...)
+{
+
+        puts(enunciado);
+        va_list ap;
+
+        int posicion = 0;
+        int run = 1;
+
+        while (run)
+        {
+                va_start(ap, enunciado);
+                cls();
+
+                puts(enunciado);
+
+                for (int i = 0; i < len; i++)
+                {
+                        char *texto = va_arg(ap, char *);
+                        if (posicion == i)
+                        {
+                                char *color = COLOR_OPTION_SELECT;
+                                printf("  %s%s <<< \x1b[0m\n", color, texto);
+                        }
+                        else
+                                printf("%s\n", texto);
+                }
+
+                int accion = getch();
+                switch (accion)
+                {
+                case 72: // Flecha de arriba
+                        if (posicion > 0)
+                                posicion--;
+                        break;
+
+                case 80: // Flecha de abajo
+                        if (posicion < len - 1)
+                                posicion++;
+                        break;
+
+                case 27: // ESC
+                        run = 0;
+                        break;
+
+                case 13: // ENTER
+                        va_end(ap);
+                        return posicion;
+                        break;
+                }
+                va_end(ap);
+        }
+        return -1;
 }
