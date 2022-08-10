@@ -3,15 +3,16 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <conio.h>
+#include <string.h>
+#include "caracteres.h"
 
 #define COLOR_OPTION_SELECT "\x1b[35;40m"
 #define COLOR_RESET "\x1b[0m"
-// #include "caracteres.h"
 
 int lenghtStr(char *str)
 {
         int i = 0;
-        while (str[i] != '\0' && i < 50)
+        while (str[i] != '\0')
         {
                 i++;
         }
@@ -23,9 +24,10 @@ bool caracteresEspeciales(char *str)
         int length = lenghtStr(str);
 
         char caracteresPermitidos[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
-                                       'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1',
-                                       '2', '3', '4', '5', '6', '7', '8', '9', '~', '@', '_', '/', '+', ':', '.', '#',
-                                       '^', '*', '%', '^', '\0'};
+                                       'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D',
+                                       'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V',
+                                       'W', 'X', 'Y', ' ', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '~', '@', '_', '/',
+                                       '+', ':', '.', '#', '^', '*', '%', '^', '\0'};
 
         int length2 = lenghtStr(caracteresPermitidos);
 
@@ -51,14 +53,27 @@ bool caracteresEspeciales(char *str)
 char *subString(const char *str, int from, int to)
 {
         int length = to - from;
-        char *dest = (char*)malloc(sizeof(char) * (length + 1));
+        char *dest = (char *)malloc(sizeof(char) * (length + 1));
         int x = 0;
-        for (int i = from; i <= to; i++){
+        for (int i = from; i <= to; i++)
+        {
                 dest[x] = str[i];
                 x++;
         }
         dest[length] = '\0';
         return dest;
+}
+
+void substr(char *dest, char *string, int from, int to)
+{
+        int length = to - from;
+        int x = 0;
+        for (int i = from; i <= to; i++)
+        {
+                dest[x] = string[i];
+                x++;
+        }
+        dest[length] = '\0';
 }
 
 void cls()
@@ -69,7 +84,9 @@ void cls()
 int select(int len, char *enunciado, ...)
 {
 
-        puts(enunciado);
+        if (enunciado != NULL)
+                puts(enunciado);
+
         va_list ap;
 
         int posicion = 0;
@@ -80,7 +97,8 @@ int select(int len, char *enunciado, ...)
                 va_start(ap, enunciado);
                 cls();
 
-                puts(enunciado);
+                if (enunciado != NULL)
+                        puts(enunciado);
 
                 for (int i = 0; i < len; i++)
                 {
