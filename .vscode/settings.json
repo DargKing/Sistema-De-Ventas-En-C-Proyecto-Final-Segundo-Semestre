@@ -13,6 +13,7 @@
                 "windows.h": "c",
                 "draw.h": "c",
                 "wingdi.h": "c",
-                "gdiplus.h": "c"
+                "gdiplus.h": "c",
+                "facturas.h": "c"
         }
 }
