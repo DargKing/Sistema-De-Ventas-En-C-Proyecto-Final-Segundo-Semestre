@@ -1,0 +1,4 @@
+ID      NOMBRE_PRODUCTO PRECIO_POR_UNIDAD       EXCENTO_IVA
+01      PLATANITO       15                      NO
+02      RUFLES          20                      NO
+02      AGUA MINERAL    35                      YES

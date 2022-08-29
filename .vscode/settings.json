@@ -3,6 +3,16 @@
                 "caracteres.h": "c",
                 "stat.h": "c",
                 "string.h": "c",
-                "stdbool.h": "c"
+                "stdbool.h": "c",
+                "iphlpapi.h": "c",
+                "stdio.h": "c",
+                "stdlib.h": "c",
+                "user.h": "c",
+                "cstdio": "c",
+                "winproc.h": "c",
+                "windows.h": "c",
+                "draw.h": "c",
+                "wingdi.h": "c",
+                "gdiplus.h": "c"
         }
 }

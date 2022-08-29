@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <conio.h>
 #include <string.h>
-#include "caracteres.h"
+#include "../handlers/caracteres.h"
 
 #define COLOR_OPTION_SELECT "\x1b[35;40m"
 #define COLOR_RESET "\x1b[0m"

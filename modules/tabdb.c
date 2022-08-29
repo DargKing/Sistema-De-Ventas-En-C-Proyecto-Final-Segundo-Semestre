@@ -1,7 +1,7 @@
-#include "caracteres.h"
 #include <string.h>
 #include <stdio.h>
-#include "tabdb.h"
+#include "../handlers/caracteres.h"
+#include "../handlers/tabdb.h"
 
 int get_len_file(FILE *fp)
 {

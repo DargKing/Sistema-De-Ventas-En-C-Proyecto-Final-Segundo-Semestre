@@ -2,13 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "tabdb.h"
+#include "../handlers/tabdb.h"
+#include "../handlers/user.h"
 
 int login(char *email, char *password)
 {
         FILE *fp;
 
-        fp = fopen("users.txt", "r+");
+        fp = fopen("./database/users.txt", "r+");
         if (fp == NULL)
                 return -1;
 
@@ -38,7 +39,7 @@ int create_new_user(char *email, char *password, char *username, char* range)
 {
         FILE *fp;
 
-        fp = fopen("users.txt", "r+");
+        fp = fopen("./database/users.txt", "r+");
         if (fp == NULL)
                 return -1;
 
@@ -78,7 +79,7 @@ int search_user(char *email)
 {
         FILE *fp;
 
-        fp = fopen("users.txt", "r+");
+        fp = fopen("./database/users.txt", "r+");
         if (fp == NULL)
                 return -1;
 
@@ -95,7 +96,7 @@ int get_data_user(int row, char *ID, char *email, char *password, char *username
 {
         FILE *fp;
 
-        fp = fopen("users.txt", "r+");
+        fp = fopen("./database/users.txt", "r+");
         if (fp == NULL)
                 return -1;
 
@@ -111,7 +112,7 @@ int get_data_user(int row, char *ID, char *email, char *password, char *username
 int change_password(char *ID, char *newPassword)
 {
         FILE *fp;
-        fp = fopen("users.txt", "r+");
+        fp = fopen("./database/users.txt", "r+");
         if (fp == NULL)
                 return -1;
 
@@ -141,7 +142,7 @@ int change_password(char *ID, char *newPassword)
 int change_username(char *ID, char *newUsername)
 {
         FILE *fp;
-        fp = fopen("users.txt", "r+");
+        fp = fopen("./database/users.txt", "r+");
         if (fp == NULL)
                 return -1;
 
@@ -171,7 +172,7 @@ int change_username(char *ID, char *newUsername)
 int delete_user(char *ID)
 {
         FILE *fp;
-        fp = fopen("users.txt", "r+");
+        fp = fopen("./database/users.txt", "r+");
         if (fp == NULL)
                 return -1;
 
@@ -192,7 +193,7 @@ int delete_user(char *ID)
 int set_admin(char *ID)
 {
         FILE *fp;
-        fp = fopen("users.txt", "r+");
+        fp = fopen("./database/users.txt", "r+");
         if (fp == NULL)
                 return -1;
 
@@ -213,7 +214,7 @@ int set_admin(char *ID)
 int set_user(char *ID)
 {
         FILE *fp;
-        fp = fopen("users.txt", "r+");
+        fp = fopen("./database/users.txt", "r+");
         if (fp == NULL)
                 return -1;
 
