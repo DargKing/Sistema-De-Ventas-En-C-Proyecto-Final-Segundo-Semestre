@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <conio.h>
 #include <string.h>
+#include <time.h>
 #include "../handlers/caracteres.h"
 
 #define COLOR_OPTION_SELECT "\x1b[35;40m"
@@ -137,4 +138,27 @@ int select(int len, char *enunciado, ...)
                 va_end(ap);
         }
         return -1;
+}
+
+void create_ID(char *ID)
+{
+
+        time_t rawtime;
+        struct tm *info;
+        time(&rawtime);
+
+        info = localtime(&rawtime);
+
+        strftime(ID, 20, "%y%m%H%I%M%S%p", info);
+}
+
+void create_date(char *date)
+{
+        time_t rawtime;
+        struct tm *info;
+        time(&rawtime);
+
+        info = localtime(&rawtime);
+
+        strftime(date, 10, "%y-%m-%d", info);
 }

@@ -9,17 +9,14 @@
 #include "handlers/colors.h"
 #include "handlers/user.h"
 #include "handlers/winProc.h"
+#include "handlers/windows.h"
 #include "handlers/draw.h"
+#include "handlers/error.h"
 
 int destroyingWindow = 0;
 int mouseTrankingRed = 0;
 int mouseTrankingGreen = 0;
 int mouseTrack = 0;
-
-void comprobarError()
-{
-        MessageBox(NULL, NULL, NULL, NULL);
-}
 
 LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -65,6 +62,9 @@ LRESULT CALLBACK LoginWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 
 LRESULT CALLBACK MainHeaderWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
+        RECT rect;
+        PAINTSTRUCT ps;
+        HDC hdc;
         switch (msg)
         {
         case WM_DESTROY:
@@ -232,16 +232,38 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 menu = GetMenu(hWnd);
                 switch (menu)
                 {
-                case TOOLBAR_IMAGE_NEW:
-                        hNuevoProductoImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 50 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_NEW, NULL, NULL);
+
+                // Inventario
+                case TOOLBAR_IMAGE_NEW_INVENTARIO:
+                        hNuevoProductoImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 50 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_NEW_INVENTARIO, NULL, NULL);
                         break;
-                case TOOLBAR_IMAGE_MODIFY:
-                        hModificarProductoImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 50 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY, NULL, NULL);
-                        if (hModificarProductoImage == NULL)
-                                MessageBox(NULL, NULL, NULL, NULL);
+                case TOOLBAR_IMAGE_DELETE_INVENTARIO:
+                        hEliminarProductoImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 50 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_DELETE_INVENTARIO, NULL, NULL);
                         break;
-                case TOOLBAR_IMAGE_DELETE:
-                        hEliminarProductoImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 50 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_DELETE, NULL, NULL);
+                case TOOLBAR_IMAGE_MODIFY_INVENTARIO:
+                        hModificarProductoImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 50 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
+                        break;
+
+                // CLientes
+                case TOOLBAR_IMAGE_NEW_CLIENTE:
+                        hNuevoClienteImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 50 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_NEW_INVENTARIO, NULL, NULL);
+                        break;
+                case TOOLBAR_IMAGE_DELETE_CLIENTE:
+                        hEliminarClienteImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 50 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_DELETE_INVENTARIO, NULL, NULL);
+                        break;
+                case TOOLBAR_IMAGE_MODIFY_CLIENTE:
+                        hModificarClienteImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 50 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
+                        break;
+
+                // Ventas
+                case TOOLBAR_IMAGE_NEW_VENTAS:
+                        hNuevaVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 40 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_NEW_INVENTARIO, NULL, NULL);
+                        break;
+                case TOOLBAR_IMAGE_DELETE_VENTAS:
+                        hEliminarVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_DELETE_INVENTARIO, NULL, NULL);
+                        break;
+                case TOOLBAR_IMAGE_MODIFY_VENTAS:
+                        hModificarVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
                         break;
                 }
                 break;
@@ -262,12 +284,14 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 
                 GetWindowTextA(hWnd, text, 100);
 
-                draw_bg_button(hdc, rect, CreateSolidBrush(RGB(240, 240, 240)), RGB(99, 110, 114), text);
+                draw_bg_button(hdc, rect, CreateSolidBrush(RGB(235, 235, 235)), RGB(99, 110, 114), text);
 
                 ReleaseDC(hWnd, hdc);
                 break;
         case WM_MOUSEHOVER:
                 hdc = GetDC(hWnd);
+
+                menu = GetMenu(hWnd);
 
                 GetClientRect(hWnd, &rect);
                 FillRect(hdc, &rect, CreateSolidBrush(RGB(201, 224, 167)));
@@ -277,6 +301,43 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 draw_bg_button_multiline(hdc, rect, CreateSolidBrush(RGB(201, 224, 167)), RGB(0, 0, 0), text);
                 InvalidateRect(hNuevoProductoImage, NULL, TRUE);
 
+                switch (menu)
+                {
+
+                // Inventario
+                case TOOLBAR_IMAGE_NEW_INVENTARIO:
+                        InvalidateRect(hNuevoProductoImage, NULL, TRUE);
+                        break;
+                case TOOLBAR_IMAGE_MODIFY_INVENTARIO:
+                        InvalidateRect(hModificarProductoImage, NULL, TRUE);
+                        break;
+                case TOOLBAR_IMAGE_DELETE_INVENTARIO:
+                        InvalidateRect(hEliminarProductoImage, NULL, TRUE);
+                        break;
+
+                // Clientes
+                case TOOLBAR_IMAGE_NEW_CLIENTE:
+                        InvalidateRect(hNuevoClienteImage, NULL, TRUE);
+                        break;
+                case TOOLBAR_IMAGE_MODIFY_CLIENTE:
+                        InvalidateRect(hModificarClienteImage, NULL, TRUE);
+                        break;
+                case TOOLBAR_IMAGE_DELETE_CLIENTE:
+                        InvalidateRect(hEliminarClienteImage, NULL, TRUE);
+                        break;
+
+                // Ventas
+                case TOOLBAR_IMAGE_NEW_VENTAS:
+                        InvalidateRect(hNuevaVentaImage, NULL, TRUE);
+                        break;
+                case TOOLBAR_IMAGE_MODIFY_VENTAS:
+                        InvalidateRect(hModificarVentaImage, NULL, TRUE);
+                        break;
+                case TOOLBAR_IMAGE_DELETE_VENTAS:
+                        InvalidateRect(hEliminarVentaImage, NULL, TRUE);
+                        break;
+                }
+
                 ReleaseDC(hWnd, hdc);
                 break;
         case WM_PAINT:
@@ -285,26 +346,56 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 
                 menu = GetMenu(hWnd);
 
-                hdcSource = CreateCompatibleDC(hdc);
-                SelectObject(hdcSource, hImageModify);
-
                 GetWindowTextA(hWnd, text, 100);
 
-                FillRect(hdc, &rect, CreateSolidBrush(RGB(240, 240, 240)));
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(235, 235, 235)));
 
                 SetRect(&rect, rect.left, rect.top + 35, rect.right, rect.bottom);
-                draw_bg_button_multiline(hdc, rect, CreateSolidBrush(RGB(240, 240, 240)), RGB(0, 0, 0), text);
+                draw_bg_button_multiline(hdc, rect, CreateSolidBrush(RGB(235, 235, 235)), RGB(0, 0, 0), text);
 
                 switch (menu)
                 {
-                case TOOLBAR_IMAGE_NEW:
+
+                // iNVENTARIO
+                case TOOLBAR_IMAGE_NEW_INVENTARIO:
+                        loadImagesAdd();
                         SendMessageA(hNuevoProductoImage, STM_SETIMAGE, IMAGE_BITMAP, hImageAdd);
                         break;
-                case TOOLBAR_IMAGE_MODIFY:
+                case TOOLBAR_IMAGE_MODIFY_INVENTARIO:
+                        loadImagesModify();
                         SendMessageA(hModificarProductoImage, STM_SETIMAGE, IMAGE_BITMAP, hImageModify);
                         break;
-                case TOOLBAR_IMAGE_DELETE:
+                case TOOLBAR_IMAGE_DELETE_INVENTARIO:
+                        loadImagesDelete();
                         SendMessageA(hEliminarProductoImage, STM_SETIMAGE, IMAGE_BITMAP, hImageDelete);
+                        break;
+
+                // CLIENTE
+                case TOOLBAR_IMAGE_NEW_CLIENTE:
+                        loadImagesAdd();
+                        SendMessageA((HWND)hNuevoClienteImage, (UINT)STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hImageAdd);
+                        break;
+                case TOOLBAR_IMAGE_MODIFY_CLIENTE:
+                        loadImagesModify();
+                        SendMessageA(hModificarClienteImage, STM_SETIMAGE, IMAGE_BITMAP, hImageModify);
+                        break;
+                case TOOLBAR_IMAGE_DELETE_CLIENTE:
+                        loadImagesDelete();
+                        SendMessageA(hEliminarClienteImage, STM_SETIMAGE, IMAGE_BITMAP, hImageDelete);
+                        break;
+
+                // VENTAS
+                case TOOLBAR_IMAGE_NEW_VENTAS:
+                        loadImagesAdd();
+                        SendMessageA(hNuevaVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageAdd);
+                        break;
+                case TOOLBAR_IMAGE_MODIFY_VENTAS:
+                        loadImagesModify();
+                        SendMessageA(hModificarVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageModify);
+                        break;
+                case TOOLBAR_IMAGE_DELETE_VENTAS:
+                        loadImagesDelete();
+                        SendMessageA(hEliminarVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageDelete);
                         break;
                 }
 
@@ -524,6 +615,93 @@ LRESULT CALLBACK ButtonRedWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM
                 draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED), COLOR_BLACK, text);
 
                 EndPaint(hWnd, &ps);
+                return 0;
+                break;
+        case WM_DESTROY:
+                DeleteDC(hdc);
+                DestroyWindow(hWnd);
+                break;
+        default:
+                DefWindowProcA(hWnd, msg, wp, lp);
+        }
+}
+
+LRESULT CALLBACK HeaderCellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+        PAINTSTRUCT ps;
+        HDC hdc;
+        RECT rect;
+        char text[100];
+        switch (msg)
+        {
+        case WM_PAINT:
+                GetClientRect(hWnd, &rect);
+
+                hdc = BeginPaint(hWnd, &ps);
+
+                SetTextColor(hdc, RGB(0, 0, 0));
+                SetBkMode(hdc, TRANSPARENT);
+
+                GetWindowTextA(hWnd, text, 100);
+
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(255, 255, 255)));
+
+                SetRect(&rect, rect.left + 10, rect.top, rect.right, rect.bottom);
+                DrawTextA(hdc, text, -1, &rect, DT_SINGLELINE | DT_VCENTER);
+
+                draw_border_bottom(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 2);
+                draw_border_top(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 2);
+                draw_border_left(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 2);
+                draw_border_right(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 2);
+
+                EndPaint(hWnd, &ps);
+
+                return 0;
+                break;
+        case WM_DESTROY:
+                DeleteDC(hdc);
+                DestroyWindow(hWnd);
+                break;
+        default:
+                DefWindowProcA(hWnd, msg, wp, lp);
+        }
+}
+
+LRESULT CALLBACK CellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+        PAINTSTRUCT ps;
+        HDC hdc;
+        RECT rect;
+        char text[100];
+        int menu;
+        switch (msg)
+        {
+        case WM_LBUTTONDOWN:
+                menu = GetMenu(hWnd);
+                SendMessageA(hTableCliente[menu].container, WM_PRINT, hdc, PRF_CHECKVISIBLE);
+                break;
+        case WM_PAINT:
+                GetClientRect(hWnd, &rect);
+
+                hdc = BeginPaint(hWnd, &ps);
+
+                SetTextColor(hdc, RGB(0, 0, 0));
+                SetBkMode(hdc, TRANSPARENT);
+
+                GetWindowTextA(hWnd, text, 100);
+
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(255, 255, 255)));
+
+                SetRect(&rect, rect.left + 10, rect.top, rect.right, rect.bottom);
+                DrawTextA(hdc, text, -1, &rect, DT_SINGLELINE | DT_VCENTER);
+
+                draw_border_bottom(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 1);
+                draw_border_top(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 1);
+                draw_border_left(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 1);
+                draw_border_right(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 1);
+
+                EndPaint(hWnd, &ps);
+
                 return 0;
                 break;
         case WM_DESTROY:

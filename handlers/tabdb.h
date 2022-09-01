@@ -1,6 +1,8 @@
 #include <stdio.h>
 
 int get_len_file(FILE *fp);
+int get_len_col_file(FILE *fp, int row, int col);
+int gets_jumplines_file(FILE *fp);
 
 void move_to_line_file(FILE *fp, int row);
 void move_to_col_file(FILE *fp, int col);

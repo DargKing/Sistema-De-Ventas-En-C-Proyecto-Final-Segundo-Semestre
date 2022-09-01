@@ -1,6 +1,6 @@
+#include "../handlers/caracteres.h"
 #include <string.h>
 #include <stdio.h>
-#include "../handlers/caracteres.h"
 #include "../handlers/tabdb.h"
 
 int get_len_file(FILE *fp)
@@ -31,6 +31,8 @@ void move_to_col_file(FILE *fp, int col)
 {
         int tabs = 0;
         char caracter;
+        int i = 0;
+
         while (tabs < col)
         {
                 if ((caracter = fgetc(fp)) == '\t')
@@ -40,10 +42,47 @@ void move_to_col_file(FILE *fp, int col)
         }
 }
 
+int get_len_line_file(FILE *fp, int row)
+{
+        move_to_line_file(fp, row);
+        size_t i = 0;
+        char caracter;
+        while ((caracter = fgetc(fp)) && caracter != '\n' && caracter != EOF)
+                i++;
+        return i;
+}
+
+int get_len_col_file(FILE *fp, int row, int col)
+{
+        move_to_line_file(fp, row);
+        size_t i = 0;
+        int tabs = 0;
+        char caracter;
+        while ((caracter = fgetc(fp)) && caracter != '\n' && caracter != EOF)
+        {
+                if (caracter == '\t')
+                        tabs++;
+                if (tabs == col)
+                        i++;
+        }
+        return i;
+}
+
+int gets_jumplines_file(FILE *fp)
+{
+        int jumplines = 0;
+        char caracter;
+        while((caracter = fgetc(fp)) && caracter != EOF){
+                if(caracter == '\n')
+                        jumplines++;
+        }
+        return jumplines - 1;
+}
+
 void read_line_file(FILE *fp, int row, char *str)
 {
         int i = 0;
-        char temp[300];
+        char temp[get_len_line_file(fp, row) + 1];
         char caracter;
 
         move_to_line_file(fp, row);
@@ -65,7 +104,7 @@ void read_line_file(FILE *fp, int row, char *str)
 void read_col_file(FILE *fp, int row, int col, char *str)
 {
         int i = 0;
-        char temp[300];
+        char temp[get_len_col_file(fp, row, col) + 1];
         char caracter;
 
         move_to_line_file(fp, row);
@@ -113,7 +152,7 @@ int search_data_file(FILE *fp, int col, char *str)
                         }
                         i++;
                 }
-                char temp[300];
+                char temp[320];
                 substr(temp, string, from, (col == 0) ? from + to : from + to - 1);
                 if (!strcmp(temp, str))
                         return row;
@@ -128,10 +167,7 @@ void delete_line_file(FILE *fp, int row)
         move_to_line_file(fp, row);
         fseek(fp, 0, SEEK_CUR);
 
-        char string[300];
-        read_line_file(fp, row, string);
-
-        int len = lenghtStr(string);
+        int len = get_len_line_file(fp, row);
 
         move_to_line_file(fp, row);
         fseek(fp, 0, SEEK_CUR);
@@ -157,7 +193,7 @@ void add_line_file(FILE *fp, char *str)
 
 void modify_col_file(FILE *fp, int row, int col, char *str)
 {
-        char line[300];
+        char line[get_len_line_file(fp, row) + 1];
         read_line_file(fp, row, line);
 
         int tabs = 0;

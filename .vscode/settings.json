@@ -14,6 +14,9 @@
                 "draw.h": "c",
                 "wingdi.h": "c",
                 "gdiplus.h": "c",
-                "facturas.h": "c"
+                "facturas.h": "c",
+                "tabdb.h": "c",
+                "time.h": "c",
+                "clientes.h": "c"
         }
 }
