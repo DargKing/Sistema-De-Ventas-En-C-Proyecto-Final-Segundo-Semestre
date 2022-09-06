@@ -21,6 +21,7 @@
 #define TOOLBAR_IMAGE_MODIFY_VENTAS 9
 
 int First;
+int yTabla;
 
 HWND hAlto, hAncho;
 
@@ -65,9 +66,26 @@ typedef struct CLIENTESHWND
     HWND dni;
     HWND phone;
     HWND TdP;
-};
+} STRUCTCLIENTESHWND;
 
-struct CLIENTESHWND *hTableCliente;
+typedef struct CLIENTESDATA
+{
+    char ID[20];
+    char name[100];
+    char lastname[100];
+    char dni[20];
+    char phone[20];
+    char TdP[20];
+    char date[20];
+} STRUCTCLIENTESDATA;
+
+// Tabla
+
+STRUCTCLIENTESHWND *hTableCliente;
+HWND hTableCurrentRow;
+STRUCTCLIENTESDATA *dataClient;
+
+HWND hCurrentBody;
 
 // Images
 HBITMAP hImageModify, hImageAdd, hImageDelete;
@@ -76,6 +94,7 @@ HBITMAP hNuevoProductoImage, hEliminarProductoImage, hModificarProductoImage,
     hNuevaVentaImage, hModificarVentaImage, hEliminarVentaImage;
 
 LRESULT CALLBACK LoginWindowProcedure(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK ClientWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
 LRESULT CALLBACK MainWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK MainHeaderWindowProcedure(HWND, UINT, WPARAM, LPARAM);
@@ -89,5 +108,8 @@ LRESULT CALLBACK STransparentWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK ButtonGreenWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK ButtonRedWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
+LRESULT CALLBACK BodyClientWindowProcedure(HWND, UINT, WPARAM, LPARAM);
+
+LRESULT CALLBACK BodyRowCellWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK CellWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK HeaderCellWindowProcedure(HWND, UINT, WPARAM, LPARAM);

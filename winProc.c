@@ -12,11 +12,32 @@
 #include "handlers/windows.h"
 #include "handlers/draw.h"
 #include "handlers/error.h"
+#include "handlers/struct.h"
 
 int destroyingWindow = 0;
 int mouseTrankingRed = 0;
 int mouseTrankingGreen = 0;
 int mouseTrack = 0;
+
+LRESULT CALLBACK ClientWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+        switch (msg)
+        {
+        case WM_COMMAND:
+                switch (wp)
+                {
+                case CLOSE_WINDOW:
+                        DestroyWindow(hWnd);
+                        break;
+                }
+                break;
+        case WM_DESTROY:
+                DestroyWindow(hWnd);
+                break;
+        default:
+                DefWindowProcA(hWnd, msg, wp, lp);
+        }
+}
 
 LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -119,6 +140,7 @@ LRESULT CALLBACK ToolBarWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                                 ShowWindow(hToolBarActual, SW_HIDE);
                                 ShowWindow(hToolBarInventario, SW_SHOW);
                                 hToolBarActual = hToolBarInventario;
+                                DestroyWindow(hCurrentBody);
                         }
                         break;
                 case NAV_CLIENTES:
@@ -127,6 +149,8 @@ LRESULT CALLBACK ToolBarWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                                 ShowWindow(hToolBarActual, SW_HIDE);
                                 ShowWindow(hToolBarClientes, SW_SHOW);
                                 hToolBarActual = hToolBarClientes;
+                                DestroyWindow(hCurrentBody);
+                                CreateBodyCliente(NULL);
                         }
                         break;
                 case NAV_VENTAS:
@@ -135,6 +159,7 @@ LRESULT CALLBACK ToolBarWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                                 ShowWindow(hToolBarActual, SW_HIDE);
                                 ShowWindow(hToolBarVentas, SW_SHOW);
                                 hToolBarActual = hToolBarVentas;
+                                DestroyWindow(hCurrentBody);
                         }
                         break;
                 }
@@ -222,11 +247,37 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
         HDC hdcSource;
         char text[100];
         UINT menu;
+        int i = 0;
         switch (msg)
         {
         case WM_DESTROY:
                 DeleteDC(hdc);
                 DestroyWindow(hWnd);
+                break;
+        case WM_LBUTTONDOWN:
+                menu = GetMenu(hWnd);
+
+                switch (menu)
+                {
+                case TOOLBAR_IMAGE_DELETE_CLIENTE:
+                        if (hTableCurrentRow == NULL)
+                                return 0;
+                        while (hTableCurrentRow != hTableCliente[i].container)
+                                i++;
+                        delete_table_row_client(i);
+                        yTabla = 20;
+                        CreateBodyCliente(1);
+                        break;
+                case TOOLBAR_IMAGE_MODIFY_CLIENTE:
+                        if (hTableCurrentRow != NULL)
+                        {
+                        }
+                        break;
+                case TOOLBAR_IMAGE_NEW_CLIENTE:
+                        CreateFormClient(TRUE, -1);
+                        break;
+                }
+
                 break;
         case WM_CREATE:
                 menu = GetMenu(hWnd);
@@ -646,8 +697,8 @@ LRESULT CALLBACK HeaderCellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARA
 
                 FillRect(hdc, &rect, CreateSolidBrush(RGB(255, 255, 255)));
 
-                SetRect(&rect, rect.left + 10, rect.top, rect.right, rect.bottom);
-                DrawTextA(hdc, text, -1, &rect, DT_SINGLELINE | DT_VCENTER);
+                SetRect(&rect, rect.left, rect.top, rect.right, rect.bottom);
+                DrawTextA(hdc, text, -1, &rect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
 
                 draw_border_bottom(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 2);
                 draw_border_top(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 2);
@@ -678,7 +729,16 @@ LRESULT CALLBACK CellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
         {
         case WM_LBUTTONDOWN:
                 menu = GetMenu(hWnd);
-                SendMessageA(hTableCliente[menu].container, WM_PRINT, hdc, PRF_CHECKVISIBLE);
+                if (hTableCurrentRow == hTableCliente[menu].container)
+                        return 0;
+                if (hTableCurrentRow != NULL)
+                {
+                        GetClientRect(hTableCurrentRow, &rect);
+                        InvalidateRect(hTableCurrentRow, &rect, TRUE);
+                        hTableCurrentRow = NULL;
+                }
+                hTableCurrentRow = hTableCliente[menu].container;
+                SendMessageA(hTableCliente[menu].container, WM_PRINT, NULL, PRF_CHECKVISIBLE);
                 break;
         case WM_PAINT:
                 GetClientRect(hWnd, &rect);
@@ -695,14 +755,69 @@ LRESULT CALLBACK CellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 SetRect(&rect, rect.left + 10, rect.top, rect.right, rect.bottom);
                 DrawTextA(hdc, text, -1, &rect, DT_SINGLELINE | DT_VCENTER);
 
-                draw_border_bottom(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 1);
-                draw_border_top(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 1);
-                draw_border_left(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 1);
-                draw_border_right(rect, hdc, CreateSolidBrush(RGB(0, 0, 0)), 1);
+                draw_border_bottom(rect, hdc, CreateSolidBrush(RGB(47, 54, 64)), 2);
+                draw_border_top(rect, hdc, CreateSolidBrush(RGB(47, 54, 64)), 2);
+                draw_border_left(rect, hdc, CreateSolidBrush(RGB(47, 54, 64)), 2);
+                draw_border_right(rect, hdc, CreateSolidBrush(RGB(47, 54, 64)), 2);
 
                 EndPaint(hWnd, &ps);
 
                 return 0;
+                break;
+        case WM_DESTROY:
+                DeleteDC(hdc);
+                DestroyWindow(hWnd);
+                break;
+        default:
+                DefWindowProcA(hWnd, msg, wp, lp);
+        }
+}
+
+LRESULT CALLBACK BodyRowCellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+        PAINTSTRUCT ps;
+        HDC hdc;
+        RECT rect;
+        char text[100];
+        int menu;
+        switch (msg)
+        {
+        case WM_PRINT:
+                hdc = GetDC(hWnd);
+                GetClientRect(hWnd, &rect);
+
+                draw_border_top(rect, hdc, CreateSolidBrush(RGB(251, 197, 49)), 1);
+                draw_border_bottom(rect, hdc, CreateSolidBrush(RGB(251, 197, 49)), 1);
+                draw_border_left(rect, hdc, CreateSolidBrush(RGB(251, 197, 49)), 1);
+                draw_border_right(rect, hdc, CreateSolidBrush(RGB(251, 197, 49)), 1);
+
+                ReleaseDC(hWnd, hdc);
+                break;
+        case WM_DESTROY:
+                DeleteDC(hdc);
+                DestroyWindow(hWnd);
+                break;
+        default:
+                DefWindowProcA(hWnd, msg, wp, lp);
+        }
+}
+
+LRESULT CALLBACK BodyClientWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+        PAINTSTRUCT ps;
+        HDC hdc;
+        RECT rect;
+        char text[100];
+        int menu;
+        switch (msg)
+        {
+        case WM_LBUTTONDOWN:
+                if (hTableCurrentRow != NULL)
+                {
+                        GetClientRect(hTableCurrentRow, &rect);
+                        InvalidateRect(hTableCurrentRow, &rect, TRUE);
+                        hTableCurrentRow = NULL;
+                }
                 break;
         case WM_DESTROY:
                 DeleteDC(hdc);

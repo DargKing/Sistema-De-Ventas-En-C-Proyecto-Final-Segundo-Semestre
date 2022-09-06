@@ -7,16 +7,8 @@
 #include "../handlers/winProc.h"
 #include "../handlers/clientes.h"
 
-typedef struct
-{
-        char name[100];
-        char lastname[100];
-        char dni[20];
-        char phone[20];
-        char TdP[20];
-} CLIENTESDATA;
-
-int yTabla = 20;
+yTabla = 20;
+FirstMalloc = 0;
 
 BOOL CreateClasses(HINSTANCE hInstance)
 {
@@ -29,6 +21,18 @@ BOOL CreateClasses(HINSTANCE hInstance)
         wMain.lpfnWndProc = MainWindowProcedure;
 
         if (!RegisterClassA(&wMain))
+                return FALSE;
+
+        WNDCLASSA wClientWindow = {0};
+
+        wClientWindow.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);
+        wClientWindow.hCursor = LoadCursor(NULL, IDC_ARROW);
+        wClientWindow.hInstance = hInstance;
+        wClientWindow.lpszClassName = "CLIENT_WINDOW";
+        wClientWindow.lpfnWndProc = ClientWindowProcedure;
+        wClientWindow.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW;
+
+        if (!RegisterClassA(&wClientWindow))
                 return FALSE;
 
         WNDCLASSA wLogin = {0};
@@ -144,7 +148,7 @@ BOOL CreateClasses(HINSTANCE hInstance)
         wBody.hCursor = LoadCursor(NULL, IDC_ARROW);
         wBody.hInstance = hInstance;
         wBody.lpszClassName = "BODY";
-        wBody.lpfnWndProc = MainWindowProcedure;
+        wBody.lpfnWndProc = BodyClientWindowProcedure;
 
         if (!RegisterClassA(&wBody))
                 return FALSE;
@@ -177,7 +181,7 @@ BOOL CreateClasses(HINSTANCE hInstance)
         wBodyRowCell.hCursor = LoadCursor(NULL, IDC_ARROW);
         wBodyRowCell.hInstance = hInstance;
         wBodyRowCell.lpszClassName = "BODY_ROW_CELL";
-        wBodyRowCell.lpfnWndProc = HeaderCellWindowProcedure;
+        wBodyRowCell.lpfnWndProc = BodyRowCellWindowProcedure;
 
         if (!RegisterClassA(&wBodyRowCell))
                 return FALSE;
@@ -221,65 +225,90 @@ void CreateMainWindow()
         hMain = CreateWindowA(main_class, "Sistema De Ventas", WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE, WPositionX, WPositionY, CMainWidth, CMainHeight,
                               NULL, NULL, NULL, NULL);
 
-        hTableCliente = (struct CLIENTESHWND *)malloc(sizeof(struct CLIENTESHWND));
+        dataClient = (STRUCTCLIENTESDATA *)malloc(sizeof(STRUCTCLIENTESDATA));
+        hTableCliente = (STRUCTCLIENTESHWND *)malloc(sizeof(STRUCTCLIENTESHWND));
         CreateHeader();
 }
 
 void CreateHeaderTableClient()
 {
         RECT rect;
-        GetClientRect(hBodyInventario, &rect);
-        float width = rect.right / 5 - 10;
-        CreateWindowA("HEADER_CELL", "Nombre", WS_VISIBLE | WS_CHILD, 25, 0, width, 20, hBodyInventario, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Apellido", WS_VISIBLE | WS_CHILD, 25 - 4 + width, 0, width, 20, hBodyInventario, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "DNI", WS_VISIBLE | WS_CHILD, 25 - 6 + (width * 2), 0, width, 20, hBodyInventario, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Telefono", WS_VISIBLE | WS_CHILD, 25 - 8 + (width * 3), 0, width, 20, hBodyInventario, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Naturaleza", WS_VISIBLE | WS_CHILD, 25 - 10 + (width * 4), 0, width, 20, hBodyInventario, NULL, NULL, NULL);
+        GetClientRect(hBodyClientes, &rect);
+        float width = rect.right / 5;
+        CreateWindowA("HEADER_CELL", "Nombre", WS_VISIBLE | WS_CHILD, 0, 0, width, 20, hBodyClientes, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Apellido", WS_VISIBLE | WS_CHILD, width, 0, width, 20, hBodyClientes, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "DNI", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, 20, hBodyClientes, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Telefono", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, 20, hBodyClientes, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Naturaleza", WS_VISIBLE | WS_CHILD, (width * 4), 0, width + 1, 20, hBodyClientes, NULL, NULL, NULL);
 }
 
-void CreateRowTableClient(CLIENTESDATA data, int i)
+void CreateRowTableClient(STRUCTCLIENTESDATA data, int i)
 {
         RECT rect;
-        GetClientRect(hBodyInventario, &rect);
-        hTableCliente[i].container = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE, 25, yTabla, rect.right - 63, 20, hBodyInventario, i, NULL, NULL);
-        float width = rect.right / 5 - 10;
+        GetClientRect(hBodyClientes, &rect);
+        hTableCliente[i].container = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, yTabla, rect.right, 20, hBodyClientes, i, NULL, NULL);
+        float width = rect.right / 5;
         CreateWindowA("CELL", data.name, WS_VISIBLE | WS_CHILD, 0, 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
-        CreateWindowA("CELL", data.lastname, WS_VISIBLE | WS_CHILD, width - 3, 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
-        CreateWindowA("CELL", data.dni, WS_VISIBLE | WS_CHILD, (width * 2) - 6, 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
-        CreateWindowA("CELL", data.phone, WS_VISIBLE | WS_CHILD, (width * 3) - 9, 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
-        CreateWindowA("CELL", data.TdP, WS_VISIBLE | WS_CHILD, (width * 4) - 12, 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
+        CreateWindowA("CELL", data.lastname, WS_VISIBLE | WS_CHILD, width, 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
+        CreateWindowA("CELL", data.dni, WS_VISIBLE | WS_CHILD, (width * 2), 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
+        CreateWindowA("CELL", data.phone, WS_VISIBLE | WS_CHILD, (width * 3), 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
+        CreateWindowA("CELL", data.TdP, WS_VISIBLE | WS_CHILD, (width * 4), 0, width + 1, 20, hTableCliente[i].container, i, NULL, NULL);
         yTabla += 20;
 }
 
-void CreateTableClient()
+void CreateTableClient(int sort)
 {
         int jumplines = get_jumplines_clients_file();
-        CLIENTESDATA data[jumplines];
+        int lines = get_lines_clients_file();
 
-        hTableCliente = (struct CLIENTESHWND *)realloc(hTableCliente, sizeof(struct CLIENTESHWND) * jumplines);
-
-        for (int i = 0; i < jumplines; i++)
+        if (!FirstMalloc)
         {
-                get_name_clients(i, data[i].name);
-                get_lastname_clients(i, data[i].lastname);
-                get_dni_clients(i, data[i].dni);
-                get_phone_clients(i, data[i].phone);
-                get_TdP_clients(i, data[i].TdP);
+                dataClient = (STRUCTCLIENTESDATA *)realloc(NULL, sizeof(STRUCTCLIENTESDATA) * (jumplines + 1));
+                hTableCliente = (STRUCTCLIENTESHWND *)realloc(NULL, sizeof(STRUCTCLIENTESHWND) * (jumplines + 1));
         }
+        else
+        {
+                dataClient = (STRUCTCLIENTESDATA *)realloc(dataClient, sizeof(STRUCTCLIENTESDATA) * jumplines);
+                hTableCliente = (STRUCTCLIENTESHWND *)realloc(hTableCliente, sizeof(STRUCTCLIENTESHWND) * jumplines);
+                FirstMalloc = 0;
+        }
+
+        int i = 0;
+        int x = 0;
+
+        char text[10];
+
+        while (i <= lines)
+        {
+                if (!isBlank(i))
+                {
+                        get_ID_clients(i, dataClient[x].ID);
+                        get_name_clients(i, dataClient[x].name);
+                        get_lastname_clients(i, dataClient[x].lastname);
+                        get_dni_clients(i, dataClient[x].dni);
+                        get_phone_clients(i, dataClient[x].phone);
+                        get_TdP_clients(i, dataClient[x].TdP);
+                        x++;
+                }
+                i++;
+        }
+
         int y = 0;
         for (int i = 0; i < jumplines; i++)
         {
-                CreateRowTableClient(data[i], i);
+                CreateRowTableClient(dataClient[i], i);
         }
 }
 
-void CreateBodyCliente()
+void CreateBodyCliente(int sort)
 {
+        yTabla = 20;
         RECT CRect;
         GetClientRect(hMain, &CRect);
-        hBodyInventario = CreateWindowA("BODY", NULL, WS_VISIBLE | WS_CHILD, 0, 100, CRect.right, CRect.bottom - HeaderHeight, hMain, NULL, NULL, NULL);
+        hBodyClientes = CreateWindowA("BODY", NULL, WS_VISIBLE | WS_CHILD, 0, 100, CRect.right, CRect.bottom - HeaderHeight, hMain, NULL, NULL, NULL);
+        hCurrentBody = hBodyClientes;
         CreateHeaderTableClient();
-        CreateTableClient();
+        CreateTableClient(sort);
 }
 
 void loadImagesAdd()
@@ -320,8 +349,6 @@ void CreateNavBar()
 
         CreateToolBarInventario();
         CreateToolBarClientes();
-
-        CreateBodyCliente();
 
         CreateToolBarVentas();
         hToolBarActual = hToolBarInventario;
@@ -380,4 +407,14 @@ void CreateToolsVentas()
         hNuevaVenta = CreateWindowA("TOOL", "Nueva Venta", WS_VISIBLE | WS_CHILD, 20, 0, 80, 75, hToolBarVentas, TOOLBAR_IMAGE_NEW_VENTAS, NULL, NULL);
         hEliminarVenta = CreateWindowA("TOOL", "Modificar Venta", WS_VISIBLE | WS_CHILD, 100, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_MODIFY_VENTAS, NULL, NULL);
         hModificarVenta = CreateWindowA("TOOL", "Eliminar Venta", WS_VISIBLE | WS_CHILD, 190, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_DELETE_VENTAS, NULL, NULL);
+}
+
+void CreateFormClient(BOOL newClient, UINT client)
+{
+        comprobarError();
+        comprobarError();
+        if (newClient == TRUE)
+        {
+                CreateWindowA("CLIENT_WINDOW", "Nuevo Cliente", WS_VISIBLE | WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+        }
 }

@@ -1,7 +1,14 @@
-220817050412PM	patricia	duran	31406947	04248110858	natural
-220810105634AM	yorman	balan	31782211	04248968221	V
-220810105723AM	Keimel	Rodriguez	123321243	234324324	G
-220810105755AM	asd	Juan	1234567	123456	123
-220810105829AM	Javier	Chacin	307934323	213555456	Casado
-220810105952AM	Manuel	Valdez	335954405	041483432	Casado con chacin
+220810105952AM	Manuel	Valdez	335954405	041483432	Casado c2on3 chacin
+220810145829AM	Javier	Chacin	307934323	213555456	Casado54
+220810175362AM	Yorman	Valdez	335954405	041483432	Casado co453n chacin
+220810102349AM	aaaa	Chacin	307934323	213555456	Casado2
+                                                                
+                                                                 
+220810102349AM	carpe	Chacin	307934323	213555456	Casado
+220810356752AM	juan	Valdez	335954405	041483432	Casado c3on chacin
+           
+220810356752AM	pedro	Valdez	335954405	041483432	Casado 3con chacin
+220810102349AM	yes	Chacin	307934323	213555456	Casador
+          
+220810102349AM	nop	Chacin	307934323	213555456	Casado1
 

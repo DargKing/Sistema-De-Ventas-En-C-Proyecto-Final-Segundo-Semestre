@@ -17,6 +17,8 @@
                 "facturas.h": "c",
                 "tabdb.h": "c",
                 "time.h": "c",
-                "clientes.h": "c"
+                "clientes.h": "c",
+                "struct.h": "c",
+                "colors.h": "c"
         }
 }

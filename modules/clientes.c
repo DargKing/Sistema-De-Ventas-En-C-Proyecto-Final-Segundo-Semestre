@@ -112,6 +112,33 @@ int modify_JoN_clients(int row, int TdP)
         return 0;
 }
 
+int search_row_client(char *ID)
+{
+        FILE *fp;
+
+        fp = fopen("database/clientes.txt", "r+");
+        if (fp == NULL)
+                return -1;
+
+        int row = search_data_file(fp, 0, ID);
+        fclose(fp);
+        return row;
+}
+
+int get_ID_clients(int row, char *ID)
+{
+
+        FILE *fp;
+
+        fp = fopen("database/clientes.txt", "r+");
+        if (fp == NULL)
+                return -1;
+
+        read_col_file(fp, row, 0, ID);
+        fclose(fp);
+        return 0;
+}
+
 int get_name_clients(int row, char *name)
 {
 
@@ -181,6 +208,20 @@ int get_TdP_clients(int row, char *TdP)
         return 0;
 }
 
+int get_lines_clients_file()
+{
+        FILE *fp;
+
+        fp = fopen("database/clientes.txt", "r+");
+        if (fp == NULL)
+                return -1;
+
+        int jumplines = gets_lines_file(fp);
+
+        fclose(fp);
+        return jumplines;
+}
+
 int get_jumplines_clients_file()
 {
         FILE *fp;
@@ -193,4 +234,17 @@ int get_jumplines_clients_file()
 
         fclose(fp);
         return jumplines;
+}
+
+int isBlank(int row)
+{
+        FILE *fp;
+        fp = fopen("database/clientes.txt", "r+");
+        if (fp == NULL)
+                return -1;
+
+        int blank = is_blank(fp, row);
+
+        fclose(fp);
+        return blank;
 }
