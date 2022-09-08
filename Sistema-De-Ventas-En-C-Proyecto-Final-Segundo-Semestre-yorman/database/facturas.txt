@@ -1,0 +1,9 @@
+0006	Otro_nombre	Otra_ciudad	V123456787	01-09-2022	1.55
+0008	Test_definitivo	Test_definitivo	G123456712	02-09-2022	19.99
+0009	Ahora_no	tiene_espacios	E123456234	04-09-2022	18.23
+0002	Ben_Parker	Villa_Granada	J123456789	04-09-2022	13.12
+0001	Jose_Luis	Venezuelaaaa	V123456789	05-09-2022	3.42
+0004	sdqweqwsad	Islas_Canarias	J123456753	06-09-2022	1.32
+0007	weqeqw	Test_city	P123456783	07-09-2022	11.11
+0003	asdas	Los_Olivos	E123456678	03-08-2022	1.32
+
