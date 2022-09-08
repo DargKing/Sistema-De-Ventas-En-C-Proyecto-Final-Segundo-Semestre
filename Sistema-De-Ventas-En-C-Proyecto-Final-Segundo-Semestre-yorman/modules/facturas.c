@@ -772,7 +772,7 @@ if(opcion == 5){ // Forma temporal... o no... de arreglar el bug (El bug es, al 
                 getch();
                 break;
         }
-            system("cls");
+        system("cls");
     }
 
 }
