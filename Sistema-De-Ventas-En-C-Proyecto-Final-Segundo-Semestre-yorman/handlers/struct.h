@@ -44,3 +44,20 @@ typedef struct FACTURASDATA
 	char date[12];
 	float price;
 } STRUCTFACTURASDATA;
+
+struct _datos // Struct con los datos del usuario
+{
+    int code[256];  // Aqui obtendra el codigo unico de la factura
+    char nombre[RANGO];
+    char domicilio[RANGO];
+    char i_rif;
+    char rif[10];
+} datos;
+
+struct _productos     //Vamos a tener todo lo refetente a un producto ordenado en esta struct 
+{
+    char item[40];
+    char definiton[100];
+    int amount;
+    float price;
+} product;
