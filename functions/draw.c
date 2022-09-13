@@ -64,6 +64,6 @@ void MouseTrack(HWND hWnd)
         mouse.cbSize = sizeof(mouse);
         mouse.hwndTrack = hWnd;
         mouse.dwFlags = TME_HOVER | TME_LEAVE;
-        mouse.dwHoverTime = 10;
+        mouse.dwHoverTime = 5;
         TrackMouseEvent(&mouse);
 }

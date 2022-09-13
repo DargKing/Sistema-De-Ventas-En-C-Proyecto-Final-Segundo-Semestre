@@ -102,5 +102,5 @@ void create_date(char *date)    /* Inserta en el parametro date la fecha actual 
 
         info = localtime(&rawtime);
 
-        strftime(date, 10, "%d-%m-%y", info);
+        strftime(date, 12, "%d-%m-%Y", info);
 }

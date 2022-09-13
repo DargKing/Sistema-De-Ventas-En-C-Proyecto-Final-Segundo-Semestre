@@ -6,11 +6,9 @@
 #include "../handlers/struct.h"
 #include "../handlers/caracteres.h"
 
-void delete_table_row_client(int i)
+void delete_table_row_client(char* ID)
 {
-        char ID[20];
-        strcpy(ID, dataClient[i].ID);
-        int row = search_row_client(ID);
+        int row = search_clients(ID);
 
         delete_client(row);
 
@@ -25,8 +23,8 @@ void SortDateStructClient(STRUCTCLIENTESDATA *data, int type, int len)
                 {
                         for (int z = 0; z < len - i; z++)
                         {
-                                char date1[12];
-                                char date2[12];
+                                char date1[16];
+                                char date2[16];
 
                                 strcpy(date1, data[z].date);
                                 strcpy(date2, data[z + 1].date);
@@ -43,11 +41,11 @@ void SortDateStructClient(STRUCTCLIENTESDATA *data, int type, int len)
                                 substr(day1, date1, 0, 2);
                                 substr(day2, date2, 0, 2);
 
-                                char year1[5];
-                                char year2[5];
+                                char year1[8];
+                                char year2[8];
 
-                                substr(year1, date1, 6, 8);
-                                substr(year2, date2, 6, 8);
+                                substr(year1, date1, 6, 10);
+                                substr(year2, date2, 6, 10);
 
                                 if (atoi(year1) < atoi(year2))
                                         continue;
@@ -104,8 +102,8 @@ void SortDateStructClient(STRUCTCLIENTESDATA *data, int type, int len)
                         char year1[5];
                         char year2[5];
 
-                        substr(year1, date1, 6, 8);
-                        substr(year2, date2, 6, 8);
+                        substr(year1, date1, 6, 10);
+                        substr(year2, date2, 6, 10);
 
                         if (atoi(year1) > atoi(year2))
                                 continue;
@@ -135,4 +133,11 @@ void SortDateStructClient(STRUCTCLIENTESDATA *data, int type, int len)
                 }
         }
         }
+}
+
+void SetWindowPosition(WINDOWPOS* pos, int x, int y, int cx, int cy){
+        pos->x = x;
+        pos->y = y;
+        pos->cx = cx;
+        pos->cy = cy;
 }

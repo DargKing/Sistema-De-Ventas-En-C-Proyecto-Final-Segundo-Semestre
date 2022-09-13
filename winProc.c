@@ -13,10 +13,11 @@
 #include "handlers/draw.h"
 #include "handlers/error.h"
 #include "handlers/struct.h"
+#include "handlers/caracteres.h"
+#include "handlers/clientes.h"
 
 int destroyingWindow = 0;
-int mouseTrankingRed = 0;
-int mouseTrankingGreen = 0;
+int mouseTranking = 0;
 int mouseTrack = 0;
 
 LRESULT CALLBACK ClientWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -121,7 +122,6 @@ LRESULT CALLBACK MainNavWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
         }
 }
 
-
 LRESULT CALLBACK ToolBarWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         RECT rect;
@@ -129,7 +129,7 @@ LRESULT CALLBACK ToolBarWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
         HDC hdc;
         char text[100];
         HMENU menu;
-        ;
+
         switch (msg)
         {
         case WM_COMMAND:
@@ -151,7 +151,7 @@ LRESULT CALLBACK ToolBarWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                                 ShowWindow(hToolBarClientes, SW_SHOW);
                                 hToolBarActual = hToolBarClientes;
                                 DestroyWindow(hCurrentBody);
-                                CreateBodyCliente(NULL);
+                                CreateBodyCliente();
                         }
                         break;
                 case NAV_VENTAS:
@@ -265,13 +265,17 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                                 return 0;
                         while (hTableCurrentRow != hTableCliente[i].container)
                                 i++;
-                        delete_table_row_client(i);
-                        yTabla = 20;
-                        CreateBodyCliente(1);
+                        delete_table_row_client(dataClient[i].ID);
+                        CreateBodyCliente();
                         break;
                 case TOOLBAR_IMAGE_MODIFY_CLIENTE:
                         if (hTableCurrentRow != NULL)
                         {
+                                if (hTableCurrentRow == NULL)
+                                        return 0;
+                                while (hTableCurrentRow != hTableCliente[i].container)
+                                        i++;
+                                CreateFormClient(FALSE, i);
                         }
                         break;
                 case TOOLBAR_IMAGE_NEW_CLIENTE:
@@ -490,7 +494,7 @@ LRESULT CALLBACK STransparentWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPA
         }
 }
 
-LRESULT CALLBACK ButtonGreenWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         PAINTSTRUCT ps;
         HDC hdc;
@@ -500,11 +504,74 @@ LRESULT CALLBACK ButtonGreenWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPAR
         char text[100];
         char name_c[100], password_c[100];
 
+        int menu;
+
+        STRUCTCLIENTESDATA dataC;
+
         switch (msg)
         {
         case WM_COMMAND:
                 switch (wp)
                 {
+                case MODIFY_CLIENT_FORM:
+                        GetWindowTextA(hFormClient.name, dataC.name, 100);
+                        GetWindowTextA(hFormClient.lastname, dataC.lastname, 100);
+                        GetWindowTextA(hFormClient.phone, dataC.phone, 20);
+                        GetWindowTextA(hFormClient.TdP, dataC.TdP, 2);
+                        GetWindowTextA(hFormClient.dni, dataC.dni, 20);
+
+                        int row;
+
+                        if (strcmp(dataC.name, currentDataC.name))
+                        {
+                                row = search_clients(currentDataC.ID);
+                                modify_name_clients(row, dataC.name);
+                        }
+
+                        if (strcmp(dataC.lastname, currentDataC.lastname))
+                        {
+                                row = search_clients(currentDataC.ID);
+                                modify_lastname_clients(row, dataC.lastname);
+                        }
+
+                        if (strcmp(dataC.dni, currentDataC.dni))
+                        {
+                                row = search_clients(currentDataC.ID);
+                                modify_dni_clients(row, dataC.dni);
+                        }
+
+                        if (strcmp(dataC.phone, currentDataC.phone))
+                        {
+                                row = search_clients(currentDataC.ID);
+                                modify_phone_clients(row, dataC.phone);
+                        }
+
+                        if (strcmp(dataC.TdP, currentDataC.TdP))
+                        {
+                                row = search_clients(currentDataC.ID);
+                                modify_TdP_clients(row, dataC.TdP);
+                        }
+
+                        DestroyWindow(hFormClient.container);
+                        DestroyWindow(hBodyClientes);
+                        CreateBodyCliente();
+
+                        break;
+                case CREATE_CLIENT_FORM:
+                        GetWindowTextA(hFormClient.name, dataC.name, 100);
+                        GetWindowTextA(hFormClient.lastname, dataC.lastname, 100);
+                        GetWindowTextA(hFormClient.phone, dataC.phone, 20);
+                        GetWindowTextA(hFormClient.TdP, dataC.TdP, 2);
+                        GetWindowTextA(hFormClient.dni, dataC.dni, 20);
+
+                        create_ID(dataC.ID);
+
+                        new_client(dataC.ID, dataC.name, dataC.lastname, dataC.dni, dataC.phone, dataC.TdP);
+
+                        DestroyWindow(hFormClient.container);
+                        DestroyWindow(hBodyClientes);
+                        CreateBodyCliente();
+                        break;
                 case LOGIN_USER:
                         GetWindowTextA(hName, name_c, 100);
                         GetWindowTextA(hPassword, password_c, 100);
@@ -520,58 +587,118 @@ LRESULT CALLBACK ButtonGreenWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPAR
                                 DestroyWindow(hWnd);
                         }
                         break;
+                case CLOSE_WINDOW:
+                        PostQuitMessage(0);
+                        break;
+                case CLOSE_CLIENT_FORM:
+                        DestroyWindow(hFormClient.container);
+                        break;
                 }
                 break;
         case WM_LBUTTONUP:
-                SendMessageA(hWnd, WM_COMMAND, LOGIN_USER, NULL);
+                menu = GetMenu(hWnd);
+                SendMessageA(hWnd, WM_COMMAND, menu, NULL);
                 break;
         case WM_MOUSEMOVE:
-                if (!mouseTrankingGreen)
+                if (!mouseTranking)
                 {
                         MouseTrack(hWnd);
-                        mouseTrankingGreen = 1;
+                        mouseTranking = 1;
                 }
                 break;
         case WM_MOUSELEAVE:
-                mouseTrankingGreen = 0;
+                mouseTranking = 0;
 
                 GetClientRect(hWnd, &rect);
-
                 hdc = GetDC(hWnd);
+                menu = GetMenu(hWnd);
                 GetWindowTextA(hWnd, text, 100);
 
-                draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN), COLOR_BLACK, text);
+                switch (menu)
+                {
+                case LOGIN_USER:
+                case CREATE_CLIENT_FORM:
+                case MODIFY_CLIENT_FORM:
+                        draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN), COLOR_BLACK, text);
+                        break;
+                case CLOSE_WINDOW:
+                case CLOSE_CLIENT_FORM:
+                        draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED), COLOR_BLACK, text);
+                        break;
+                }
 
                 ReleaseDC(hWnd, hdc);
                 break;
         case WM_LBUTTONDOWN:
-                if (mouseTrankingGreen)
+                if (mouseTranking)
                 {
-                        GetClientRect(hWnd, &rect);
-                        GetWindowTextA(hWnd, text, 100);
+                        menu = GetMenu(hWnd);
+                        switch (menu)
+                        {
+                        case LOGIN_USER:
+                        case CREATE_CLIENT_FORM:
+                        case MODIFY_CLIENT_FORM:
+                                GetClientRect(hWnd, &rect);
+                                GetWindowTextA(hWnd, text, 100);
 
-                        hdc = GetDC(hWnd);
+                                hdc = GetDC(hWnd);
 
-                        draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN_CLICK), COLOR_WHITE, text);
-                        ReleaseDC(hWnd, hdc);
+                                draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN_CLICK), COLOR_WHITE, text);
+                                ReleaseDC(hWnd, hdc);
+                                break;
+                        case CLOSE_WINDOW:
+                        case CLOSE_CLIENT_FORM:
+                                draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED_CLICK), COLOR_WHITE, text);
+                                break;
+                        }
                 }
                 break;
         case WM_MOUSEHOVER:
                 GetClientRect(hWnd, &rect);
                 hdc = GetDC(hWnd);
 
-                GetWindowTextA(hWnd, text, 100);
-                draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN_HOVER), COLOR_WHITE, text);
+                menu = GetMenu(hWnd);
+
+                switch (menu)
+                {
+                case LOGIN_USER:
+                case MODIFY_CLIENT_FORM:
+                case CREATE_CLIENT_FORM:
+                        GetWindowTextA(hWnd, text, 100);
+                        draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN_HOVER), COLOR_WHITE, text);
+                        break;
+                case CLOSE_WINDOW:
+                case CLOSE_CLIENT_FORM:
+                        GetWindowTextA(hWnd, text, 100);
+                        draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED_HOVER), COLOR_WHITE, text);
+                        break;
+                }
 
                 ReleaseDC(hWnd, hdc);
                 break;
         case WM_PAINT:
                 GetClientRect(hWnd, &rect);
 
-                hdc = BeginPaint(hWnd, &ps);
-                GetWindowTextA(hWnd, text, 100);
+                menu = GetMenu(hWnd);
 
-                draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN), COLOR_BLACK, text);
+                switch (menu)
+                {
+                case LOGIN_USER:
+                case CREATE_CLIENT_FORM:
+                case MODIFY_CLIENT_FORM:
+                        hdc = BeginPaint(hWnd, &ps);
+                        GetWindowTextA(hWnd, text, 100);
+
+                        draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN), COLOR_BLACK, text);
+                        break;
+                case CLOSE_WINDOW:
+                case CLOSE_CLIENT_FORM:
+                        hdc = BeginPaint(hWnd, &ps);
+                        GetWindowTextA(hWnd, text, 100);
+
+                        draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED), COLOR_BLACK, text);
+                        break;
+                }
 
                 EndPaint(hWnd, &ps);
                 return 0;
@@ -579,7 +706,21 @@ LRESULT CALLBACK ButtonGreenWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPAR
         case WM_DESTROY:
                 DeleteDC(hdc);
                 DestroyWindow(hWnd);
-                SendMessageA(hLogin, WM_COMMAND, CLOSE_WINDOW, NULL);
+                menu = GetMenu(hWnd);
+                switch (menu)
+                {
+                case LOGIN_USER:
+                        SendMessageA(hLogin, WM_COMMAND, CLOSE_WINDOW, NULL);
+                        break;
+                case CLOSE_WINDOW:
+                        DestroyWindow(hWnd);
+                        break;
+                case CREATE_CLIENT_FORM:
+                case CLOSE_CLIENT_FORM:
+                case MODIFY_CLIENT_FORM:
+                        DestroyWindow(hFormClient.container);
+                        break;
+                }
                 break;
         default:
                 DefWindowProcA(hWnd, msg, wp, lp);
@@ -614,7 +755,7 @@ LRESULT CALLBACK ButtonRedWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM
                 SendMessageA(hWnd, WM_COMMAND, CLOSE_WINDOW, NULL);
                 break;
         case WM_MOUSEMOVE:
-                if (!mouseTrankingRed)
+                if (!mouseTranking)
                 {
                         TRACKMOUSEEVENT mouse;
                         mouse.cbSize = sizeof(mouse);
@@ -622,11 +763,11 @@ LRESULT CALLBACK ButtonRedWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM
                         mouse.dwFlags = TME_HOVER | TME_LEAVE;
                         mouse.dwHoverTime = 10;
                         TrackMouseEvent(&mouse);
-                        mouseTrankingRed = 1;
+                        mouseTranking = 1;
                 }
                 break;
         case WM_MOUSELEAVE:
-                mouseTrankingRed = 0;
+                mouseTranking = 0;
 
                 GetClientRect(hWnd, &rect);
 
@@ -638,7 +779,7 @@ LRESULT CALLBACK ButtonRedWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM
                 ReleaseDC(hWnd, hdc);
                 break;
         case WM_LBUTTONDOWN:
-                if (mouseTrankingRed)
+                if (mouseTranking)
                 {
                         GetClientRect(hWnd, &rect);
                         GetWindowTextA(hWnd, text, 100);

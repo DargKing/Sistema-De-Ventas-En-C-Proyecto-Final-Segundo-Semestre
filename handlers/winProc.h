@@ -1,8 +1,12 @@
 #include <windows.h>
 
+#define CLOSE_APP -1
 #define CLOSE_WINDOW 0
 #define LOGIN_USER 1
 #define SINGUP_USER 2
+#define CLOSE_CLIENT_FORM 4
+#define CREATE_CLIENT_FORM 5
+#define MODIFY_CLIENT_FORM 6
 
 #define NAV_INVENTARIO 1
 #define NAV_CLIENTES 2
@@ -58,6 +62,8 @@ HWND hNuevoCliente, hEliminarCliente, hModificarCliente;
 // Ventas
 HWND hNuevaVenta, hEliminarVenta, hModificarVenta;
 
+// Forms
+
 typedef struct CLIENTESHWND
 {
     HWND container;
@@ -75,7 +81,7 @@ typedef struct CLIENTESDATA
     char lastname[100];
     char dni[20];
     char phone[20];
-    char TdP[20];
+    char TdP[2];
     char date[20];
 } STRUCTCLIENTESDATA;
 
@@ -84,6 +90,10 @@ typedef struct CLIENTESDATA
 STRUCTCLIENTESHWND *hTableCliente;
 HWND hTableCurrentRow;
 STRUCTCLIENTESDATA *dataClient;
+
+// Form
+STRUCTCLIENTESHWND hFormClient;
+STRUCTCLIENTESDATA currentDataC;
 
 HWND hCurrentBody;
 
@@ -105,6 +115,7 @@ LRESULT CALLBACK ToolWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
 LRESULT CALLBACK STransparentWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
+LRESULT CALLBACK ButtonsWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK ButtonGreenWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK ButtonRedWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
