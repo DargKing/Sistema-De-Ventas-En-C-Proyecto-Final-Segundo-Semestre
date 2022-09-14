@@ -242,7 +242,7 @@ void CreateHeaderTableClient()
         CreateWindowA("HEADER_CELL", "DNI", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Telefono", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Naturaleza", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 5), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 5), 0, width + 3, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
 }
 
 void CreateRowTableClient(STRUCTCLIENTESDATA data, int i)
@@ -268,7 +268,7 @@ void CreateRowTableClient(STRUCTCLIENTESDATA data, int i)
         CreateWindowA("CELL", data.dni, WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
         CreateWindowA("CELL", data.phone, WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
         CreateWindowA("CELL", TipoDePersona, WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
-        CreateWindowA("CELL", data.date, WS_VISIBLE | WS_CHILD, (width * 5), 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
+        CreateWindowA("CELL", data.date, WS_VISIBLE | WS_CHILD, (width * 5), 0, width + 3, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
         yTabla += 20;
 }
 
@@ -326,6 +326,40 @@ void CreateTableClient()
         {
                 CreateRowTableClient(dataClient[i], i);
         }
+
+        RECT rectMainWindow;
+
+        GetClientRect(hMain, &rectMainWindow);
+
+        RECT rectContainer;
+        GetClientRect(hTableContainer, &rectContainer);
+
+        HWND scrollBar;
+
+        scrollBar = CreateWindowEx(0, "SCROLLBAR", NULL, WS_CHILD | WS_VISIBLE | SBS_VERT, rectBodyClientes.right - SCROLLBAR_WIDTH, 0, SCROLLBAR_WIDTH, rectMainWindow.bottom - HeaderHeight, hBodyClientes, (HMENU)1001, (HINSTANCE)GetWindowLongA(hTableContainer, GWL_HINSTANCE), NULL);
+
+        SCROLLINFO sbInfo;
+
+        sbInfo.nPos = 0;
+        sbInfo.nMin = 0;
+        sbInfo.cbSize = sizeof(SCROLLINFO);
+
+        if (rectContainer.bottom > rectMainWindow.bottom - HeaderHeight)
+        {
+                sbInfo.nMax = rectContainer.bottom;
+                sbInfo.nPage = rectMainWindow.bottom - HeaderHeight;
+                sbInfo.fMask = SIF_ALL;
+        }
+        else
+        {
+                sbInfo.nMax = 1;
+                sbInfo.nPage = 1;
+                sbInfo.fMask = SIF_DISABLENOSCROLL;
+        }
+
+        SetScrollInfo(scrollBar, SB_VERT, &sbInfo, TRUE);
+
+        SetWindowLongA(scrollBar, GWLP_WNDPROC, (LONG)ScrollBarProc);
 }
 
 void CreateBodyCliente()
