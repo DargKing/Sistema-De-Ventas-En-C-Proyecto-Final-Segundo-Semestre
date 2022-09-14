@@ -9,7 +9,7 @@
 #include "../handlers/clientes.h"
 #include "../handlers/struct.h"
 
-yTabla = 20;
+yTabla = 0;
 FirstMalloc = 0;
 currentSort = DEFAULT_SORT;
 
@@ -177,6 +177,16 @@ BOOL CreateClasses(HINSTANCE hInstance)
         if (!RegisterClassA(&wBodyRowCell))
                 return FALSE;
 
+        WNDCLASSA wDiv = {0};
+
+        wDiv.hCursor = LoadCursor(NULL, IDC_ARROW);
+        wDiv.hInstance = hInstance;
+        wDiv.lpszClassName = "DIV";
+        wDiv.lpfnWndProc = DivWindowProcedure;
+
+        if (!RegisterClassA(&wDiv))
+                return FALSE;
+
         return TRUE;
 }
 
@@ -225,21 +235,22 @@ void CreateHeaderTableClient()
 {
         RECT rect;
         GetClientRect(hBodyClientes, &rect);
-        float width = rect.right / 6;
-        CreateWindowA("HEADER_CELL", "Nombre", WS_VISIBLE | WS_CHILD, 0, 0, width, 20, hBodyClientes, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Apellido", WS_VISIBLE | WS_CHILD, width, 0, width, 20, hBodyClientes, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "DNI", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, 20, hBodyClientes, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Telefono", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, 20, hBodyClientes, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Naturaleza", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, 20, hBodyClientes, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 5), 0, width + 1, 20, hBodyClientes, NULL, NULL, NULL);
+        float width = (rect.right - SCROLLBAR_WIDTH) / 6;
+        HWND temp = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, 0, rect.right, ROW_TABLE_HEIGHT, hBodyClientes, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Nombre", WS_VISIBLE | WS_CHILD, 0, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Apellido", WS_VISIBLE | WS_CHILD, width, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "DNI", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Telefono", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Naturaleza", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 5), 0, width + 3, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
 }
 
 void CreateRowTableClient(STRUCTCLIENTESDATA data, int i)
 {
         RECT rect;
         GetClientRect(hBodyClientes, &rect);
-        hTableCliente[i].container = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, yTabla, rect.right, 20, hBodyClientes, i, NULL, NULL);
-        float width = rect.right / 6;
+        hTableCliente[i].container = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, yTabla, rect.right, ROW_TABLE_HEIGHT, hTableContainer, i, NULL, NULL);
+        float width = (rect.right - SCROLLBAR_WIDTH) / 6;
 
         char TipoDePersona[20];
 
@@ -252,12 +263,12 @@ void CreateRowTableClient(STRUCTCLIENTESDATA data, int i)
         else
                 strcpy(TipoDePersona, "Juridico");
 
-        CreateWindowA("CELL", data.name, WS_VISIBLE | WS_CHILD, 0, 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
-        CreateWindowA("CELL", data.lastname, WS_VISIBLE | WS_CHILD, width, 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
-        CreateWindowA("CELL", data.dni, WS_VISIBLE | WS_CHILD, (width * 2), 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
-        CreateWindowA("CELL", data.phone, WS_VISIBLE | WS_CHILD, (width * 3), 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
-        CreateWindowA("CELL", TipoDePersona, WS_VISIBLE | WS_CHILD, (width * 4), 0, width, 20, hTableCliente[i].container, i, NULL, NULL);
-        CreateWindowA("CELL", data.date, WS_VISIBLE | WS_CHILD, (width * 5), 0, width + 1, 20, hTableCliente[i].container, i, NULL, NULL);
+        CreateWindowA("CELL", data.name, WS_VISIBLE | WS_CHILD, 0, 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
+        CreateWindowA("CELL", data.lastname, WS_VISIBLE | WS_CHILD, width, 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
+        CreateWindowA("CELL", data.dni, WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
+        CreateWindowA("CELL", data.phone, WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
+        CreateWindowA("CELL", TipoDePersona, WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
+        CreateWindowA("CELL", data.date, WS_VISIBLE | WS_CHILD, (width * 5), 0, width + 3, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
         yTabla += 20;
 }
 
@@ -305,22 +316,61 @@ void CreateTableClient()
                 SortDateStructClient(dataClient, 1, x);
                 break;
         }
+        RECT rectBodyClientes;
+        GetClientRect(hBodyClientes, &rectBodyClientes);
+
+        hTableContainer = CreateWindowA("DIV", NULL, WS_VISIBLE | WS_CHILD, 0, 20, rectBodyClientes.right - SCROLLBAR_WIDTH, (jumplines + 1) * ROW_TABLE_HEIGHT, hBodyClientes, NULL, NULL, NULL);
 
         int y = 0;
         for (int i = 0; i < jumplines; i++)
         {
                 CreateRowTableClient(dataClient[i], i);
         }
+
+        RECT rectMainWindow;
+
+        GetClientRect(hMain, &rectMainWindow);
+
+        RECT rectContainer;
+        GetClientRect(hTableContainer, &rectContainer);
+
+        HWND scrollBar;
+
+        scrollBar = CreateWindowEx(0, "SCROLLBAR", NULL, WS_CHILD | WS_VISIBLE | SBS_VERT, rectBodyClientes.right - SCROLLBAR_WIDTH, 0, SCROLLBAR_WIDTH, rectMainWindow.bottom - HeaderHeight, hBodyClientes, (HMENU)1001, (HINSTANCE)GetWindowLongA(hTableContainer, GWL_HINSTANCE), NULL);
+
+        SCROLLINFO sbInfo;
+
+        sbInfo.nPos = 0;
+        sbInfo.nMin = 0;
+        sbInfo.cbSize = sizeof(SCROLLINFO);
+
+        if (rectContainer.bottom > rectMainWindow.bottom - HeaderHeight)
+        {
+                sbInfo.nMax = rectContainer.bottom;
+                sbInfo.nPage = rectMainWindow.bottom - HeaderHeight;
+                sbInfo.fMask = SIF_ALL;
+        }
+        else
+        {
+                sbInfo.nMax = 1;
+                sbInfo.nPage = 1;
+                sbInfo.fMask = SIF_DISABLENOSCROLL;
+        }
+
+        SetScrollInfo(scrollBar, SB_VERT, &sbInfo, TRUE);
+
+        SetWindowLongA(scrollBar, GWLP_WNDPROC, (LONG)ScrollBarProc);
 }
 
 void CreateBodyCliente()
 {
-        yTabla = 20;
+        yTabla = 0;
         RECT CRect;
         GetClientRect(hMain, &CRect);
         hBodyClientes = CreateWindowA("BODY", NULL, WS_VISIBLE | WS_CHILD, 0, 100, CRect.right, CRect.bottom - HeaderHeight, hMain, NULL, NULL, NULL);
         hTableCurrentRow = NULL;
         hCurrentBody = hBodyClientes;
+
         CreateHeaderTableClient();
         CreateTableClient();
 }

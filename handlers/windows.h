@@ -53,3 +53,5 @@ int currentSort;
 #define HeaderHeight 100
 #define NavHeight 25
 #define ToolBarHeight HeaderHeight - NavHeight
+#define SCROLLBAR_WIDTH 20
+#define ROW_TABLE_HEIGHT 20

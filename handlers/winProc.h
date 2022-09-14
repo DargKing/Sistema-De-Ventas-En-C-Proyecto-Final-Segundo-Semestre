@@ -90,6 +90,7 @@ typedef struct CLIENTESDATA
 STRUCTCLIENTESHWND *hTableCliente;
 HWND hTableCurrentRow;
 STRUCTCLIENTESDATA *dataClient;
+HWND hTableContainer;
 
 // Form
 STRUCTCLIENTESHWND hFormClient;
@@ -102,6 +103,9 @@ HBITMAP hImageModify, hImageAdd, hImageDelete;
 HBITMAP hNuevoProductoImage, hEliminarProductoImage, hModificarProductoImage,
     hNuevoClienteImage, hModificarClienteImage, hEliminarClienteImage,
     hNuevaVentaImage, hModificarVentaImage, hEliminarVentaImage;
+
+LRESULT CALLBACK DivWindowProcedure(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK ScrollBarProc(HWND, UINT, WPARAM, LPARAM);
 
 LRESULT CALLBACK LoginWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK ClientWindowProcedure(HWND, UINT, WPARAM, LPARAM);

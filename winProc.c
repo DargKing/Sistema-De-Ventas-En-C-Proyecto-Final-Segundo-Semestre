@@ -20,6 +20,87 @@ int destroyingWindow = 0;
 int mouseTranking = 0;
 int mouseTrack = 0;
 
+LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+        char text[100];
+        switch (msg)
+        {
+        case WM_CREATE:
+                // comprobarError();
+                break;
+        case WM_DESTROY:
+                DestroyWindow(hWnd);
+                break;
+        case WM_VSCROLL:
+                comprobarError();
+                break;
+        default:
+                DefWindowProcA(hWnd, msg, wp, lp);
+        }
+}
+
+LRESULT CALLBACK ScrollBarProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+        char text[100];
+        int newPos;
+        int oldPos;
+        SCROLLINFO scrollInfo;
+        RECT rect;
+
+        switch (msg)
+        {
+        case WM_VSCROLL:
+
+                scrollInfo.cbSize = sizeof(SCROLLINFO);
+                scrollInfo.fMask = SIF_POS | SIF_RANGE | SIF_TRACKPOS | SIF_PAGE;
+
+                GetScrollInfo(hWnd, SB_VERT, &scrollInfo);
+
+                oldPos = scrollInfo.nPos;
+
+                switch (LOWORD(wp))
+                {
+                case SB_PAGEUP:
+                        scrollInfo.nPos -= rect.bottom - HeaderHeight;
+                        break;
+                case SB_PAGEDOWN:
+                        GetClientRect(hMain, &rect);
+                        scrollInfo.nPos += rect.bottom - HeaderHeight;
+                        break;
+                case SB_BOTTOM:
+                        scrollInfo.nPos = scrollInfo.nMax;
+                        break;
+                case SB_TOP:
+                        scrollInfo.nPos = scrollInfo.nMin;
+                        break;
+                case SB_LINEUP:
+                        scrollInfo.nPos -= scrollInfo.nPage / 100;
+                        break;
+                case SB_LINEDOWN:
+                        scrollInfo.nPos += scrollInfo.nPage / 100;
+                        break;
+                case SB_THUMBTRACK:
+                        scrollInfo.nPos = HIWORD(wp);
+                        break;
+                }
+
+                scrollInfo.fMask = SIF_POS;
+                SetScrollInfo(hWnd, SB_VERT, &scrollInfo, TRUE);
+
+                newPos = scrollInfo.nPos;
+
+                if (newPos != oldPos)
+                {
+                        GetClientRect(hTableContainer, &rect);
+                        ScrollWindowEx(hTableContainer, 0, oldPos - newPos, &rect, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN);
+                        UpdateWindow(hBodyClientes);
+                }
+                break;
+        default:
+                CallWindowProcA(DefWindowProcA, hWnd, msg, wp, lp);
+        }
+}
+
 LRESULT CALLBACK ClientWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         switch (msg)
