@@ -23,16 +23,51 @@ int mouseTrack = 0;
 LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         char text[100];
+        SCROLLINFO scrollInfo;
+
+        int newPos;
+        int oldPos;
+        RECT rect;
+        RECT rectBodyClientes;
+        RECT rectMainWindow;
+        RECT rectContainer;
+
+        SCROLLINFO sbInfo;
+
         switch (msg)
         {
         case WM_CREATE:
-                // comprobarError();
+                GetClientRect(hBodyClientes, &rectBodyClientes);
+                GetClientRect(hMain, &rectMainWindow);
+                hScrollBar = CreateWindowA("SCROLLBAR", NULL, WS_CHILD | WS_VISIBLE | SBS_VERT, rectBodyClientes.right - SCROLLBAR_WIDTH, 0, SCROLLBAR_WIDTH, rectMainWindow.bottom - HeaderHeight, hBodyClientes, (HMENU)1001, NULL, NULL);
+
+                SetWindowLongPtrA(hScrollBar, GWLP_WNDPROC, ScrollBarProc);
                 break;
+        // case WM_SIZE:
+        //         GetClientRect(hWnd, &rectContainer);
+        //         GetClientRect(hMain, &rectMainWindow);
+
+        //         sbInfo.nPos = 0;
+        //         sbInfo.nMin = 0;
+        //         sbInfo.cbSize = sizeof(SCROLLINFO);
+
+        //         if (rectContainer.bottom > rectMainWindow.bottom - HeaderHeight)
+        //         {
+        //                 sbInfo.nMax = rectMainWindow.bottom - HeaderHeight;
+        //                 sbInfo.nPage = 100;
+        //                 sbInfo.fMask = SIF_ALL;
+        //         }
+        //         else
+        //         {
+        //                 sbInfo.nMax = 1;
+        //                 sbInfo.nPage = 1;
+        //                 sbInfo.fMask = SIF_DISABLENOSCROLL;
+        //         }
+
+        //         SetScrollInfo(hScrollBar, SB_VERT, &sbInfo, TRUE);
+        //         break;
         case WM_DESTROY:
                 DestroyWindow(hWnd);
-                break;
-        case WM_VSCROLL:
-                comprobarError();
                 break;
         default:
                 DefWindowProcA(hWnd, msg, wp, lp);
@@ -97,7 +132,7 @@ LRESULT CALLBACK ScrollBarProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 }
                 break;
         default:
-                CallWindowProcA(DefWindowProcA, hWnd, msg, wp, lp);
+                DefWindowProcA(hWnd, msg, wp, lp);
         }
 }
 

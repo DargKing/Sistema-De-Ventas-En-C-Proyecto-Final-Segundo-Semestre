@@ -91,6 +91,7 @@ STRUCTCLIENTESHWND *hTableCliente;
 HWND hTableCurrentRow;
 STRUCTCLIENTESDATA *dataClient;
 HWND hTableContainer;
+HWND hScrollBar;
 
 // Form
 STRUCTCLIENTESHWND hFormClient;
