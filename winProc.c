@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <wingdi.h>
+#include <math.h>
 
 #include "handlers/colors.h"
 #include "handlers/user.h"
@@ -23,16 +24,129 @@ int mouseTrack = 0;
 LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         char text[100];
+
+        int newPos;
+        int oldPos;
+
+        SCROLLINFO scrollInfo;
+        RECT rect;
+        RECT rectMainWindow;
+        RECT rectContainer;
+        int cxClient, cyClient;
+        SCROLLINFO sbInfo;
+
+        PAINTSTRUCT ps;
+        HDC hdc;
+        int inicio, fin, y;
+
         switch (msg)
         {
-        case WM_CREATE:
-                // comprobarError();
+        case WM_SIZE:
+
+                cxClient = LOWORD(lp);
+                cyClient = HIWORD(lp);
+
+                GetClientRect(hMain, &rectMainWindow);
+
+                sbInfo.nPos = 0;
+                sbInfo.nMin = 0;
+                sbInfo.cbSize = sizeof(SCROLLINFO);
+                // sprintf(text, "%d Mayor", cyClient);
+                // MessageBoxA(NULL, text, NULL, MB_OK);
+
+                if (cyClient > 1)
+                {
+                        sbInfo.nMax = jumplines - 1;
+                        sbInfo.nPage = (cyClient / 20);
+                        sbInfo.fMask = SIF_ALL;
+                }
+                else
+                {
+                        sbInfo.nMax = 1;
+                        sbInfo.nPage = 1;
+                        sbInfo.fMask = SIF_DISABLENOSCROLL;
+                }
+
+                SetScrollInfo(hWnd, SB_VERT, &sbInfo, TRUE);
+
+                break;
+        case WM_VSCROLL:
+
+                scrollInfo.cbSize = sizeof(SCROLLINFO);
+                scrollInfo.fMask = SIF_POS | SIF_RANGE | SIF_TRACKPOS | SIF_PAGE;
+
+                GetScrollInfo(hWnd, SB_VERT, &scrollInfo);
+
+                oldPos = scrollInfo.nPos;
+
+                switch (LOWORD(wp))
+                {
+                case SB_PAGEUP:
+                        scrollInfo.nPos -= rect.bottom - HeaderHeight;
+                        break;
+                case SB_PAGEDOWN:
+                        GetClientRect(hMain, &rect);
+                        scrollInfo.nPos += rect.bottom - HeaderHeight;
+                        break;
+                case SB_BOTTOM:
+                        scrollInfo.nPos = scrollInfo.nMax;
+                        break;
+                case SB_TOP:
+                        scrollInfo.nPos = scrollInfo.nMin;
+                        break;
+                case SB_LINEUP:
+                        if (scrollInfo.nPos > 0)
+                                scrollInfo.nPos -= 1;
+                        break;
+                case SB_LINEDOWN:
+                        GetClientRect(hTableContainer, &rect);
+
+                        if (scrollInfo.nPos < scrollInfo.nMax - scrollInfo.nPage)
+                                scrollInfo.nPos += 1;
+                        break;
+                case SB_THUMBTRACK:
+                case SB_THUMBPOSITION:
+                        scrollInfo.nPos = HIWORD(wp);
+                        break;
+                }
+
+                scrollInfo.fMask = SIF_POS;
+                SetScrollInfo(hWnd, SB_VERT, &scrollInfo, TRUE);
+
+                newPos = scrollInfo.nPos;
+
+                if (newPos != oldPos)
+                {
+                        GetClientRect(hWnd, &rect);
+                        // ScrollWindowEx(hWnd, 0, oldPos - newPos, &rect, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN);
+                        ScrollWindow(hWnd, 0, ROW_TABLE_HEIGHT * (oldPos - newPos), NULL, NULL);
+                        // rect.top = newPos;
+                        // rect.bottom = newPos + scrollInfo.nPage;
+                        // InvalidateRect(hTableContainer, &rect, TRUE);
+                        UpdateWindow(hWnd);
+                }
+                break;
+        case WM_PAINT:
+                hdc = BeginPaint(hWnd, &ps);
+
+                scrollInfo.cbSize = sizeof(SCROLLINFO);
+                scrollInfo.fMask = SIF_POS;
+
+                GetScrollInfo(hWnd, SB_VERT, &scrollInfo);
+
+                inicio = max((long)0, scrollInfo.nPos + ps.rcPaint.top / ROW_TABLE_HEIGHT);
+                fin = min((long)jumplines - 1, scrollInfo.nPos + ps.rcPaint.bottom / ROW_TABLE_HEIGHT);
+
+                for (int i = inicio; i <= fin; i++)
+                {
+                        y = ROW_TABLE_HEIGHT * (i - scrollInfo.nPos);
+                        InvalidateRect(hTableCliente[i].container, NULL, FALSE);
+                }
+
+                EndPaint(hWnd, &ps);
                 break;
         case WM_DESTROY:
                 DestroyWindow(hWnd);
-                break;
-        case WM_VSCROLL:
-                comprobarError();
                 break;
         default:
                 DefWindowProcA(hWnd, msg, wp, lp);
@@ -74,10 +188,14 @@ LRESULT CALLBACK ScrollBarProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         scrollInfo.nPos = scrollInfo.nMin;
                         break;
                 case SB_LINEUP:
-                        scrollInfo.nPos -= scrollInfo.nPage / 100;
+                        if (scrollInfo.nPos > 0)
+                                scrollInfo.nPos -= 20;
                         break;
                 case SB_LINEDOWN:
-                        scrollInfo.nPos += scrollInfo.nPage / 100;
+                        GetClientRect(hTableContainer, &rect);
+
+                        if (scrollInfo.nPos < rect.bottom - scrollInfo.nPage)
+                                scrollInfo.nPos += 20;
                         break;
                 case SB_THUMBTRACK:
                         scrollInfo.nPos = HIWORD(wp);
@@ -93,7 +211,10 @@ LRESULT CALLBACK ScrollBarProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 {
                         GetClientRect(hTableContainer, &rect);
                         ScrollWindowEx(hTableContainer, 0, oldPos - newPos, &rect, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN);
-                        UpdateWindow(hBodyClientes);
+                        rect.top = newPos;
+                        rect.bottom = newPos + scrollInfo.nPage;
+                        // InvalidateRect(hTableContainer, &rect, TRUE);
+                        UpdateWindow(hTableContainer);
                 }
                 break;
         default:

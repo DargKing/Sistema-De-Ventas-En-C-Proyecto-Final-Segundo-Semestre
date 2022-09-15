@@ -226,6 +226,8 @@ void CreateMainWindow()
         hMain = CreateWindowA(main_class, "Sistema De Ventas", WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE, WPositionX, WPositionY, CMainWidth, CMainHeight,
                               NULL, NULL, NULL, NULL);
 
+        UpdateWindow(hMain);
+
         dataClient = (STRUCTCLIENTESDATA *)malloc(sizeof(STRUCTCLIENTESDATA));
         hTableCliente = (STRUCTCLIENTESHWND *)malloc(sizeof(STRUCTCLIENTESHWND));
         CreateHeader();
@@ -236,20 +238,20 @@ void CreateHeaderTableClient()
         RECT rect;
         GetClientRect(hBodyClientes, &rect);
         float width = (rect.right - SCROLLBAR_WIDTH) / 6;
-        HWND temp = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, 0, rect.right, ROW_TABLE_HEIGHT, hBodyClientes, NULL, NULL, NULL);
+        HWND temp = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, 0, rect.right - SCROLLBAR_WIDTH, ROW_TABLE_HEIGHT, hBodyClientes, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Nombre", WS_VISIBLE | WS_CHILD, 0, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Apellido", WS_VISIBLE | WS_CHILD, width, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "DNI", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Telefono", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Naturaleza", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 5), 0, width + 3, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 5), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
 }
 
 void CreateRowTableClient(STRUCTCLIENTESDATA data, int i)
 {
         RECT rect;
         GetClientRect(hBodyClientes, &rect);
-        hTableCliente[i].container = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, yTabla, rect.right, ROW_TABLE_HEIGHT, hTableContainer, i, NULL, NULL);
+        hTableCliente[i].container = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, yTabla, rect.right - SCROLLBAR_WIDTH, ROW_TABLE_HEIGHT, hTableContainer, i, NULL, NULL);
         float width = (rect.right - SCROLLBAR_WIDTH) / 6;
 
         char TipoDePersona[20];
@@ -268,13 +270,13 @@ void CreateRowTableClient(STRUCTCLIENTESDATA data, int i)
         CreateWindowA("CELL", data.dni, WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
         CreateWindowA("CELL", data.phone, WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
         CreateWindowA("CELL", TipoDePersona, WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
-        CreateWindowA("CELL", data.date, WS_VISIBLE | WS_CHILD, (width * 5), 0, width + 3, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
+        CreateWindowA("CELL", data.date, WS_VISIBLE | WS_CHILD, (width * 5), 0, width, ROW_TABLE_HEIGHT, hTableCliente[i].container, i, NULL, NULL);
         yTabla += 20;
 }
 
 void CreateTableClient()
 {
-        int jumplines = get_jumplines_clients_file();
+        jumplines = get_jumplines_clients_file();
         int lines = get_lines_clients_file();
 
         free(dataClient);
@@ -307,19 +309,20 @@ void CreateTableClient()
                 i++;
         }
 
-        switch (currentSort)
-        {
-        case DATE_SORT_DES:
-                SortDateStructClient(dataClient, 0, x);
-                break;
-        case DATE_SORT_ASD:
-                SortDateStructClient(dataClient, 1, x);
-                break;
-        }
+        // switch (currentSort)
+        // {
+        // case DATE_SORT_DES:
+        //         SortDateStructClient(dataClient, 0, x);
+        //         break;
+        // case DATE_SORT_ASD:
+        //         SortDateStructClient(dataClient, 1, x);
+        //         break;
+        // }
         RECT rectBodyClientes;
         GetClientRect(hBodyClientes, &rectBodyClientes);
 
-        hTableContainer = CreateWindowA("DIV", NULL, WS_VISIBLE | WS_CHILD, 0, 20, rectBodyClientes.right - SCROLLBAR_WIDTH, (jumplines + 1) * ROW_TABLE_HEIGHT, hBodyClientes, NULL, NULL, NULL);
+        hTableContainer = CreateWindowExA(0, "DIV", NULL, WS_VISIBLE | WS_CHILD | WS_VSCROLL, 0, 20, rectBodyClientes.right, rectBodyClientes.bottom - 20, hBodyClientes, NULL, NULL, NULL);
+        // hTableContainer = CreateWindowExA(0, "DIV", NULL, WS_VISIBLE | WS_CHILD | WS_VSCROLL, 0, 20, rectBodyClientes.right, jumplines * HeaderHeight, hBodyClientes, NULL, NULL, NULL);
 
         int y = 0;
         for (int i = 0; i < jumplines; i++)
@@ -333,33 +336,6 @@ void CreateTableClient()
 
         RECT rectContainer;
         GetClientRect(hTableContainer, &rectContainer);
-
-        HWND scrollBar;
-
-        scrollBar = CreateWindowEx(0, "SCROLLBAR", NULL, WS_CHILD | WS_VISIBLE | SBS_VERT, rectBodyClientes.right - SCROLLBAR_WIDTH, 0, SCROLLBAR_WIDTH, rectMainWindow.bottom - HeaderHeight, hBodyClientes, (HMENU)1001, (HINSTANCE)GetWindowLongA(hTableContainer, GWL_HINSTANCE), NULL);
-
-        SCROLLINFO sbInfo;
-
-        sbInfo.nPos = 0;
-        sbInfo.nMin = 0;
-        sbInfo.cbSize = sizeof(SCROLLINFO);
-
-        if (rectContainer.bottom > rectMainWindow.bottom - HeaderHeight)
-        {
-                sbInfo.nMax = rectContainer.bottom;
-                sbInfo.nPage = rectMainWindow.bottom - HeaderHeight;
-                sbInfo.fMask = SIF_ALL;
-        }
-        else
-        {
-                sbInfo.nMax = 1;
-                sbInfo.nPage = 1;
-                sbInfo.fMask = SIF_DISABLENOSCROLL;
-        }
-
-        SetScrollInfo(scrollBar, SB_VERT, &sbInfo, TRUE);
-
-        SetWindowLongA(scrollBar, GWLP_WNDPROC, (LONG)ScrollBarProc);
 }
 
 void CreateBodyCliente()

@@ -26,6 +26,7 @@
 
 int First;
 int yTabla;
+int jumplines;
 
 HWND hAlto, hAncho;
 
