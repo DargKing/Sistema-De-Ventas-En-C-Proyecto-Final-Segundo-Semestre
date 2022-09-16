@@ -10,7 +10,7 @@ int modify_TdP_clients(int row, int TdP);
 int search_clients(char *ID);
 
 int get_ID_clients(int row, char *ID);
-int get_date_clients(int row, char *date);
+int get_date_clients(int row, char *name);
 int get_name_clients(int row, char *name);
 int get_lastname_clients(int row, char *apellido);
 int get_dni_clients(int row, char *identificacion);

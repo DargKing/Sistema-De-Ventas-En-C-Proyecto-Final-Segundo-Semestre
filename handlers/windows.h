@@ -49,6 +49,8 @@ RECT CRect;
 int WHeight, WWidth;
 int FirstMalloc;
 int currentSort;
+int cxColumnTable;
+int nColumnsTable;
 
 #define HeaderHeight 100
 #define NavHeight 25

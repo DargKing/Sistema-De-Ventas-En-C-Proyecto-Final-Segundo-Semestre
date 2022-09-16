@@ -3,6 +3,7 @@
 #include <wingdi.h>
 
 #include "../handlers/draw.h"
+#include "../handlers/winProc.h"
 
 void draw_border_top(RECT rect, HDC hdc, HBRUSH hbrush, int px)
 {
@@ -36,6 +37,14 @@ void draw_border_bottom(RECT rect, HDC hdc, HBRUSH hbrush, int px)
         FillRect(hdc, &rect_temp, hbrush);
 }
 
+void draw_border(HDC hdc, RECT rect, HBRUSH hbrush, int px)
+{
+        draw_border_bottom(rect, hdc, hbrush, px);
+        draw_border_right(rect, hdc, hbrush, px);
+        draw_border_top(rect, hdc, hbrush, px);
+        draw_border_left(rect, hdc, hbrush, px);
+}
+
 void draw_bg_button(HDC hdc, RECT rect, HBRUSH bgBrush, COLORREF textBrush, char *text)
 {
         SetBkMode(hdc, TRANSPARENT);
@@ -66,4 +75,16 @@ void MouseTrack(HWND hWnd)
         mouse.dwFlags = TME_HOVER | TME_LEAVE;
         mouse.dwHoverTime = 5;
         TrackMouseEvent(&mouse);
+}
+
+void draw_cell(char *text, HDC hdc, int x, int y, int cx, int cy)
+{
+        SetBkMode(hdc, TRANSPARENT);
+        RECT rect;
+
+        SetRect(&rect, x, y, x + cx, y + cy);
+        FillRect(hdc, &rect, CreateSolidBrush(RGB(255, 255, 255)));
+
+        SetRect(&rect, x + 10, y, x + cx - 5, y + cy);
+        DrawTextA(hdc, text, -1, &rect, DT_SINGLELINE | DT_VCENTER);
 }

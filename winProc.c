@@ -20,6 +20,7 @@
 int destroyingWindow = 0;
 int mouseTranking = 0;
 int mouseTrack = 0;
+int display_scrollbar = 0;
 
 LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -32,6 +33,7 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
         RECT rect;
         RECT rectMainWindow;
         RECT rectContainer;
+        RECT rectBodyClientes;
         int cxClient, cyClient;
         SCROLLINFO sbInfo;
 
@@ -41,6 +43,14 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 
         switch (msg)
         {
+        case WM_CREATE:
+                GetClientRect(hBodyClientes, &rectBodyClientes);
+                GetClientRect(hMain, &rectMainWindow);
+                if (jumplines > (rectMainWindow.bottom - HeaderHeight) / ROW_TABLE_HEIGHT)
+                        cxColumnTable = (rectBodyClientes.right - SCROLLBAR_WIDTH) / nColumnsTable;
+                else
+                        cxColumnTable = rectBodyClientes.right / nColumnsTable;
+                break;
         case WM_SIZE:
 
                 cxClient = LOWORD(lp);
@@ -51,24 +61,15 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 sbInfo.nPos = 0;
                 sbInfo.nMin = 0;
                 sbInfo.cbSize = sizeof(SCROLLINFO);
-                // sprintf(text, "%d Mayor", cyClient);
-                // MessageBoxA(NULL, text, NULL, MB_OK);
 
-                if (cyClient > 1)
+                if (jumplines > cyClient / ROW_TABLE_HEIGHT)
                 {
                         sbInfo.nMax = jumplines - 1;
                         sbInfo.nPage = (cyClient / 20);
                         sbInfo.fMask = SIF_ALL;
+                        SetScrollInfo(hWnd, SB_VERT, &sbInfo, TRUE);
+                        display_scrollbar = 1;
                 }
-                else
-                {
-                        sbInfo.nMax = 1;
-                        sbInfo.nPage = 1;
-                        sbInfo.fMask = SIF_DISABLENOSCROLL;
-                }
-
-                SetScrollInfo(hWnd, SB_VERT, &sbInfo, TRUE);
-
                 break;
         case WM_VSCROLL:
 
@@ -82,11 +83,11 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 switch (LOWORD(wp))
                 {
                 case SB_PAGEUP:
-                        scrollInfo.nPos -= rect.bottom - HeaderHeight;
+                        scrollInfo.nPos -= scrollInfo.nPage;
                         break;
                 case SB_PAGEDOWN:
                         GetClientRect(hMain, &rect);
-                        scrollInfo.nPos += rect.bottom - HeaderHeight;
+                        scrollInfo.nPos += scrollInfo.nPage;
                         break;
                 case SB_BOTTOM:
                         scrollInfo.nPos = scrollInfo.nMax;
@@ -101,7 +102,7 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 case SB_LINEDOWN:
                         GetClientRect(hTableContainer, &rect);
 
-                        if (scrollInfo.nPos < scrollInfo.nMax - scrollInfo.nPage)
+                        if (scrollInfo.nPos < scrollInfo.nMax - (scrollInfo.nPage - 1))
                                 scrollInfo.nPos += 1;
                         break;
                 case SB_THUMBTRACK:
@@ -118,11 +119,7 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 if (newPos != oldPos)
                 {
                         GetClientRect(hWnd, &rect);
-                        // ScrollWindowEx(hWnd, 0, oldPos - newPos, &rect, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN);
                         ScrollWindow(hWnd, 0, ROW_TABLE_HEIGHT * (oldPos - newPos), NULL, NULL);
-                        // rect.top = newPos;
-                        // rect.bottom = newPos + scrollInfo.nPage;
-                        // InvalidateRect(hTableContainer, &rect, TRUE);
                         UpdateWindow(hWnd);
                 }
                 break;
@@ -130,9 +127,11 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 hdc = BeginPaint(hWnd, &ps);
 
                 scrollInfo.cbSize = sizeof(SCROLLINFO);
-                scrollInfo.fMask = SIF_POS;
+                scrollInfo.fMask = SIF_ALL;
 
                 GetScrollInfo(hWnd, SB_VERT, &scrollInfo);
+
+                GetClientRect(hMain, &rectMainWindow);
 
                 inicio = max((long)0, scrollInfo.nPos + ps.rcPaint.top / ROW_TABLE_HEIGHT);
                 fin = min((long)jumplines - 1, scrollInfo.nPos + ps.rcPaint.bottom / ROW_TABLE_HEIGHT);
@@ -1124,18 +1123,80 @@ LRESULT CALLBACK BodyRowCellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPAR
         RECT rect;
         char text[100];
         int menu;
+        int width;
+
+        HWND temp;
+
+        STRUCTCLIENTESDATA data;
+
         switch (msg)
         {
-        case WM_PRINT:
-                hdc = GetDC(hWnd);
+        case WM_LBUTTONDOWN:
+                menu = GetMenu(hWnd);
+                if (hTableCurrentRow == hTableCliente[menu].container)
+                        return 0;
+                if (hTableCurrentRow != NULL)
+                {
+                        temp = hTableCurrentRow;
+                        hTableCurrentRow = NULL;
+                        GetClientRect(temp, &rect);
+                        InvalidateRect(temp, &rect, TRUE);
+                }
                 GetClientRect(hWnd, &rect);
+                hTableCurrentRow = hTableCliente[menu].container;
+                InvalidateRect(hTableCurrentRow, &rect, TRUE);
+                ;
+                break;
+        case WM_PAINT:
+                hdc = BeginPaint(hWnd, &ps);
 
-                draw_border_top(rect, hdc, CreateSolidBrush(RGB(251, 197, 49)), 1);
-                draw_border_bottom(rect, hdc, CreateSolidBrush(RGB(251, 197, 49)), 1);
-                draw_border_left(rect, hdc, CreateSolidBrush(RGB(251, 197, 49)), 1);
-                draw_border_right(rect, hdc, CreateSolidBrush(RGB(251, 197, 49)), 1);
+                GetClientRect(hWnd, &rect);
+                menu = GetMenu(hWnd);
 
-                ReleaseDC(hWnd, hdc);
+                data = dataClient[menu];
+                width = rect.right / 6;
+
+                char TipoDePersona[20];
+
+                if (data.TdP[0] == 'V')
+                        strcpy(TipoDePersona, "Venezolano");
+                else if (data.TdP[0] == 'G')
+                        strcpy(TipoDePersona, "Gubernamental");
+                else if (data.TdP[0] == 'E')
+                        strcpy(TipoDePersona, "Extranjero");
+                else
+                        strcpy(TipoDePersona, "Juridico");
+
+                draw_cell(data.name, hdc, 0, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(data.lastname, hdc, width, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(data.dni, hdc, width * 2, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(data.phone, hdc, width * 3, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(TipoDePersona, hdc, width * 4, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(data.date, hdc, width * 5, 0, width, ROW_TABLE_HEIGHT);
+
+                if (hTableCurrentRow != hWnd)
+                        draw_border(hdc, rect, CreateSolidBrush(RGB(0, 0, 0)), 2);
+                else
+                {
+                        draw_border(hdc, rect, CreateSolidBrush(COLOR_YELLOW), 3);
+                }
+
+                SetRect(&rect, width - 1, 0, width + 2, ROW_TABLE_HEIGHT);
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                SetRect(&rect, (width * 2) - 1, 0, (width * 2) + 2, ROW_TABLE_HEIGHT);
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                SetRect(&rect, (width * 3) - 1, 0, (width * 3) + 2, ROW_TABLE_HEIGHT);
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                SetRect(&rect, (width * 4) - 1, 0, (width * 4) + 2, ROW_TABLE_HEIGHT);
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                SetRect(&rect, (width * 5) - 1, 0, (width * 5) + 2, ROW_TABLE_HEIGHT);
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                EndPaint(hWnd, &ps);
                 break;
         case WM_DESTROY:
                 DeleteDC(hdc);
