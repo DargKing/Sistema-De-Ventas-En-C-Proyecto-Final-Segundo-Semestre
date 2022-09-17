@@ -7,6 +7,8 @@
 #define CLOSE_CLIENT_FORM 4
 #define CREATE_CLIENT_FORM 5
 #define MODIFY_CLIENT_FORM 6
+#define ADD_PRODUCT_VENTAS 7
+#define DELETE_PRODUCT_VENTAS 8
 
 #define NAV_INVENTARIO 1
 #define NAV_CLIENTES 2
@@ -26,7 +28,7 @@
 
 int First;
 int yTabla;
-int jumplines;
+int rows_clients_table;
 
 HWND hAlto, hAncho;
 
@@ -86,6 +88,15 @@ typedef struct CLIENTESDATA
     char date[20];
 } STRUCTCLIENTESDATA;
 
+typedef struct PRODUCTOSDATA
+{
+    char ID[20];
+    char name[100];
+    char price[20];
+    char descount[20];
+    char date[20];
+} STRUCTPRODUCTOSDATA;
+
 // Tabla
 
 STRUCTCLIENTESHWND *hTableCliente;
@@ -107,6 +118,7 @@ HBITMAP hNuevoProductoImage, hEliminarProductoImage, hModificarProductoImage,
     hNuevaVentaImage, hModificarVentaImage, hEliminarVentaImage;
 
 LRESULT CALLBACK DivWindowProcedure(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK WinProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK ScrollBarProc(HWND, UINT, WPARAM, LPARAM);
 
 LRESULT CALLBACK LoginWindowProcedure(HWND, UINT, WPARAM, LPARAM);

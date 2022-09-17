@@ -46,7 +46,7 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
         case WM_CREATE:
                 GetClientRect(hBodyClientes, &rectBodyClientes);
                 GetClientRect(hMain, &rectMainWindow);
-                if (jumplines > (rectMainWindow.bottom - HeaderHeight) / ROW_TABLE_HEIGHT)
+                if (rows_clients_table > (rectMainWindow.bottom - HeaderHeight) / ROW_TABLE_HEIGHT)
                         cxColumnTable = (rectBodyClientes.right - SCROLLBAR_WIDTH) / nColumnsTable;
                 else
                         cxColumnTable = rectBodyClientes.right / nColumnsTable;
@@ -62,9 +62,9 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 sbInfo.nMin = 0;
                 sbInfo.cbSize = sizeof(SCROLLINFO);
 
-                if (jumplines > cyClient / ROW_TABLE_HEIGHT)
+                if (rows_clients_table > cyClient / ROW_TABLE_HEIGHT)
                 {
-                        sbInfo.nMax = jumplines - 1;
+                        sbInfo.nMax = rows_clients_table - 1;
                         sbInfo.nPage = (cyClient / 20);
                         sbInfo.fMask = SIF_ALL;
                         SetScrollInfo(hWnd, SB_VERT, &sbInfo, TRUE);
@@ -134,7 +134,7 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 GetClientRect(hMain, &rectMainWindow);
 
                 inicio = max((long)0, scrollInfo.nPos + ps.rcPaint.top / ROW_TABLE_HEIGHT);
-                fin = min((long)jumplines - 1, scrollInfo.nPos + ps.rcPaint.bottom / ROW_TABLE_HEIGHT);
+                fin = min((long)rows_clients_table - 1, scrollInfo.nPos + ps.rcPaint.bottom / ROW_TABLE_HEIGHT);
 
                 for (int i = inicio; i <= fin; i++)
                 {
@@ -352,7 +352,7 @@ LRESULT CALLBACK ToolBarWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                                 ShowWindow(hToolBarClientes, SW_SHOW);
                                 hToolBarActual = hToolBarClientes;
                                 DestroyWindow(hCurrentBody);
-                                CreateBodyCliente();
+                                CreateBodyClienteMainWindow();
                         }
                         break;
                 case NAV_VENTAS:
@@ -362,6 +362,7 @@ LRESULT CALLBACK ToolBarWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                                 ShowWindow(hToolBarVentas, SW_SHOW);
                                 hToolBarActual = hToolBarVentas;
                                 DestroyWindow(hCurrentBody);
+                                CreateBodyVentasMainWindow();
                         }
                         break;
                 }
@@ -467,7 +468,7 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         while (hTableCurrentRow != hTableCliente[i].container)
                                 i++;
                         delete_table_row_client(dataClient[i].ID);
-                        CreateBodyCliente();
+                        CreateBodyClienteMainWindow();
                         break;
                 case TOOLBAR_IMAGE_MODIFY_CLIENTE:
                         if (hTableCurrentRow != NULL)
@@ -669,6 +670,8 @@ LRESULT CALLBACK STransparentWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPA
         HDC hdc;
         RECT rect;
         char text[100];
+        int menu;
+
         switch (msg)
         {
         case WM_PAINT:
@@ -681,7 +684,12 @@ LRESULT CALLBACK STransparentWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPA
 
                 GetWindowTextA(hWnd, text, 100);
 
-                DrawTextA(hdc, text, -1, &rect, DT_SINGLELINE | DT_VCENTER);
+                menu = GetMenu(hWnd);
+
+                if (menu == SS_CENTER)
+                        DrawTextA(hdc, text, -1, &rect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
+                else
+                        DrawTextA(hdc, text, -1, &rect, DT_SINGLELINE | DT_VCENTER);
                 EndPaint(hWnd, &ps);
 
                 return 0;
@@ -755,7 +763,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 
                         DestroyWindow(hFormClient.container);
                         DestroyWindow(hBodyClientes);
-                        CreateBodyCliente();
+                        CreateBodyClienteMainWindow();
 
                         break;
                 case CREATE_CLIENT_FORM:
@@ -771,7 +779,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 
                         DestroyWindow(hFormClient.container);
                         DestroyWindow(hBodyClientes);
-                        CreateBodyCliente();
+                        CreateBodyClienteMainWindow();
                         break;
                 case LOGIN_USER:
                         GetWindowTextA(hName, name_c, 100);
@@ -1228,6 +1236,15 @@ LRESULT CALLBACK BodyClientWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARA
                 DeleteDC(hdc);
                 DestroyWindow(hWnd);
                 break;
+        default:
+                DefWindowProcA(hWnd, msg, wp, lp);
+        }
+}
+
+LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+        switch (msg)
+        {
         default:
                 DefWindowProcA(hWnd, msg, wp, lp);
         }

@@ -52,7 +52,6 @@ BOOL CreateClasses(HINSTANCE hInstance)
 
         WNDCLASSA wS_Transparent = {0};
 
-        wS_Transparent.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
         wS_Transparent.hCursor = LoadCursor(NULL, IDC_ARROW);
         wS_Transparent.hInstance = hInstance;
         wS_Transparent.lpszClassName = "S_TRANSPARENT";
@@ -186,6 +185,17 @@ BOOL CreateClasses(HINSTANCE hInstance)
         if (!RegisterClassA(&wDiv))
                 return FALSE;
 
+        WNDCLASSA wSeparator = {0};
+
+        wSeparator.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);
+        wSeparator.hCursor = LoadCursor(NULL, IDC_ARROW);
+        wSeparator.hInstance = hInstance;
+        wSeparator.lpszClassName = "SEPARATOR";
+        wSeparator.lpfnWndProc = WinProc;
+
+        if (!RegisterClassA(&wSeparator))
+                return FALSE;
+
         return TRUE;
 }
 
@@ -258,7 +268,39 @@ void CreateRowTableClient(STRUCTCLIENTESDATA data, int i)
 
 void CreateTableClient()
 {
-        jumplines = get_jumplines_clients_file();
+        RECT rectBodyClientes;
+        RECT rectMainWindow;
+
+        GetClientRect(hBodyClientes, &rectBodyClientes);
+        GetClientRect(hMain, &rectMainWindow);
+
+        DWORD sTableContainer;
+
+        nColumnsTable = 6;
+        if (rows_clients_table > (rectMainWindow.bottom - HeaderHeight) / ROW_TABLE_HEIGHT)
+                sTableContainer = WS_VISIBLE | WS_CHILD | WS_VSCROLL;
+        else
+                sTableContainer = WS_VISIBLE | WS_CHILD;
+
+        hTableContainer = CreateWindowExA(0, "DIV", NULL, sTableContainer, 0, 20, rectBodyClientes.right, rectBodyClientes.bottom - ROW_TABLE_HEIGHT, hBodyClientes, NULL, NULL, NULL);
+
+        int y = 0;
+        for (int i = 0; i < rows_clients_table; i++)
+        {
+                CreateRowTableClient(dataClient[i], i);
+        }
+}
+
+void CreateBodyClienteMainWindow()
+{
+        yTabla = 0;
+        RECT CRect;
+        GetClientRect(hMain, &CRect);
+        hBodyClientes = CreateWindowA("BODY", NULL, WS_VISIBLE | WS_CHILD, 0, 100, CRect.right, CRect.bottom - HeaderHeight, hMain, NULL, NULL, NULL);
+        hTableCurrentRow = NULL;
+        hCurrentBody = hBodyClientes;
+
+        rows_clients_table = get_jumplines_clients_file();
         int lines = get_lines_clients_file();
 
         free(dataClient);
@@ -267,8 +309,8 @@ void CreateTableClient()
         dataClient = NULL;
         hTableCliente = NULL;
 
-        dataClient = (STRUCTCLIENTESDATA *)malloc(sizeof(STRUCTCLIENTESDATA) * (jumplines + 1));
-        hTableCliente = (STRUCTCLIENTESHWND *)malloc(sizeof(STRUCTCLIENTESHWND) * (jumplines + 1));
+        dataClient = (STRUCTCLIENTESDATA *)malloc(sizeof(STRUCTCLIENTESDATA) * (rows_clients_table + 1));
+        hTableCliente = (STRUCTCLIENTESHWND *)malloc(sizeof(STRUCTCLIENTESHWND) * (rows_clients_table + 1));
 
         int i = 0;
         int x = 0;
@@ -300,38 +342,6 @@ void CreateTableClient()
                 SortDateStructClient(dataClient, 1, x);
                 break;
         }
-
-        RECT rectBodyClientes;
-        RECT rectMainWindow;
-
-        GetClientRect(hBodyClientes, &rectBodyClientes);
-        GetClientRect(hMain, &rectMainWindow);
-
-        DWORD sTableContainer;
-
-        nColumnsTable = 6;
-        if (jumplines > (rectMainWindow.bottom - HeaderHeight) / ROW_TABLE_HEIGHT)
-                sTableContainer = WS_VISIBLE | WS_CHILD | WS_VSCROLL;
-        else
-                sTableContainer = WS_VISIBLE | WS_CHILD;
-
-        hTableContainer = CreateWindowExA(0, "DIV", NULL, sTableContainer, 0, 20, rectBodyClientes.right, rectBodyClientes.bottom - ROW_TABLE_HEIGHT, hBodyClientes, NULL, NULL, NULL);
-
-        int y = 0;
-        for (int i = 0; i < jumplines; i++)
-        {
-                CreateRowTableClient(dataClient[i], i);
-        }
-}
-
-void CreateBodyCliente()
-{
-        yTabla = 0;
-        RECT CRect;
-        GetClientRect(hMain, &CRect);
-        hBodyClientes = CreateWindowA("BODY", NULL, WS_VISIBLE | WS_CHILD, 0, 100, CRect.right, CRect.bottom - HeaderHeight, hMain, NULL, NULL, NULL);
-        hTableCurrentRow = NULL;
-        hCurrentBody = hBodyClientes;
 
         CreateTableClient();
         CreateHeaderTableClient();
@@ -377,6 +387,8 @@ void CreateNavBar()
         CreateToolBarClientes();
 
         hToolBarActual = hToolBarVentas;
+
+        CreateBodyVentasMainWindow();
 }
 
 // Body
@@ -431,6 +443,10 @@ void CreateToolsVentas()
         hNuevaVenta = CreateWindowA("TOOL", "Nueva Venta", WS_VISIBLE | WS_CHILD, 20, 0, 80, 75, hToolBarVentas, TOOLBAR_IMAGE_NEW_VENTAS, NULL, NULL);
         hEliminarVenta = CreateWindowA("TOOL", "Modificar Venta", WS_VISIBLE | WS_CHILD, 100, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_MODIFY_VENTAS, NULL, NULL);
         hModificarVenta = CreateWindowA("TOOL", "Eliminar Venta", WS_VISIBLE | WS_CHILD, 190, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_DELETE_VENTAS, NULL, NULL);
+}
+
+void CreateTableProductosVentas(STRUCTPRODUCTOSDATA *data, int x)
+{
 }
 
 void CreateFormClient(BOOL newClient, UINT client)
@@ -531,4 +547,82 @@ void CreateFormClient(BOOL newClient, UINT client)
                 CreateWindowA("BUTTON_P", "Registrar", WS_VISIBLE | WS_CHILD, buttonRegisterPos.x, buttonRegisterPos.y, buttonRegisterPos.cx, buttonRegisterPos.cy, hFormClient.container, MODIFY_CLIENT_FORM, NULL, NULL);
                 CreateWindowA("BUTTON_P", "Cancelar", WS_VISIBLE | WS_CHILD, buttonClosePos.x, buttonClosePos.y, buttonClosePos.cx, buttonClosePos.cy, hFormClient.container, CLOSE_CLIENT_FORM, NULL, NULL);
         }
+}
+
+void CreateFormVentas() // Cliente (DNI, Nombre, Telefono, TdP)
+{
+
+        RECT rect;
+
+        GetClientRect(hBodyVentas, &rect);
+
+        int margin_top = 10;
+        int margin_left = 50;
+
+        int seccion_clientes = 43 + margin_top;
+        int seccion_productos = 173 + margin_top;
+
+        int width = rect.right / 3;
+
+        CreateWindowA("S_TRANSPARENT", "Nueva Venta", WS_CHILD | WS_VISIBLE, margin_left, 20 + margin_top, width, 20, hBodyVentas, NULL, NULL, NULL);
+
+        {
+                int ySeparador = 50 + margin_top;
+                CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, margin_left, ySeparador, (rect.right * 0.3), 1, hBodyVentas, NULL, NULL, NULL);
+                CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, rect.right - (rect.right * 0.3) - margin_left, ySeparador, (rect.right * 0.3), 1, hBodyVentas, NULL, NULL, NULL);
+                CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, margin_left + (rect.right * 0.39), ySeparador, rect.right * 0.1, 1, hBodyVentas, NULL, NULL, NULL);
+        }
+
+        CreateWindowA("S_TRANSPARENT", "CLIENTES", WS_CHILD | WS_VISIBLE, (rect.right / 2) - (width / 2), 20 + seccion_clientes, width, 20, hBodyVentas,
+                      SS_CENTER, NULL, NULL);
+
+        CreateWindowA("S_TRANSPARENT", "Nombre: ", WS_CHILD | WS_VISIBLE, margin_left, 25 + seccion_clientes, width, 20, hBodyVentas, NULL, NULL, NULL);
+        CreateWindowA("EDIT", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, margin_left, 45 + margin_top + seccion_clientes,
+                      width, 20, hBodyVentas, NULL, NULL, NULL);
+
+        CreateWindowA("S_TRANSPARENT", "Cedula: ", WS_CHILD | WS_VISIBLE, margin_left + width + (rect.right - (width * 2) - (margin_left * 2)), 25 + seccion_clientes,
+                      width, 20, hBodyVentas, NULL, NULL, NULL);
+        CreateWindowA("EDIT", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, margin_left + width + (rect.right - (width * 2) - (margin_left * 2)),
+                      45 + margin_top + seccion_clientes, width, 20, hBodyVentas, NULL, NULL, NULL);
+
+        CreateWindowA("S_TRANSPARENT", "Cedula: ", WS_CHILD | WS_VISIBLE, margin_left, 80 + seccion_clientes, width, 20, hBodyVentas, NULL, NULL, NULL);
+        CreateWindowA("EDIT", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, margin_left, 100 + seccion_clientes, width, 20, hBodyVentas, NULL, NULL, NULL);
+
+        CreateWindowA("S_TRANSPARENT", "Tipo de Persona ", WS_CHILD | WS_VISIBLE, margin_left + width + (rect.right - (width * 2) - (margin_left * 2)), 80 + seccion_clientes,
+                      width, 20, hBodyVentas, NULL, NULL, NULL);
+        CreateWindowA("EDIT", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_CENTER, margin_left + width + (rect.right - (width * 2) - (margin_left * 2)), 100 + seccion_clientes,
+                      15, 20, hBodyVentas, NULL, NULL, NULL);
+
+        {
+                int ySeparador = seccion_productos + margin_top;
+                CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, margin_left, ySeparador, (rect.right * 0.3), 1, hBodyVentas, NULL, NULL, NULL);
+                CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, rect.right - (rect.right * 0.3) - margin_left, ySeparador, (rect.right * 0.3), 1, hBodyVentas, NULL, NULL, NULL);
+                CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, margin_left + (rect.right * 0.39), ySeparador, rect.right * 0.1, 1, hBodyVentas, NULL, NULL, NULL);
+        }
+
+        CreateWindowA("S_TRANSPARENT", "PRODUCTOS", WS_CHILD | WS_VISIBLE, (rect.right / 2) - (width / 2), 20 + seccion_productos, width, 20, hBodyVentas,
+                      SS_CENTER, NULL, NULL);
+
+        CreateWindowA("BUTTON_P", "Agregar Producto: ", WS_CHILD | WS_VISIBLE, margin_left, 25 + seccion_productos, width, 20, hBodyVentas, ADD_PRODUCT_VENTAS, NULL, NULL);
+        CreateWindowA("BUTTON_P", "Eliminar Producto", WS_CHILD | WS_VISIBLE | WS_BORDER, margin_left, 45 + seccion_productos, width, 20, hBodyVentas, DELETE_PRODUCT_VENTAS, NULL, NULL);
+}
+
+void CreateBodyVentasMainWindow()
+{
+        RECT rectMainWindow;
+        GetClientRect(hMain, &rectMainWindow);
+
+        int margin = 15;
+
+        WINDOWPOS body;
+
+        int cx = rectMainWindow.right / 2;
+        int cy = rectMainWindow.bottom - (margin * 2) - HeaderHeight;
+        int x = (rectMainWindow.right / 2) - (cx / 2);
+        int y = HeaderHeight + margin;
+
+        hBodyVentas = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE, x, y, cx, cy, hMain, NULL, NULL, NULL);
+        hCurrentBody = hBodyVentas;
+
+        CreateFormVentas();
 }

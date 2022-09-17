@@ -32,7 +32,8 @@ void CreateToolsVentas();
 
 void CreateTableClient();
 
-void CreateBodyCliente();
+void CreateBodyClienteMainWindow();
+void CreateBodyVentasMainWindow();
 
 void loadImagesAdd();
 void loadImagesModify();
