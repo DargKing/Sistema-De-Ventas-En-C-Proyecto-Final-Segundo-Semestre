@@ -90,13 +90,13 @@ int gets_jumplines_file(FILE *fp) // Devuelve la cantidad de lineas que no estan
         while (caracter != EOF)
         {
                 caracter = fgetc(fp);
-                if (caracter == '\n' && first_char_line != ' ')
+                if (caracter == '\n' && first_char_line != ' ' && first_char_line != '\n' && last_char != '\n')
                         jumplines++;
                 if (last_char == '\n')
                         first_char_line = caracter;
                 last_char = caracter;
         }
-        return jumplines - 1;
+        return jumplines;
 }
 
 void read_line_file(FILE *fp, int row, char *str) // Inserta en la variable str el contenido de la linea especificada
@@ -124,18 +124,14 @@ void read_line_file(FILE *fp, int row, char *str) // Inserta en la variable str 
 void read_col_file(FILE *fp, int row, int col, char *str) // Inserta en la varible str el contenido de la columna n de la linea m
 {
         int i = 0;
-        char temp[get_len_col_file(fp, row, col) + 1];
+        char temp[get_len_col_file(fp, row, col) + 3];
         char caracter;
 
         move_to_line_file(fp, row);
         move_to_col_file(fp, col);
 
-        while ((caracter = fgetc(fp)) != '\t')
+        while ((caracter = fgetc(fp)) != '\t' && caracter != '\n' && caracter != EOF)
         {
-                if (caracter == '\n' || caracter == EOF)
-                {
-                        break;
-                }
                 temp[i] = caracter;
                 i++;
         }

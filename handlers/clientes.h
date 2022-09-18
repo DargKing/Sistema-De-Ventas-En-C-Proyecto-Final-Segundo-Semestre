@@ -5,11 +5,12 @@ int modify_name_clients(int row, char *nombre);
 int modify_lastname_clients(int row, char *apellido);
 int modify_dni_clients(int row, char *identificacion);
 int modify_phone_clients(int row, char *phone);
-int modify_JoN_clients(int row, int TdP);
+int modify_TdP_clients(int row, int TdP);
 
-int search_row_client(char* ID);
+int search_clients(char *ID);
 
 int get_ID_clients(int row, char *ID);
+int get_date_clients(int row, char *name);
 int get_name_clients(int row, char *name);
 int get_lastname_clients(int row, char *apellido);
 int get_dni_clients(int row, char *identificacion);

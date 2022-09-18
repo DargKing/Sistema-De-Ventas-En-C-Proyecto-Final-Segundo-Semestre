@@ -4,13 +4,14 @@
 #include "../handlers/caracteres.h"
 #include "../handlers/tabdb.h"
 #include <time.h>
-#include "../handlers/clientes.h"
 
 int new_client(char *ID, char *nombre, char *apellido, char *identificacion, char *phone, char *TdP)
 {
 
         char client[500];
-        sprintf(client, "%s\t%s\t%s\t%s\t%s\t%s", ID, nombre, apellido, identificacion, phone, TdP);
+        char date[12];
+        create_date(date);
+        sprintf(client, "%s\t%s\t%s\t%s\t%s\t%s\t%s", ID, date, nombre, apellido, identificacion, phone, TdP);
 
         FILE *fp;
 
@@ -48,7 +49,7 @@ int modify_name_clients(int row, char *nombre)
         if (fp == NULL)
                 return -1;
 
-        modify_col_file(fp, row, 1, nombre);
+        modify_col_file(fp, row, 2, nombre);
         fclose(fp);
         return 0;
 }
@@ -62,7 +63,7 @@ int modify_lastname_clients(int row, char *apellido)
         if (fp == NULL)
                 return -1;
 
-        modify_col_file(fp, row, 2, apellido);
+        modify_col_file(fp, row, 3, apellido);
         fclose(fp);
         return 0;
 }
@@ -76,7 +77,7 @@ int modify_dni_clients(int row, char *identificacion)
         if (fp == NULL)
                 return -1;
 
-        modify_col_file(fp, row, 3, identificacion);
+        modify_col_file(fp, row, 4, identificacion);
 
         fclose(fp);
         return 0;
@@ -91,13 +92,13 @@ int modify_phone_clients(int row, char *phone)
         if (fp == NULL)
                 return -1;
 
-        modify_col_file(fp, row, 4, phone);
+        modify_col_file(fp, row, 5, phone);
 
         fclose(fp);
         return 0;
 }
 
-int modify_JoN_clients(int row, int TdP)
+int modify_TdP_clients(int row, char *TdP)
 {
 
         FILE *fp;
@@ -106,28 +107,14 @@ int modify_JoN_clients(int row, int TdP)
         if (fp == NULL)
                 return -1;
 
-        modify_col_file(fp, row, 5, TdP);
+        modify_col_file(fp, row, 6, TdP);
 
         fclose(fp);
         return 0;
-}
-
-int search_row_client(char *ID)
-{
-        FILE *fp;
-
-        fp = fopen("database/clientes.txt", "r+");
-        if (fp == NULL)
-                return -1;
-
-        int row = search_data_file(fp, 0, ID);
-        fclose(fp);
-        return row;
 }
 
 int get_ID_clients(int row, char *ID)
 {
-
         FILE *fp;
 
         fp = fopen("database/clientes.txt", "r+");
@@ -135,6 +122,20 @@ int get_ID_clients(int row, char *ID)
                 return -1;
 
         read_col_file(fp, row, 0, ID);
+        fclose(fp);
+        return 0;
+}
+
+int get_date_clients(int row, char *date)
+{
+
+        FILE *fp;
+
+        fp = fopen("database/clientes.txt", "r+");
+        if (fp == NULL)
+                return -1;
+
+        read_col_file(fp, row, 1, date);
         fclose(fp);
         return 0;
 }
@@ -148,7 +149,7 @@ int get_name_clients(int row, char *name)
         if (fp == NULL)
                 return -1;
 
-        read_col_file(fp, row, 1, name);
+        read_col_file(fp, row, 2, name);
         fclose(fp);
         return 0;
 }
@@ -162,7 +163,7 @@ int get_lastname_clients(int row, char *apellido)
         if (fp == NULL)
                 return -1;
 
-        read_col_file(fp, row, 2, apellido);
+        read_col_file(fp, row, 3, apellido);
         fclose(fp);
         return 0;
 }
@@ -175,7 +176,7 @@ int get_dni_clients(int row, char *identificacion)
         if (fp == NULL)
                 return -1;
 
-        read_col_file(fp, row, 3, identificacion);
+        read_col_file(fp, row, 4, identificacion);
         fclose(fp);
         return 0;
 }
@@ -189,7 +190,7 @@ int get_phone_clients(int row, char *phone)
         if (fp == NULL)
                 return -1;
 
-        read_col_file(fp, row, 4, phone);
+        read_col_file(fp, row, 5, phone);
         fclose(fp);
         return 0;
 }
@@ -203,7 +204,7 @@ int get_TdP_clients(int row, char *TdP)
         if (fp == NULL)
                 return -1;
 
-        read_col_file(fp, row, 5, TdP);
+        read_col_file(fp, row, 6, TdP);
         fclose(fp);
         return 0;
 }
@@ -247,4 +248,17 @@ int isBlank(int row)
 
         fclose(fp);
         return blank;
+}
+
+int search_clients(char *ID)
+{
+        FILE *fp;
+        fp = fopen("database/clientes.txt", "r+");
+        if (fp == NULL)
+                return -1;
+
+        int row = search_data_file(fp, 0, ID);
+
+        fclose(fp);
+        return row;
 }
