@@ -593,7 +593,7 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                                 i++;
                         row = search_product(dataProductos[i].ID);
 
-                hTableCurrentRow = NULL;
+                        hTableCurrentRow = NULL;
                         hide_product(row);
 
                         DestroyWindow(hBodyInventario);
@@ -1109,6 +1109,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 }
                 break;
         case WM_LBUTTONUP:
+                InvalidateRect(hWnd, NULL, FALSE);
                 menu = GetMenu(hWnd);
                 SendMessageA(hWnd, WM_COMMAND, menu, NULL);
                 break;
@@ -1129,6 +1130,9 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 
                 switch (menu)
                 {
+                case NEW_VENTA:
+                        InvalidateRect(hWnd, NULL, FALSE);
+                        break;
                 case LOGIN_USER:
                 case CREATE_CLIENT_FORM:
                 case MODIFY_CLIENT_FORM:
@@ -1136,14 +1140,14 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case ADD_PRODUCT_FORM:
                 case WINDOW_PRODUCT_VENTAS:
                 case MODIFY_PRODUCT_FORM:
-                        draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN), COLOR_BLACK, text);
+                        InvalidateRect(hWnd, NULL, FALSE);
                         break;
                 case CLOSE_WINDOW:
                 case CLOSE_CLIENT_FORM:
                 case CLOSE_WINDOW_PRODUCT_VENTAS:
                 case DELETE_PRODUCT_VENTAS:
                 case CLOSE_FORM_PRODUCT:
-                        draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED), COLOR_BLACK, text);
+                        InvalidateRect(hWnd, NULL, FALSE);
                         break;
                 }
 
@@ -1152,9 +1156,15 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
         case WM_LBUTTONDOWN:
                 if (mouseTranking)
                 {
+                        hdc = GetDC(hWnd);
                         menu = GetMenu(hWnd);
+                        GetClientRect(hWnd, &rect);
+                        GetWindowTextA(hWnd, text, 100);
                         switch (menu)
                         {
+                        case NEW_VENTA:
+                                draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE_CLICK), COLOR_BLACK, text);
+                                break;
                         case LOGIN_USER:
                         case CREATE_CLIENT_FORM:
                         case MODIFY_CLIENT_FORM:
@@ -1162,13 +1172,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         case WINDOW_PRODUCT_VENTAS:
                         case ADD_PRODUCT_FORM:
                         case MODIFY_PRODUCT_FORM:
-                                GetClientRect(hWnd, &rect);
-                                GetWindowTextA(hWnd, text, 100);
-
-                                hdc = GetDC(hWnd);
-
                                 draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN_CLICK), COLOR_WHITE, text);
-                                ReleaseDC(hWnd, hdc);
                                 break;
                         case CLOSE_WINDOW:
                         case DELETE_PRODUCT_VENTAS:
@@ -1177,6 +1181,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         case CLOSE_FORM_PRODUCT:
                                 draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED_CLICK), COLOR_WHITE, text);
                                 break;
+                                ReleaseDC(hWnd, hdc);
                         }
                 }
                 break;
@@ -1185,9 +1190,14 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 hdc = GetDC(hWnd);
 
                 menu = GetMenu(hWnd);
+                GetWindowTextA(hWnd, text, 100);
 
                 switch (menu)
                 {
+                case NEW_VENTA:
+                        draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE_HOVER), COLOR_BLACK, text);
+                        break;
+
                 case LOGIN_USER:
                 case MODIFY_CLIENT_FORM:
                 case CREATE_CLIENT_FORM:
@@ -1195,7 +1205,6 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case ADD_PRODUCT_FORM:
                 case WINDOW_PRODUCT_VENTAS:
                 case MODIFY_PRODUCT_FORM:
-                        GetWindowTextA(hWnd, text, 100);
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN_HOVER), COLOR_WHITE, text);
                         break;
                 case CLOSE_WINDOW:
@@ -1203,7 +1212,6 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case DELETE_PRODUCT_VENTAS:
                 case CLOSE_WINDOW_PRODUCT_VENTAS:
                 case CLOSE_FORM_PRODUCT:
-                        GetWindowTextA(hWnd, text, 100);
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED_HOVER), COLOR_WHITE, text);
                         break;
                 }
@@ -1214,9 +1222,14 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 GetClientRect(hWnd, &rect);
 
                 menu = GetMenu(hWnd);
+                hdc = BeginPaint(hWnd, &ps);
+                GetWindowTextA(hWnd, text, 100);
 
                 switch (menu)
                 {
+                case NEW_VENTA:
+                        draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE), COLOR_BLACK, text);
+                        break;
                 case LOGIN_USER:
                 case CREATE_CLIENT_FORM:
                 case ADD_PRODUCT_VENTAS:
@@ -1224,9 +1237,6 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case MODIFY_CLIENT_FORM:
                 case WINDOW_PRODUCT_VENTAS:
                 case MODIFY_PRODUCT_FORM:
-                        hdc = BeginPaint(hWnd, &ps);
-                        GetWindowTextA(hWnd, text, 100);
-
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN), COLOR_BLACK, text);
                         break;
                 case CLOSE_WINDOW:
@@ -1234,9 +1244,6 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case DELETE_PRODUCT_VENTAS:
                 case CLOSE_WINDOW_PRODUCT_VENTAS:
                 case CLOSE_FORM_PRODUCT:
-                        hdc = BeginPaint(hWnd, &ps);
-                        GetWindowTextA(hWnd, text, 100);
-
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED), COLOR_BLACK, text);
                         break;
                 }

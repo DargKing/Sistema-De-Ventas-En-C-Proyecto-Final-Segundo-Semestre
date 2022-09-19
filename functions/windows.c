@@ -208,6 +208,9 @@ BOOL CreateClasses(HINSTANCE hInstance)
         wSeparator.lpszClassName = "SEPARATOR";
         wSeparator.lpfnWndProc = WinProc;
 
+        if (!RegisterClassA(&wSeparator))
+                return FALSE;
+
         WNDCLASSA wContainerVacio = {0};
 
         wContainerVacio.hbrBackground = (HBRUSH)CreateSolidBrush(RGB(235, 235, 235));
@@ -596,14 +599,15 @@ void CreateFormVentas() // Cliente (DNI, Nombre, Telefono, TdP)
 
         CreateWindowA("S_TRANSPARENT", "Nueva Venta", WS_CHILD | WS_VISIBLE, margin_left, 20 + margin_top, width, 20, hBodyVentas, NULL, NULL, NULL);
 
+        char text[30];
         {
                 int ySeparador = 50 + margin_top;
-                CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, margin_left, ySeparador, (rect.right * 0.3), 1, hBodyVentas, NULL, NULL, NULL);
+                CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, margin_left, ySeparador, (rect.right * 0.3), 1, hBodyVentas, NULL, NULL, NULL);
                 CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, rect.right - (rect.right * 0.3) - margin_left, ySeparador, (rect.right * 0.3), 1, hBodyVentas, NULL, NULL, NULL);
                 CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, margin_left + (rect.right * 0.39), ySeparador, rect.right * 0.1, 1, hBodyVentas, NULL, NULL, NULL);
         }
 
-        CreateWindowA("S_TRANSPARENT", "CLIENTES", WS_CHILD | WS_VISIBLE, (rect.right / 2) - (width / 2), 20 + seccion_clientes, width, 20, hBodyVentas,
+        CreateWindowA("S_TRANSPARENT", "CLIENTE", WS_CHILD | WS_VISIBLE, (rect.right / 2) - (width / 2), 20 + seccion_clientes, width, 20, hBodyVentas,
                       SS_CENTER, NULL, NULL);
 
         CreateWindowA("S_TRANSPARENT", "Nombre: ", WS_CHILD | WS_VISIBLE, margin_left, 25 + seccion_clientes, width, 20, hBodyVentas, NULL, NULL, NULL);
@@ -635,15 +639,28 @@ void CreateFormVentas() // Cliente (DNI, Nombre, Telefono, TdP)
 
         int cxButton = 200;
 
-        CreateWindowA("BUTTON_P", "Agregar Producto", WS_CHILD | WS_VISIBLE | WS_BORDER, margin_left, 25 + seccion_productos, cxButton, 30, hBodyVentas, WINDOW_PRODUCT_VENTAS, NULL, NULL);
-        CreateWindowA("BUTTON_P", "Eliminar Producto", WS_CHILD | WS_VISIBLE | WS_BORDER, margin_left + (margin_left * 0.5) + cxButton, 25 + seccion_productos, cxButton, 30, hBodyVentas, DELETE_PRODUCT_VENTAS, NULL, NULL);
+        /*
+                Para Poder obtener el margen entre cada objeto se necesita seguir la siguiente ecuacion
+                Margin = (Ancho Contenedor - (Ancho Objeto * Cantidad de objetos)) / (Cantidad de Objetos - 1)
+        */
+
+        int xButton[3];
+        int marginButtons = (rect.right - (margin_left * 2) - (cxButton * 3)) / 2;
+
+        xButton[0] = margin_left;
+        xButton[1] = margin_left + cxButton + marginButtons;
+        xButton[2] = (rect.right - margin_left) - cxButton;
+
+        CreateWindowA("BUTTON_P", "Agregar Producto", WS_CHILD | WS_VISIBLE | WS_BORDER, xButton[0], 45 + seccion_productos, cxButton, 30, hBodyVentas, WINDOW_PRODUCT_VENTAS, NULL, NULL);
+        CreateWindowA("BUTTON_P", "Eliminar Producto", WS_CHILD | WS_VISIBLE | WS_BORDER, xButton[1], 45 + seccion_productos, cxButton, 30, hBodyVentas, DELETE_PRODUCT_VENTAS, NULL, NULL);
+        CreateWindowA("BUTTON_P", "Registrar Venta", WS_CHILD | WS_VISIBLE | WS_BORDER, xButton[2], 45 + seccion_productos, cxButton, 30, hBodyVentas, NEW_VENTA, NULL, NULL);
 
         pTableCurrentProduct.x = margin_left;
-        pTableCurrentProduct.y = seccion_productos + 70;
+        pTableCurrentProduct.y = seccion_productos + 90;
         pTableCurrentProduct.cx = rect.right - (margin_left * 2);
-        pTableCurrentProduct.cy = rect.bottom - (seccion_productos - 70);
+        pTableCurrentProduct.cy = rect.bottom - (seccion_productos + 100);
 
-        CreateTableListOfProducts(margin_left, seccion_productos + 70, rect.right - (margin_left * 2), rect.bottom - seccion_productos - 70);
+        CreateTableListOfProducts(pTableCurrentProduct.x, pTableCurrentProduct.y, pTableCurrentProduct.cx, pTableCurrentProduct.cy);
 }
 
 void CreateTableListOfProducts(int x, int y, int cx, int cy)
