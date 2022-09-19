@@ -1,3 +1,6 @@
-01      PLATANITO       15                      NO
-02      RUFLES          20                      NO
-02      AGUA MINERAL    35                      YES
+220912120345PM	19-09-2022	Platanito	10	0	Comida	4	F
+220912120347PM	19-09-2022	Platanito	10	0	Comida	4	F
+220912120422PM	19-09-2022	Doritos	5	10	Comida	5	F
+220912125013PM	19-09-2022	Doritos	5	10	Comida	5	F
+220912125106PM	19-09-2022	Doritos	5	15	Comida	5	F
+

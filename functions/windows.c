@@ -6,12 +6,15 @@
 #include <windowsx.h>
 #include "../handlers/windows.h"
 #include "../handlers/winProc.h"
+#include "../handlers/productos.h"
 #include "../handlers/clientes.h"
 #include "../handlers/struct.h"
 
 yTabla = 0;
 FirstMalloc = 0;
 currentSort = DEFAULT_SORT;
+Window_product_is_open = 0;
+rows_currentProduct_table = 0;
 
 BOOL CreateClasses(HINSTANCE hInstance)
 {
@@ -77,7 +80,7 @@ BOOL CreateClasses(HINSTANCE hInstance)
         wMainHeader.hbrBackground = (HBRUSH)CreateSolidBrush(RGB(0, 0, 0));
         wMainHeader.hCursor = LoadCursor(NULL, IDC_ARROW);
         wMainHeader.hInstance = hInstance;
-        wMainHeader.lpszClassName = "MAIN_HEADER";
+        wMainHeader.lpszClassName = "HEADER";
         wMainHeader.lpfnWndProc = MainHeaderWindowProcedure;
         wMainHeader.style = CS_GLOBALCLASS | CS_HREDRAW | CS_VREDRAW;
 
@@ -175,6 +178,18 @@ BOOL CreateClasses(HINSTANCE hInstance)
         if (!RegisterClassA(&wBodyRowCell))
                 return FALSE;
 
+        wBodyRowCell.lpszClassName = "BODY_ROW_CELL_PRODUCT";
+        wBodyRowCell.lpfnWndProc = BodyRowCellProductWindowProcedure;
+
+        if (!RegisterClassA(&wBodyRowCell))
+                return FALSE;
+
+        wBodyRowCell.lpszClassName = "BODY_ROW_CELL_CURRENTPRODUCT";
+        wBodyRowCell.lpfnWndProc = BodyRowCellCurrentProductWindowProcedure;
+
+        if (!RegisterClassA(&wBodyRowCell))
+                return FALSE;
+
         WNDCLASSA wDiv = {0};
 
         wDiv.hCursor = LoadCursor(NULL, IDC_ARROW);
@@ -193,7 +208,15 @@ BOOL CreateClasses(HINSTANCE hInstance)
         wSeparator.lpszClassName = "SEPARATOR";
         wSeparator.lpfnWndProc = WinProc;
 
-        if (!RegisterClassA(&wSeparator))
+        WNDCLASSA wContainerVacio = {0};
+
+        wContainerVacio.hbrBackground = (HBRUSH)CreateSolidBrush(RGB(235, 235, 235));
+        wContainerVacio.hCursor = LoadCursor(NULL, IDC_ARROW);
+        wContainerVacio.hInstance = hInstance;
+        wContainerVacio.lpszClassName = "CONTAINER_VACIO";
+        wContainerVacio.lpfnWndProc = WinProc;
+
+        if (!RegisterClassA(&wContainerVacio))
                 return FALSE;
 
         return TRUE;
@@ -239,6 +262,13 @@ void CreateMainWindow()
 
         dataClient = (STRUCTCLIENTESDATA *)malloc(sizeof(STRUCTCLIENTESDATA));
         hTableCliente = (STRUCTCLIENTESHWND *)malloc(sizeof(STRUCTCLIENTESHWND));
+
+        h_rows_product_table = (HWND *)malloc(sizeof(HWND));
+        dataProductos = (STRUCTPRODUCTOSDATA *)malloc(sizeof(STRUCTPRODUCTOSDATA));
+
+        h_rows_currentProduct_table = (HWND *)malloc(sizeof(HWND));
+        CurrentProducts = (STRUCTPRODUCTOSDATA *)malloc(sizeof(STRUCTPRODUCTOSDATA));
+
         CreateHeader();
 }
 
@@ -366,7 +396,7 @@ void CreateHeader()
 {
         RECT CRect;
         GetClientRect(hMain, &CRect);
-        hMainHeader = CreateWindowA("MAIN_HEADER", NULL, WS_VISIBLE | WS_CHILD, 0, 0, CRect.right, HeaderHeight, hMain, NULL, NULL, NULL);
+        hMainHeader = CreateWindowA("HEADER", NULL, WS_VISIBLE | WS_CHILD, 0, 0, CRect.right, HeaderHeight, hMain, NULL, NULL, NULL);
         CreateNavBar();
 }
 
@@ -603,8 +633,48 @@ void CreateFormVentas() // Cliente (DNI, Nombre, Telefono, TdP)
         CreateWindowA("S_TRANSPARENT", "PRODUCTOS", WS_CHILD | WS_VISIBLE, (rect.right / 2) - (width / 2), 20 + seccion_productos, width, 20, hBodyVentas,
                       SS_CENTER, NULL, NULL);
 
-        CreateWindowA("BUTTON_P", "Agregar Producto: ", WS_CHILD | WS_VISIBLE, margin_left, 25 + seccion_productos, width, 20, hBodyVentas, ADD_PRODUCT_VENTAS, NULL, NULL);
-        CreateWindowA("BUTTON_P", "Eliminar Producto", WS_CHILD | WS_VISIBLE | WS_BORDER, margin_left, 45 + seccion_productos, width, 20, hBodyVentas, DELETE_PRODUCT_VENTAS, NULL, NULL);
+        int cxButton = 200;
+
+        CreateWindowA("BUTTON_P", "Agregar Producto", WS_CHILD | WS_VISIBLE | WS_BORDER, margin_left, 25 + seccion_productos, cxButton, 30, hBodyVentas, WINDOW_PRODUCT_VENTAS, NULL, NULL);
+        CreateWindowA("BUTTON_P", "Eliminar Producto", WS_CHILD | WS_VISIBLE | WS_BORDER, margin_left + (margin_left * 0.5) + cxButton, 25 + seccion_productos, cxButton, 30, hBodyVentas, DELETE_PRODUCT_VENTAS, NULL, NULL);
+
+        pTableCurrentProduct.x = margin_left;
+        pTableCurrentProduct.y = seccion_productos + 70;
+        pTableCurrentProduct.cx = rect.right - (margin_left * 2);
+        pTableCurrentProduct.cy = rect.bottom - (seccion_productos - 70);
+
+        CreateTableListOfProducts(margin_left, seccion_productos + 70, rect.right - (margin_left * 2), rect.bottom - seccion_productos - 70);
+}
+
+void CreateTableListOfProducts(int x, int y, int cx, int cy)
+{
+        hTableCurrentProduct = CreateWindowA("DIV", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, x, y, cx, cy, hBodyVentas, LIST_CURRENT_PRODUCTS, NULL, NULL);
+
+        int i = 0;
+
+        int yRows = 20;
+
+        for (int i = 0; i < rows_currentProduct_table; i++)
+        {
+                h_rows_currentProduct_table[i] = CreateWindowA("BODY_ROW_CELL_CURRENTPRODUCT", NULL, WS_CHILD | WS_VISIBLE, 0, yRows, cxColumnTableCurrentProduct * 6, ROW_TABLE_HEIGHT, hTableCurrentProduct, (HMENU)i, NULL, NULL);
+                yRows += ROW_TABLE_HEIGHT;
+        }
+        CreateHeaderTableCurrentProducts(hTableCurrentProduct);
+}
+
+void CreateHeaderTableCurrentProducts(HWND hWnd)
+{
+        RECT rect;
+        GetClientRect(hBodyClientes, &rect);
+        int width = cxColumnTableCurrentProduct;
+
+        HWND temp = CreateWindowA("BODY_ROW_CELL_CURRENTPRODUCT", NULL, WS_CHILD | WS_VISIBLE, 0, 0, width * 6, ROW_TABLE_HEIGHT, hWnd, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Producto", WS_VISIBLE | WS_CHILD, 0, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Categoria", WS_VISIBLE | WS_CHILD, width, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Cantidad", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Descuento", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Precio", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Precio Total", WS_VISIBLE | WS_CHILD, (width * 5), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
 }
 
 void CreateBodyVentasMainWindow()
@@ -625,4 +695,240 @@ void CreateBodyVentasMainWindow()
         hCurrentBody = hBodyVentas;
 
         CreateFormVentas();
+}
+
+void CreateWindowProducts()
+{
+
+        int cxWindow = 700, cyWindow = 500;
+        int x = (WWidth / 2) - (cxWindow / 2), y = (WHeight / 2) - (cyWindow / 2);
+        hWindowProduct = CreateWindowA("CLIENT_WINDOW", "Agregar Producto", WS_OVERLAPPEDWINDOW | WS_VISIBLE, x, y, cxWindow, cyWindow, NULL, NULL, NULL, NULL);
+        CreateHeaderWindowProducts(hWindowProduct, cxWindow, 60);
+
+        rows_product_table = get_jumplines_product_file();
+        int lines = get_lines_product_file();
+
+        dataProductos = (STRUCTPRODUCTOSDATA *)realloc(NULL, sizeof(STRUCTPRODUCTOSDATA) * (rows_product_table + 1));
+        h_rows_product_table = (HWND *)realloc(NULL, sizeof(HWND) * (rows_product_table + 1));
+
+        int i = 0;
+        int j = 0;
+
+        while (i < lines)
+        {
+                if (get_visibility_product(i))
+                {
+                        get_ID_product(i, dataProductos[j].ID);
+                        get_date_product(i, dataProductos[j].date);
+                        get_name_product(i, dataProductos[j].name);
+                        get_price_product(i, dataProductos[j].price);
+                        get_stock_product(i, dataProductos[j].stock);
+                        get_discount_product(i, dataProductos[j].discount);
+                        get_category_product(i, dataProductos[j].category);
+                        j++;
+                }
+                i++;
+        }
+
+        CreateTableProducts(hWindowProduct, rows_product_table, 0, 80, cxWindow - 15, cyWindow - 60 - 60);
+
+        CreateHeaderTableProducts(hWindowProduct, 60);
+}
+
+void CreateFormProduct(BOOL newProduct, UINT product)
+{
+        if (newProduct == TRUE)
+        {
+                int CContainerWidth = 500;
+                int CContainerHeight = 250;
+
+                WINDOWPOS containerPos;
+                WINDOWPOS namePos;
+                WINDOWPOS categoryPos;
+                WINDOWPOS discountPos;
+                WINDOWPOS pricePos;
+                WINDOWPOS stockPos;
+                WINDOWPOS buttonRegisterPos;
+                WINDOWPOS buttonClosePos;
+
+                SetWindowPosition(&containerPos, WWidth / 2 - (CContainerWidth / 2), WHeight / 2 - (CContainerHeight / 2), CContainerWidth, CContainerHeight);
+
+                SetWindowPosition(&namePos, CContainerWidth * 0.08, 20, CContainerWidth * 0.35, 18);
+                SetWindowPosition(&categoryPos, CContainerWidth * 0.55, 20, CContainerWidth * 0.35, 18);
+
+                SetWindowPosition(&discountPos, CContainerWidth * 0.08, 90, CContainerWidth * 0.35, 18);
+                SetWindowPosition(&pricePos, CContainerWidth * 0.55, 90, CContainerWidth * 0.35, 18);
+
+                SetWindowPosition(&stockPos, CContainerWidth * 0.08, 160, 30, 18);
+
+                SetWindowPosition(&buttonRegisterPos, CContainerWidth * 0.35, 160, 100, 30);
+                SetWindowPosition(&buttonClosePos, CContainerWidth * 0.60, 160, 100, 30);
+
+                hFormProduct.container = CreateWindowA("CLIENT_WINDOW", "Nuevo Cliente", WS_VISIBLE | WS_OVERLAPPEDWINDOW, containerPos.x, containerPos.y, containerPos.cx, containerPos.cy, NULL, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Nombre:", WS_VISIBLE | WS_CHILD, namePos.x, namePos.y, 60, namePos.cy, hFormProduct.container, NULL, NULL, NULL);
+                hFormProduct.name = CreateWindowA("EDIT", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, namePos.x, namePos.y + 25, namePos.cx, namePos.cy, hFormProduct.container, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Categoria:", WS_VISIBLE | WS_CHILD, categoryPos.x, categoryPos.y, 70, categoryPos.cy, hFormProduct.container, NULL, NULL, NULL);
+                hFormProduct.category = CreateWindowA("EDIT", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, categoryPos.x, categoryPos.y + 25, categoryPos.cx, categoryPos.cy, hFormProduct.container, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Descuento:", WS_VISIBLE | WS_CHILD, discountPos.x, discountPos.y, 75, discountPos.cy, hFormProduct.container, NULL, NULL, NULL);
+                hFormProduct.discount = CreateWindowA("EDIT", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, discountPos.x, discountPos.y + 25, discountPos.cx, discountPos.cy, hFormProduct.container, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Precio:", WS_VISIBLE | WS_CHILD, pricePos.x, pricePos.y, 50, pricePos.cy, hFormProduct.container, NULL, NULL, NULL);
+                hFormProduct.price = CreateWindowA("EDIT", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, pricePos.x, pricePos.y + 25, pricePos.cx, pricePos.cy, hFormProduct.container, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Stock:", WS_VISIBLE | WS_CHILD, stockPos.x, stockPos.y, 45, stockPos.cy, hFormProduct.container, NULL, NULL, NULL);
+                hFormProduct.stock = CreateWindowA("EDIT", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER, stockPos.x + 50, stockPos.y, stockPos.cx, stockPos.cy, hFormProduct.container, NULL, NULL, NULL);
+
+                CreateWindowA("BUTTON_P", "Registrar", WS_VISIBLE | WS_CHILD, buttonRegisterPos.x, buttonRegisterPos.y, buttonRegisterPos.cx, buttonRegisterPos.cy, hFormProduct.container, ADD_PRODUCT_FORM, NULL, NULL);
+                CreateWindowA("BUTTON_P", "Cancelar", WS_VISIBLE | WS_CHILD, buttonClosePos.x, buttonClosePos.y, buttonClosePos.cx, buttonClosePos.cy, hFormProduct.container, CLOSE_FORM_PRODUCT, NULL, NULL);
+        }
+        else
+        {
+                currentDataP = dataProductos[product];
+
+                int CContainerWidth = 500;
+                int CContainerHeight = 250;
+
+                WINDOWPOS containerPos;
+                WINDOWPOS namePos;
+                WINDOWPOS categoryPos;
+                WINDOWPOS discountPos;
+                WINDOWPOS pricePos;
+                WINDOWPOS stockPos;
+                WINDOWPOS buttonRegisterPos;
+                WINDOWPOS buttonClosePos;
+
+                SetWindowPosition(&containerPos, WWidth / 2 - (CContainerWidth / 2), WHeight / 2 - (CContainerHeight / 2), CContainerWidth, CContainerHeight);
+
+                SetWindowPosition(&namePos, CContainerWidth * 0.08, 20, CContainerWidth * 0.35, 18);
+                SetWindowPosition(&categoryPos, CContainerWidth * 0.55, 20, CContainerWidth * 0.35, 18);
+
+                SetWindowPosition(&discountPos, CContainerWidth * 0.08, 90, CContainerWidth * 0.35, 18);
+                SetWindowPosition(&pricePos, CContainerWidth * 0.55, 90, CContainerWidth * 0.35, 18);
+
+                SetWindowPosition(&stockPos, CContainerWidth * 0.08, 160, 30, 18);
+
+                SetWindowPosition(&buttonRegisterPos, CContainerWidth * 0.35, 160, 100, 30);
+                SetWindowPosition(&buttonClosePos, CContainerWidth * 0.60, 160, 100, 30);
+
+                hFormProduct.container = CreateWindowA("CLIENT_WINDOW", "Nuevo Cliente", WS_VISIBLE | WS_OVERLAPPEDWINDOW, containerPos.x, containerPos.y, containerPos.cx, containerPos.cy, NULL, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Name:", WS_VISIBLE | WS_CHILD, namePos.x, namePos.y, 60, namePos.cy, hFormProduct.container, NULL, NULL, NULL);
+                hFormProduct.name = CreateWindowA("EDIT", currentDataP.name, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, namePos.x, namePos.y + 25, namePos.cx, namePos.cy, hFormProduct.container, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Categoria:", WS_VISIBLE | WS_CHILD, categoryPos.x, categoryPos.y, 70, categoryPos.cy, hFormProduct.container, NULL, NULL, NULL);
+                hFormProduct.category = CreateWindowA("EDIT", currentDataP.category, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, categoryPos.x, categoryPos.y + 25, categoryPos.cx, categoryPos.cy, hFormProduct.container, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Descuento:", WS_VISIBLE | WS_CHILD, discountPos.x, discountPos.y, 75, discountPos.cy, hFormProduct.container, NULL, NULL, NULL);
+                hFormProduct.discount = CreateWindowA("EDIT", currentDataP.discount, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, discountPos.x, discountPos.y + 25, discountPos.cx, discountPos.cy, hFormProduct.container, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Precio:", WS_VISIBLE | WS_CHILD, pricePos.x, pricePos.y, 50, pricePos.cy, hFormProduct.container, NULL, NULL, NULL);
+                hFormProduct.price = CreateWindowA("EDIT", currentDataP.price, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, pricePos.x, pricePos.y + 25, pricePos.cx, pricePos.cy, hFormProduct.container, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Stock:", WS_VISIBLE | WS_CHILD, stockPos.x, stockPos.y, 45, stockPos.cy, hFormProduct.container, NULL, NULL, NULL);
+                hFormProduct.stock = CreateWindowA("EDIT", currentDataP.stock, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER, stockPos.x + 50, stockPos.y, stockPos.cx, stockPos.cy, hFormProduct.container, NULL, NULL, NULL);
+
+                CreateWindowA("BUTTON_P", "Registrar", WS_VISIBLE | WS_CHILD, buttonRegisterPos.x, buttonRegisterPos.y, buttonRegisterPos.cx, buttonRegisterPos.cy, hFormProduct.container, MODIFY_PRODUCT_FORM, NULL, NULL);
+                CreateWindowA("BUTTON_P", "Cancelar", WS_VISIBLE | WS_CHILD, buttonClosePos.x, buttonClosePos.y, buttonClosePos.cx, buttonClosePos.cy, hFormProduct.container, CLOSE_FORM_PRODUCT, NULL, NULL);
+        }
+}
+
+void CreateBodyProductos()
+{
+        RECT rectMainWindow;
+        GetClientRect(hMain, &rectMainWindow);
+
+        int cxBody = rectMainWindow.right / 1.8;
+        int cyBody = rectMainWindow.bottom - HeaderHeight - 40;
+        int xBody = (rectMainWindow.right / 2) - (cxBody / 2);
+        int yBody = HeaderHeight + 20;
+
+        hBodyInventario = CreateWindowA("CONTAINER_VACIO", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, xBody, yBody, cxBody, cyBody, hMain, NULL, NULL, NULL);
+        hCurrentBody = hBodyInventario;
+
+        hTableProduct = CreateWindowA("DIV", NULL, WS_CHILD | WS_VISIBLE, 0, 20, cxBody, cyBody, hBodyInventario, LIST_PRODUCTS, NULL, NULL);
+
+        rows_product_table = get_jumplines_product_file();
+        int lines = get_lines_product_file();
+
+        char text[20];
+
+
+        dataProductos = (STRUCTPRODUCTOSDATA *)realloc(NULL, sizeof(STRUCTPRODUCTOSDATA) * (rows_product_table + 1));
+        h_rows_product_table = (HWND *)realloc(NULL, sizeof(HWND) * (rows_product_table + 1));
+
+        int i = 0;
+        int x = 0;
+
+        while (i < lines)
+        {
+                if (get_visibility_product(i))
+                {
+                        get_ID_product(i, dataProductos[x].ID);
+                        get_date_product(i, dataProductos[x].date);
+                        get_name_product(i, dataProductos[x].name);
+                        get_price_product(i, dataProductos[x].price);
+                        get_stock_product(i, dataProductos[x].stock);
+                        get_discount_product(i, dataProductos[x].discount);
+                        get_category_product(i, dataProductos[x].category);
+                        x++;
+                }
+                i++;
+        }
+
+        CreateTableProducts(hTableProduct, rows_product_table, 0, 0, cxBody, cyBody - 20);
+
+        CreateHeaderTableProducts(hBodyInventario, 0);
+}
+
+void CreateHeaderWindowProducts(HWND hWnd, int cxHeader, int cyHeader)
+{
+        RECT rect;
+        GetClientRect(hWnd, &rect);
+
+        HWND headerWindowProduct = CreateWindowA("CONTAINER_VACIO", NULL, WS_CHILD | WS_VISIBLE, 0, 0, cxHeader, cyHeader, hWnd, NULL, NULL, NULL);
+
+        int cxButton = 100;
+        int cyButton = 30;
+        int yButton = (cyHeader / 2) - (cyButton / 2);
+
+        int cxEdit = 100;
+        int cyEdit = 20;
+        int yEdit = (cyHeader / 2) - (cyEdit / 2);
+
+        char text[100];
+
+        HWND button = CreateWindowA("BUTTON_P", "Agregar", WS_CHILD | WS_VISIBLE, 100, yButton, cxButton, cyButton, headerWindowProduct, ADD_PRODUCT_VENTAS, NULL, NULL);
+        CreateWindowA("BUTTON_P", "Cancelar", WS_CHILD | WS_VISIBLE, 220, yButton, cxButton, cyButton, headerWindowProduct, CLOSE_WINDOW_PRODUCT_VENTAS, NULL, NULL);
+        CreateWindowA("EDIT", "Search", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 340, yEdit, cxEdit, cyEdit, headerWindowProduct, NULL, NULL, NULL);
+}
+
+void CreateTableProducts(HWND hWnd, int len, int x, int y, int cx, int cy)
+{
+        hTableProduct = CreateWindowA("DIV", NULL, WS_CHILD | WS_VISIBLE, x, y, cx, cy, hWnd, LIST_PRODUCTS, NULL, NULL);
+
+        int yRows = 0;
+
+        for (int i = 0; i < len; i++)
+        {
+                h_rows_product_table[i] = CreateWindowA("BODY_ROW_CELL_PRODUCT", NULL, WS_CHILD | WS_VISIBLE, 0, yRows, cxColumnTableProduct * 6, ROW_TABLE_HEIGHT, hTableProduct, (HMENU)i, NULL, NULL);
+                yRows += ROW_TABLE_HEIGHT;
+        }
+}
+
+void CreateHeaderTableProducts(HWND hWnd, int y)
+{
+        RECT rect;
+        GetClientRect(hBodyClientes, &rect);
+        int width = cxColumnTableProduct;
+
+        HWND temp = CreateWindowA("BODY_ROW_CELL_PRODUCT", NULL, WS_CHILD | WS_VISIBLE, 0, y, width * 6, ROW_TABLE_HEIGHT, hWnd, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Producto", WS_VISIBLE | WS_CHILD, 0, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Categoria", WS_VISIBLE | WS_CHILD, width, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Stock", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Descuento", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Precio Total", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 5), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
 }

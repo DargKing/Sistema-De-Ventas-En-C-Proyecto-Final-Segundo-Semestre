@@ -19,6 +19,9 @@
                 "time.h": "c",
                 "clientes.h": "c",
                 "struct.h": "c",
-                "colors.h": "c"
+                "colors.h": "c",
+                "productos.h": "c",
+                "mmsystem.h": "c",
+                "winuser.h": "c"
         }
 }

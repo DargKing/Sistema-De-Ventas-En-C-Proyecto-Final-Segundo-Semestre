@@ -5,25 +5,21 @@
 #include "handlers/tabdb.h"
 #include "handlers/clientes.h"
 #include "handlers/caracteres.h"
+#include "handlers/productos.h"
 
-typedef struct CLIENTESDATA
-{
-        char ID[20];
-        char name[100];
-        char lastname[100];
-        char dni[20];
-        char phone[20];
-        char TdP[20];
-        char date[20];
-} STRUCTCLIENTESDATA;
 
 int main()
 {
-        STRUCTCLIENTESDATA data;
-        
-        get_ID_clients(0, data.ID);
+        FILE* fp;
+        fp = fopen("database/productos.txt", "r+");
 
-        int row = search_clients(data.ID);
+        if(fp == NULL)
+                return -1;
 
-        printf("%d\n", row);
+        char ID[20];
+
+        hide_product(1);
+
+        fclose(fp);
+        return 0;
 }

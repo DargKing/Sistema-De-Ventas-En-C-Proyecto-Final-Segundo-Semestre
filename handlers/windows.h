@@ -30,7 +30,17 @@ void CreateToolsClientes();
 void CreateToolBarVentas();
 void CreateToolsVentas();
 
+void CreateBodyProductos();
+
 void CreateTableClient();
+
+void CreateWindowProducts();
+void CreateHeaderWindowProducts(HWND hWnd, int cxHeader, int cyHeader);
+void CreateTableProducts(HWND hWnd, int len, int x, int y, int cx, int cy);
+void CreateHeaderTableProducts(HWND hWnd, int y);
+
+void CreateTableListOfProducts(int x, int y, int cx, int cy);
+void CreateHeaderTableCurrentProducts(HWND hWnd);
 
 void CreateBodyClienteMainWindow();
 void CreateBodyVentasMainWindow();
@@ -40,6 +50,7 @@ void loadImagesModify();
 void loadImagesDelete();
 
 void CreateFormClient(BOOL newClient, UINT client);
+void CreateFormProduct(BOOL newProduct, UINT product);
 
 BOOL CreateClasses(HINSTANCE);
 BOOL InitProgram(HINSTANCE);
@@ -47,11 +58,15 @@ BOOL InitProgram(HINSTANCE);
 HINSTANCE hInst;
 
 RECT CRect;
+WINDOWPOS pTableCurrentProduct;
 int WHeight, WWidth;
 int FirstMalloc;
 int currentSort;
 int cxColumnTable;
 int nColumnsTable;
+int Window_product_is_open;
+int cxColumnTableProduct;
+int cxColumnTableCurrentProduct;
 
 #define HeaderHeight 100
 #define NavHeight 25

@@ -259,8 +259,17 @@ void modify_col_file(FILE *fp, int row, int col, char *str) // Se cambia el cont
                 strcpy(final, part1);
                 strcat(final, str);
 
-                add_line_file(fp, final);
-                delete_line_file(fp, row);
+                if (lenStr != len)
+                {
+                        add_line_file(fp, final);
+                        delete_line_file(fp, row);
+                }
+                else
+                {
+                        move_to_line_file(fp, row);
+                        fseek(fp, 0, SEEK_CUR);
+                        fprintf(fp, "%s", final);
+                }
                 return;
         }
 
@@ -276,8 +285,11 @@ void modify_col_file(FILE *fp, int row, int col, char *str) // Se cambia el cont
         strcat(final, "\t");
         strcat(final, part2);
 
-        add_line_file(fp, final);
-        delete_line_file(fp, row);
+        if (len != lenStr)
+        {
+                add_line_file(fp, final);
+                delete_line_file(fp, row);
+        }
 }
 
 int is_blank(FILE *fp, int row) // Revisa si es una linea en blanco o no, devuelve 1 si lo es, de lo contrario devuelve 0

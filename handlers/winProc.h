@@ -7,12 +7,21 @@
 #define CLOSE_CLIENT_FORM 4
 #define CREATE_CLIENT_FORM 5
 #define MODIFY_CLIENT_FORM 6
-#define ADD_PRODUCT_VENTAS 7
+#define WINDOW_PRODUCT_VENTAS 7
 #define DELETE_PRODUCT_VENTAS 8
+#define ADD_PRODUCT_VENTAS 9
+#define CLOSE_WINDOW_PRODUCT_VENTAS 10
+#define CLOSE_FORM_PRODUCT 11
+#define ADD_PRODUCT_FORM 12
+#define MODIFY_PRODUCT_FORM 13
 
 #define NAV_INVENTARIO 1
 #define NAV_CLIENTES 2
 #define NAV_VENTAS 3
+
+#define LIST_CURRENT_PRODUCTS 1
+#define LIST_PRODUCTS 2
+#define LIST_CLIENTS 3
 
 #define TOOLBAR_IMAGE_NEW_INVENTARIO 1
 #define TOOLBAR_IMAGE_DELETE_INVENTARIO 2
@@ -29,6 +38,8 @@
 int First;
 int yTabla;
 int rows_clients_table;
+int rows_product_table;
+int rows_currentProduct_table;
 
 HWND hAlto, hAncho;
 
@@ -93,21 +104,61 @@ typedef struct PRODUCTOSDATA
     char ID[20];
     char name[100];
     char price[20];
-    char descount[20];
+    char discount[20];
+    char stock[20];
     char date[20];
+    char category[100];
 } STRUCTPRODUCTOSDATA;
+
+typedef struct PRODUCTOSHWND
+{
+    HWND container;
+    HWND name;
+    HWND price;
+    HWND discount;
+    HWND stock;
+    HWND date;
+    HWND category;
+} STRUCTPRODUCTOSHWND;
+
+typedef struct CURRENTPRODUCTOSDATA
+{
+    char ID[20];
+    char name[100];
+    char price[20];
+    char discount[20];
+    int amount;
+    char category[100];
+} STRUCTCURRENTPRODUCTOSDATA;
 
 // Tabla
 
 STRUCTCLIENTESHWND *hTableCliente;
+
 HWND hTableCurrentRow;
+
 STRUCTCLIENTESDATA *dataClient;
+
+STRUCTPRODUCTOSDATA *dataProductos;
+HWND *h_rows_product_table;
 HWND hTableContainer;
+
 HWND hScrollBar;
+
+HWND hWindowProduct;
+
+HWND hTableProduct;
+HWND hTableCurrentProduct;
+
+STRUCTCURRENTPRODUCTOSDATA *CurrentProducts;
+HWND* h_rows_currentProduct_table;
 
 // Form
 STRUCTCLIENTESHWND hFormClient;
 STRUCTCLIENTESDATA currentDataC;
+
+STRUCTPRODUCTOSHWND hFormProduct;
+STRUCTPRODUCTOSDATA currentDataP;
 
 HWND hCurrentBody;
 
@@ -140,5 +191,7 @@ LRESULT CALLBACK ButtonRedWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK BodyClientWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
 LRESULT CALLBACK BodyRowCellWindowProcedure(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK BodyRowCellProductWindowProcedure(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK BodyRowCellCurrentProductWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK CellWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK HeaderCellWindowProcedure(HWND, UINT, WPARAM, LPARAM);
