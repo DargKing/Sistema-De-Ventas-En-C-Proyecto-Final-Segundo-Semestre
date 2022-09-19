@@ -47,7 +47,7 @@ int delete_client(int row) // funcion para eliminar la fila N del archivo client
         return 0; // significa que la funcion fue exitosa
 }
 
-int modify_name_clients(int row, char *nombre) // funcion para modificar la fila del archivo del nombre
+int modify_name_clients(int row, char *nombre) // funcion para modificar la calumna  del nombre del archivo txt
 {
 
         FILE *fp;
@@ -76,7 +76,7 @@ int modify_dni_clients(int row, char *identificacion) // funcion para modificar 
         return 0;   // significa que la funcion fue exitosa
 }
 
-int modify_phone_clients(int row, char *phone) // funncion paraa modificar la fila del numero del cliente
+int modify_phone_clients(int row, char *phone) // funcion para modificar la columna del numero del telefono del archivo.txt
 {
 
         FILE *fp;
@@ -90,7 +90,7 @@ int modify_phone_clients(int row, char *phone) // funncion paraa modificar la fi
         return 0; // significa que la funcion fue exitosa
 }
 
-int modify_TdP_clients(int row, char *TdP) // funcion para modificar la fila del la tipo de persona del cliente
+int modify_TdP_clients(int row, char *TdP) // funcion para modificar la columnas del la tipo de persona del client
 {
 
         FILE *fp;
@@ -159,7 +159,7 @@ int get_dni_clients(int row, char *identificacion) // funcion para obtener la id
         return 0; // significa que la funcion fue exitosa
 }
 
-int get_phone_clients(int row, char *phone) // funcion para obtener el numero  del cliente
+int get_phone_clients(int row, char *phone) // funcion para obtener el numero  del cliente 
 {
 
         FILE *fp;
@@ -187,7 +187,7 @@ int get_TdP_clients(int row, char *TdP) // funcion para agregar el tipo de perso
         return 0; // significa que la funcion fue exitosa
 }
 
-int get_lines_clients_file() // funciom para leer una linea entera del cliente
+int get_lines_clients_file() // sirve para devolver todas las lineas del archivo.txt
 {
         FILE *fp;
 
@@ -201,7 +201,7 @@ int get_lines_clients_file() // funciom para leer una linea entera del cliente
         return jumplines;
 }
 
-int get_jumplines_clients_file()
+int get_jumplines_clients_file()//sirve para devolver todas lineas que esten en blanco en el archivo.txt
 {
         FILE *fp;
 
@@ -215,7 +215,7 @@ int get_jumplines_clients_file()
         return jumplines;
 }
 
-int isBlank(int row) // si la linea a la que apunta esta en blanco devuelve 1 y si no 0
+int isBlank(int row) //sirve si la linea a la que apunta esta en blanco devuelve 1 y si no 0
 {
         FILE *fp;
         fp = fopen("database/clientes.txt", "r+"); // abrir archivo
@@ -228,7 +228,7 @@ int isBlank(int row) // si la linea a la que apunta esta en blanco devuelve 1 y 
         return blank;
 }
 
-int search_clients(char *ID) // funcion para buscar en la base de datos los registros de los clientes por su id
+int search_clients(char *ID) // funcion para buscar en la base de datos los registros de los clientes por su id en elarchivo.txt
 {
         FILE *fp;
         fp = fopen("database/clientes.txt", "r+"); // abrir archivo
