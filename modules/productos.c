@@ -1,3 +1,34 @@
+/*
+Este codigo hace uso de tabdb.h para modificar productos.txt, en productos.txt se encuentra la lista de productos actuales del sistema,
+cuenta con 8 Columnas.
+
+        ID  FECHA DE CREACION   NOMBRE DE PRODUCTO  PRECIO  DESCUENTO  CATEGORIA  STOCK  VISIBILIDAD
+
+        Las funciones se dividen en obtener datos, modificar el archivo y buscar en el archivo
+
+        MODIFICAR EL ARCHIVO
+                new_pruduct()
+                modify_product
+                reduce_stock()
+                hide_product()
+
+        OBTENER DATOS
+                get_ID_product()
+                get_date_product()
+                get_name_product()
+                get_price_product()
+                get_discount_product()
+                get_category_product()
+                get_stock_product()
+                get_visibilitys_product()
+                get_jumplines_product_file()
+                get_lines_product_file()
+                isBlank_product()
+
+        BUSCAR EN EL ARCHIVO
+                search_product()
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +59,36 @@ int new_product(char *ID, char *name, char *price, char *discount, char *stock, 
         return 0;
 }
 
-int modify_product(char *lastID, char* date, char *name, char *price, char *discount, char *stock, char *category)
+int reduce_stock(int row, int quantity)
+{
+        FILE *fp;
+        fp = fopen("database/productos.txt", "r+");
+
+        if (fp == NULL)
+                return -1;
+
+        char amount[20];
+        char newAmount[20];
+        char temp[20];
+
+        read_col_file(fp, row, 6, amount);
+
+        int n = atoi(amount) - quantity;
+
+        sprintf(temp, "%d", n);
+
+        sprintf(newAmount, "%d", n);
+
+        modify_col_file(fp, row, 6, amount);
+
+        if (strlen(amount) == strlen(temp))
+                delete_line_file(fp, row);
+
+        fclose(fp);
+        return 0;
+}
+
+int modify_product(char *lastID, char *date, char *name, char *price, char *discount, char *stock, char *category)
 {
 
         char product[500];
@@ -211,8 +271,10 @@ int get_jumplines_product_file()
         int i = 0;
         int jumplines = 0;
 
-        while(i < lines){
-                if(get_visibility_product(i)){
+        while (i < lines)
+        {
+                if (!isBlank_product(i) && get_visibility_product(i))
+                {
                         jumplines++;
                 }
                 i++;
@@ -229,7 +291,7 @@ int isBlank_product(int row)
         if (fp == NULL)
                 return -1;
 
-        int blank = get_visibility_product(row);
+        int blank = is_blank(fp, row);
 
         fclose(fp);
         return blank;

@@ -27,3 +27,4 @@ int get_jumplines_product_file();
 int isBlank_product(int row);
 
 int search_product(char *ID);
+int reduce_stock(int row, int quantity);

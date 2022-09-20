@@ -1,20 +1,35 @@
 #include <windows.h>
 
+// Acciones del boton
+
 #define CLOSE_APP -1
 #define CLOSE_WINDOW 0
 #define LOGIN_USER 1
 #define SINGUP_USER 2
 #define CLOSE_CLIENT_FORM 4
+
 #define CREATE_CLIENT_FORM 5
 #define MODIFY_CLIENT_FORM 6
+
 #define WINDOW_PRODUCT_VENTAS 7
 #define DELETE_PRODUCT_VENTAS 8
 #define ADD_PRODUCT_VENTAS 9
 #define CLOSE_WINDOW_PRODUCT_VENTAS 10
 #define CLOSE_FORM_PRODUCT 11
+
 #define ADD_PRODUCT_FORM 12
 #define MODIFY_PRODUCT_FORM 13
+
 #define NEW_VENTA 14
+#define SELECT_CLIENT_VENTAS 15
+
+#define CLOSE_WINDOW_CLIENTS_VENTAS 16
+#define ADD_CLIENT_VENTAS 17
+#define OPEN_FORM_CLIENTS_VENTAS 18
+#define CREATE_CLIENT_FORM_VENTAS 19
+
+
+// Others
 
 #define NAV_INVENTARIO 1
 #define NAV_CLIENTES 2
@@ -111,6 +126,15 @@ typedef struct PRODUCTOSDATA
     char category[100];
 } STRUCTPRODUCTOSDATA;
 
+typedef struct VENTASDATA
+{
+    char ID[20];
+    char ID_cliente[20];
+    char discount[20];
+    char productos[1000];
+    char date[20];
+} STRUCTVENTASDATA;
+
 typedef struct PRODUCTOSHWND
 {
     HWND container;
@@ -135,6 +159,7 @@ typedef struct CURRENTPRODUCTOSDATA
 // Tabla
 
 STRUCTCLIENTESHWND *hTableCliente;
+// HWND *hTableCliente;
 
 HWND hTableCurrentRow;
 
@@ -151,6 +176,8 @@ HWND hWindowProduct;
 HWND hTableProduct;
 HWND hTableCurrentProduct;
 
+STRUCTCLIENTESHWND hCurrentClientVentas;
+STRUCTCLIENTESDATA CurrentClientVentas;
 STRUCTCURRENTPRODUCTOSDATA *CurrentProducts;
 HWND* h_rows_currentProduct_table;
 

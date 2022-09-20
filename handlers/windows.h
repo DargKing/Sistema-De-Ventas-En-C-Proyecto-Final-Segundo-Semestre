@@ -45,11 +45,15 @@ void CreateHeaderTableCurrentProducts(HWND hWnd);
 void CreateBodyClienteMainWindow();
 void CreateBodyVentasMainWindow();
 
+void CreateWindowClients();
+void CreateHeaderClientsVentas(HWND hWnd, int cxHeader, int cyHeader);
+void CreateTableListOfClients(HWND hWnd, int x, int y, int cxTable, int cyTable);
+
 void loadImagesAdd();
 void loadImagesModify();
 void loadImagesDelete();
 
-void CreateFormClient(BOOL newClient, UINT client);
+void CreateFormClient(BOOL newClient, UINT client, BOOL ventas);
 void CreateFormProduct(BOOL newProduct, UINT product);
 
 BOOL CreateClasses(HINSTANCE);

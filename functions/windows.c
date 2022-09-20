@@ -315,7 +315,7 @@ void CreateTableClient()
         else
                 sTableContainer = WS_VISIBLE | WS_CHILD;
 
-        hTableContainer = CreateWindowExA(0, "DIV", NULL, sTableContainer, 0, 20, rectBodyClientes.right, rectBodyClientes.bottom - ROW_TABLE_HEIGHT, hBodyClientes, NULL, NULL, NULL);
+        hTableContainer = CreateWindowExA(0, "DIV", NULL, sTableContainer, 0, 20, rectBodyClientes.right, rectBodyClientes.bottom - ROW_TABLE_HEIGHT, hBodyClientes, LIST_CLIENTS, NULL, NULL);
 
         int y = 0;
         for (int i = 0; i < rows_clients_table; i++)
@@ -482,9 +482,9 @@ void CreateTableProductosVentas(STRUCTPRODUCTOSDATA *data, int x)
 {
 }
 
-void CreateFormClient(BOOL newClient, UINT client)
+void CreateFormClient(BOOL newClient, UINT client, BOOL ventas)
 {
-        if (newClient == TRUE)
+        if (newClient == TRUE && ventas != TRUE)
         {
                 int CContainerWidth = 500;
                 int CContainerHeight = 250;
@@ -529,6 +529,53 @@ void CreateFormClient(BOOL newClient, UINT client)
                 hFormClient.TdP = CreateWindowA("EDIT", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER, tdpPos.x + 45, tdpPos.y, tdpPos.cx, tdpPos.cy, hFormClient.container, NULL, NULL, NULL);
 
                 CreateWindowA("BUTTON_P", "Registrar", WS_VISIBLE | WS_CHILD, buttonRegisterPos.x, buttonRegisterPos.y, buttonRegisterPos.cx, buttonRegisterPos.cy, hFormClient.container, CREATE_CLIENT_FORM, NULL, NULL);
+                CreateWindowA("BUTTON_P", "Cancelar", WS_VISIBLE | WS_CHILD, buttonClosePos.x, buttonClosePos.y, buttonClosePos.cx, buttonClosePos.cy, hFormClient.container, CLOSE_CLIENT_FORM, NULL, NULL);
+        }
+        else if (newClient == TRUE && ventas == TRUE)
+        {
+                int CContainerWidth = 500;
+                int CContainerHeight = 250;
+
+                WINDOWPOS containerPos;
+                WINDOWPOS namePos;
+                WINDOWPOS lastnamePos;
+                WINDOWPOS dniPos;
+                WINDOWPOS phonePos;
+                WINDOWPOS tdpPos;
+                WINDOWPOS buttonRegisterPos;
+                WINDOWPOS buttonClosePos;
+
+                SetWindowPosition(&containerPos, WWidth / 2 - (CContainerWidth / 2), WHeight / 2 - (CContainerHeight / 2), CContainerWidth, CContainerHeight);
+
+                SetWindowPosition(&namePos, CContainerWidth * 0.08, 20, CContainerWidth * 0.35, 18);
+                SetWindowPosition(&lastnamePos, CContainerWidth * 0.55, 20, CContainerWidth * 0.35, 18);
+
+                SetWindowPosition(&dniPos, CContainerWidth * 0.08, 90, CContainerWidth * 0.35, 18);
+                SetWindowPosition(&phonePos, CContainerWidth * 0.55, 90, CContainerWidth * 0.35, 18);
+
+                SetWindowPosition(&tdpPos, CContainerWidth * 0.08, 160, 20, 18);
+
+                SetWindowPosition(&buttonRegisterPos, CContainerWidth * 0.35, 160, 100, 30);
+                SetWindowPosition(&buttonClosePos, CContainerWidth * 0.60, 160, 100, 30);
+
+                hFormClient.container = CreateWindowA("CLIENT_WINDOW", "Nuevo Cliente", WS_VISIBLE | WS_OVERLAPPEDWINDOW, containerPos.x, containerPos.y, containerPos.cx, containerPos.cy, NULL, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Name:", WS_VISIBLE | WS_CHILD, namePos.x, namePos.y, 45, namePos.cy, hFormClient.container, NULL, NULL, NULL);
+                hFormClient.name = CreateWindowA("EDIT", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, namePos.x, namePos.y + 25, namePos.cx, namePos.cy, hFormClient.container, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Lastname:", WS_VISIBLE | WS_CHILD, lastnamePos.x, lastnamePos.y, 70, lastnamePos.cy, hFormClient.container, NULL, NULL, NULL);
+                hFormClient.lastname = CreateWindowA("EDIT", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, lastnamePos.x, lastnamePos.y + 25, lastnamePos.cx, lastnamePos.cy, hFormClient.container, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "DNI:", WS_VISIBLE | WS_CHILD, dniPos.x, dniPos.y, 30, dniPos.cy, hFormClient.container, NULL, NULL, NULL);
+                hFormClient.dni = CreateWindowA("EDIT", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, dniPos.x, dniPos.y + 25, dniPos.cx, dniPos.cy, hFormClient.container, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "Phone:", WS_VISIBLE | WS_CHILD, phonePos.x, phonePos.y, 50, phonePos.cy, hFormClient.container, NULL, NULL, NULL);
+                hFormClient.phone = CreateWindowA("EDIT", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, phonePos.x, phonePos.y + 25, phonePos.cx, phonePos.cy, hFormClient.container, NULL, NULL, NULL);
+
+                CreateWindowA("STATIC", "TdP:", WS_VISIBLE | WS_CHILD, tdpPos.x, tdpPos.y, 35, tdpPos.cy, hFormClient.container, NULL, NULL, NULL);
+                hFormClient.TdP = CreateWindowA("EDIT", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER, tdpPos.x + 45, tdpPos.y, tdpPos.cx, tdpPos.cy, hFormClient.container, NULL, NULL, NULL);
+
+                CreateWindowA("BUTTON_P", "Registrar", WS_VISIBLE | WS_CHILD, buttonRegisterPos.x, buttonRegisterPos.y, buttonRegisterPos.cx, buttonRegisterPos.cy, hFormClient.container, CREATE_CLIENT_FORM_VENTAS, NULL, NULL);
                 CreateWindowA("BUTTON_P", "Cancelar", WS_VISIBLE | WS_CHILD, buttonClosePos.x, buttonClosePos.y, buttonClosePos.cx, buttonClosePos.cy, hFormClient.container, CLOSE_CLIENT_FORM, NULL, NULL);
         }
         else
@@ -595,7 +642,7 @@ void CreateFormVentas() // Cliente (DNI, Nombre, Telefono, TdP)
         int seccion_clientes = 43 + margin_top;
         int seccion_productos = 173 + margin_top;
 
-        int width = rect.right / 3;
+        int width = rect.right / 4;
 
         CreateWindowA("S_TRANSPARENT", "Nueva Venta", WS_CHILD | WS_VISIBLE, margin_left, 20 + margin_top, width, 20, hBodyVentas, NULL, NULL, NULL);
 
@@ -607,25 +654,29 @@ void CreateFormVentas() // Cliente (DNI, Nombre, Telefono, TdP)
                 CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, margin_left + (rect.right * 0.39), ySeparador, rect.right * 0.1, 1, hBodyVentas, NULL, NULL, NULL);
         }
 
+        CreateWindowA("BUTTON_P", "Seleccionar Cliente", WS_CHILD | WS_VISIBLE, margin_left, ((seccion_clientes + margin_top)) - (30 / 2) + 50 + margin_top, 150, 30,
+                      hBodyVentas, SELECT_CLIENT_VENTAS, NULL, NULL);
+
         CreateWindowA("S_TRANSPARENT", "CLIENTE", WS_CHILD | WS_VISIBLE, (rect.right / 2) - (width / 2), 20 + seccion_clientes, width, 20, hBodyVentas,
                       SS_CENTER, NULL, NULL);
 
-        CreateWindowA("S_TRANSPARENT", "Nombre: ", WS_CHILD | WS_VISIBLE, margin_left, 25 + seccion_clientes, width, 20, hBodyVentas, NULL, NULL, NULL);
-        CreateWindowA("EDIT", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, margin_left, 45 + margin_top + seccion_clientes,
+        CreateWindowA("S_TRANSPARENT", "Nombre: ", WS_CHILD | WS_VISIBLE, rect.right / 3, 30 + seccion_clientes, width, 20, hBodyVentas, NULL, NULL, NULL);
+        hCurrentClientVentas.name = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, rect.right / 3, 50 + seccion_clientes,
+                                                  width, 20, hBodyVentas, NULL, NULL, NULL);
+
+        CreateWindowA("S_TRANSPARENT", "Cedula: ", WS_CHILD | WS_VISIBLE, rect.right / 3 + width + 50, 30 + seccion_clientes,
                       width, 20, hBodyVentas, NULL, NULL, NULL);
 
-        CreateWindowA("S_TRANSPARENT", "Cedula: ", WS_CHILD | WS_VISIBLE, margin_left + width + (rect.right - (width * 2) - (margin_left * 2)), 25 + seccion_clientes,
-                      width, 20, hBodyVentas, NULL, NULL, NULL);
-        CreateWindowA("EDIT", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, margin_left + width + (rect.right - (width * 2) - (margin_left * 2)),
-                      45 + margin_top + seccion_clientes, width, 20, hBodyVentas, NULL, NULL, NULL);
+        hCurrentClientVentas.TdP = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER, rect.right / 3 + width + 50, seccion_clientes + 50,
+                                                 15, 20, hBodyVentas, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "-", WS_CHILD | WS_VISIBLE, rect.right / 3 + width + 65, 50 + seccion_clientes,
+                      15, 20, hBodyVentas, SS_CENTER, NULL, NULL);
+        hCurrentClientVentas.dni = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, margin_left + width + (rect.right - (width * 2) - (margin_left * 2)),
+                                                 50 + seccion_clientes, width, 20, hBodyVentas, NULL, NULL, NULL);
 
-        CreateWindowA("S_TRANSPARENT", "Cedula: ", WS_CHILD | WS_VISIBLE, margin_left, 80 + seccion_clientes, width, 20, hBodyVentas, NULL, NULL, NULL);
-        CreateWindowA("EDIT", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, margin_left, 100 + seccion_clientes, width, 20, hBodyVentas, NULL, NULL, NULL);
-
-        CreateWindowA("S_TRANSPARENT", "Tipo de Persona ", WS_CHILD | WS_VISIBLE, margin_left + width + (rect.right - (width * 2) - (margin_left * 2)), 80 + seccion_clientes,
-                      width, 20, hBodyVentas, NULL, NULL, NULL);
-        CreateWindowA("EDIT", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_CENTER, margin_left + width + (rect.right - (width * 2) - (margin_left * 2)), 100 + seccion_clientes,
-                      15, 20, hBodyVentas, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "Telefono: ", WS_CHILD | WS_VISIBLE, rect.right / 3, 80 + seccion_clientes, width, 20, hBodyVentas, NULL, NULL, NULL);
+        hCurrentClientVentas.phone = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, rect.right / 3, 100 + seccion_clientes,
+                                                   width, 20, hBodyVentas, NULL, NULL, NULL);
 
         {
                 int ySeparador = seccion_productos + margin_top;
@@ -733,16 +784,19 @@ void CreateWindowProducts()
 
         while (i < lines)
         {
-                if (get_visibility_product(i))
+                if (!isBlank_product(i))
                 {
-                        get_ID_product(i, dataProductos[j].ID);
-                        get_date_product(i, dataProductos[j].date);
-                        get_name_product(i, dataProductos[j].name);
-                        get_price_product(i, dataProductos[j].price);
-                        get_stock_product(i, dataProductos[j].stock);
-                        get_discount_product(i, dataProductos[j].discount);
-                        get_category_product(i, dataProductos[j].category);
-                        j++;
+                        if (get_visibility_product(i))
+                        {
+                                get_ID_product(i, dataProductos[j].ID);
+                                get_date_product(i, dataProductos[j].date);
+                                get_name_product(i, dataProductos[j].name);
+                                get_price_product(i, dataProductos[j].price);
+                                get_stock_product(i, dataProductos[j].stock);
+                                get_discount_product(i, dataProductos[j].discount);
+                                get_category_product(i, dataProductos[j].category);
+                                j++;
+                        }
                 }
                 i++;
         }
@@ -872,7 +926,6 @@ void CreateBodyProductos()
 
         char text[20];
 
-
         dataProductos = (STRUCTPRODUCTOSDATA *)realloc(NULL, sizeof(STRUCTPRODUCTOSDATA) * (rows_product_table + 1));
         h_rows_product_table = (HWND *)realloc(NULL, sizeof(HWND) * (rows_product_table + 1));
 
@@ -948,4 +1001,126 @@ void CreateHeaderTableProducts(HWND hWnd, int y)
         CreateWindowA("HEADER_CELL", "Descuento", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Precio Total", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 5), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+}
+
+void CreateRowTableClientPortable(HWND hWnd, int width)
+{
+        char text[100];
+        yTabla = 0;
+        for (int i = 0; i < rows_clients_table; i++)
+        {
+                hTableCliente[i].container = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, yTabla, width, ROW_TABLE_HEIGHT, hTableContainer, i, NULL, NULL);
+                yTabla += 20;
+        }
+}
+
+void CreateTableListOfClients(HWND hWnd, int x, int y, int cxTable, int cyTable)
+{
+        nColumnsTable = 6;
+
+        DWORD sTableContainer;
+
+        if (rows_clients_table > cyTable / ROW_TABLE_HEIGHT)
+                sTableContainer = WS_VISIBLE | WS_CHILD | WS_VSCROLL;
+        else
+        {
+                sTableContainer = WS_VISIBLE | WS_CHILD;
+        }
+
+        hTableContainer = CreateWindowExA(0, "DIV", NULL, sTableContainer, x, y, cxTable, cyTable, hWnd, LIST_CLIENTS, NULL, NULL);
+
+        CreateRowTableClientPortable(hTableContainer, cxColumnTable * 6);
+}
+
+void CreateHeaderTableClients(HWND hWnd, int y)
+{
+        RECT rect;
+        GetClientRect(hWnd, &rect);
+        int width = cxColumnTable;
+
+        HWND temp = CreateWindowA("BODY_ROW_CELL_PRODUCT", NULL, WS_CHILD | WS_VISIBLE, 0, y, width * 6, ROW_TABLE_HEIGHT, hWnd, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Nombre", WS_VISIBLE | WS_CHILD, 0, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Apellido", WS_VISIBLE | WS_CHILD, width, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Cedula", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Telefono", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Naturaleza", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 5), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+}
+
+void CreateHeaderClientsVentas(HWND hWnd, int cxHeader, int cyHeader)
+{
+        RECT rect;
+        GetClientRect(hWnd, &rect);
+
+        HWND headerWindowProduct = CreateWindowA("CONTAINER_VACIO", NULL, WS_CHILD | WS_VISIBLE, 0, 0, cxHeader, cyHeader, hWnd, NULL, NULL, NULL);
+
+        int cxButton = 100;
+        int cyButton = 30;
+        int yButton = (cyHeader / 2) - (cyButton / 2);
+
+        int cxEdit = 100;
+        int cyEdit = 20;
+        int yEdit = (cyHeader / 2) - (cyEdit / 2);
+
+        char text[100];
+
+        CreateWindowA("BUTTON_P", "Agregar", WS_CHILD | WS_VISIBLE, 100, yButton, cxButton, cyButton, headerWindowProduct, ADD_CLIENT_VENTAS, NULL, NULL);
+        CreateWindowA("BUTTON_P", "Nuevo Cliente", WS_CHILD | WS_VISIBLE, 220, yButton, cxButton + 20, cyButton, headerWindowProduct, OPEN_FORM_CLIENTS_VENTAS, NULL, NULL);
+        CreateWindowA("BUTTON_P", "Cancelar", WS_CHILD | WS_VISIBLE, 360, yButton, cxButton, cyButton, headerWindowProduct, CLOSE_WINDOW_CLIENTS_VENTAS, NULL, NULL);
+        CreateWindowA("EDIT", "Search", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 480, yEdit, cxEdit, cyEdit, headerWindowProduct, NULL, NULL, NULL);
+}
+
+void CreateWindowClients()
+{
+        int cxWindow = 700, cyWindow = 500;
+        int x = (WWidth / 2) - (cxWindow / 2), y = (WHeight / 2) - (cyWindow / 2);
+        hBodyClientes = CreateWindowA("CLIENT_WINDOW", "Seleccionar Cliente", WS_OVERLAPPEDWINDOW | WS_VISIBLE, x, y, cxWindow, cyWindow, NULL, NULL, NULL, NULL);
+        CreateHeaderWindowProducts(hWindowProduct, cxWindow, 60);
+
+        rows_clients_table = get_jumplines_clients_file();
+        int lines = get_lines_clients_file();
+
+        free(dataClient);
+        free(hTableCliente);
+
+        dataClient = NULL;
+        hTableCliente = NULL;
+
+        dataClient = (STRUCTCLIENTESDATA *)malloc(sizeof(STRUCTCLIENTESDATA) * (rows_clients_table + 1));
+        hTableCliente = (STRUCTCLIENTESHWND *)malloc(sizeof(STRUCTCLIENTESHWND) * (rows_clients_table + 1));
+
+        int i = 0;
+        x = 0;
+
+        char text[300];
+
+        while (i < lines)
+        {
+                if (!isBlank(i))
+                {
+                        get_ID_clients(i, dataClient[x].ID);
+                        get_date_clients(i, dataClient[x].date);
+                        get_name_clients(i, dataClient[x].name);
+                        get_lastname_clients(i, dataClient[x].lastname);
+                        get_dni_clients(i, dataClient[x].dni);
+                        get_phone_clients(i, dataClient[x].phone);
+                        get_TdP_clients(i, dataClient[x].TdP);
+                        x++;
+                }
+                i++;
+        }
+
+        switch (currentSort)
+        {
+        case DATE_SORT_DES:
+                SortDateStructClient(dataClient, 0, x);
+                break;
+        case DATE_SORT_ASD:
+                SortDateStructClient(dataClient, 1, x);
+                break;
+        }
+
+        CreateHeaderClientsVentas(hBodyClientes, cxWindow, 60);
+        CreateTableListOfClients(hBodyClientes, 0, 80, cxWindow - 15, cyWindow - 120);
+        CreateHeaderTableClients(hBodyClientes, 60);
 }

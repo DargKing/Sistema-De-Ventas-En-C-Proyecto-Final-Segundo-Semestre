@@ -9,6 +9,7 @@
 
 #include "handlers/colors.h"
 #include "handlers/productos.h"
+#include "handlers/ventas.h"
 #include "handlers/user.h"
 #include "handlers/winProc.h"
 #include "handlers/windows.h"
@@ -47,7 +48,6 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
         switch (msg)
         {
         case WM_CREATE:
-
                 menu = GetMenu(hWnd);
                 if (hCurrentBody == hBodyClientes)
                 {
@@ -57,6 +57,14 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                                 cxColumnTable = (rectBodyClientes.right - SCROLLBAR_WIDTH) / nColumnsTable;
                         else
                                 cxColumnTable = rectBodyClientes.right / nColumnsTable;
+                }
+                else if (menu == LIST_CLIENTS)
+                {
+                        GetClientRect(hWnd, &rect);
+                        if (rows_clients_table > rect.bottom / ROW_TABLE_HEIGHT)
+                                cxColumnTable = (rect.right - SCROLLBAR_WIDTH + 15) / nColumnsTable;
+                        else
+                                cxColumnTable = (rect.right - 15) / nColumnsTable;
                 }
                 else if (menu == LIST_PRODUCTS)
                 {
@@ -88,6 +96,21 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 {
                         GetClientRect(hMain, &rectMainWindow);
 
+                        sbInfo.nPos = 0;
+                        sbInfo.nMin = 0;
+                        sbInfo.cbSize = sizeof(SCROLLINFO);
+
+                        if (rows_clients_table > cyClient / ROW_TABLE_HEIGHT)
+                        {
+                                sbInfo.nMax = rows_clients_table - 1;
+                                sbInfo.nPage = (cyClient / 20);
+                                sbInfo.fMask = SIF_ALL;
+                                SetScrollInfo(hWnd, SB_VERT, &sbInfo, TRUE);
+                                display_scrollbar = 1;
+                        }
+                }
+                else if (menu == LIST_CLIENTS)
+                {
                         sbInfo.nPos = 0;
                         sbInfo.nMin = 0;
                         sbInfo.cbSize = sizeof(SCROLLINFO);
@@ -190,11 +213,12 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 scrollInfo.cbSize = sizeof(SCROLLINFO);
                 scrollInfo.fMask = SIF_ALL;
 
+                menu = GetMenu(hWnd);
+
                 GetScrollInfo(hWnd, SB_VERT, &scrollInfo);
 
-                if (hCurrentBody == hBodyClientes)
+                if (menu == LIST_CLIENTS)
                 {
-                        GetClientRect(hMain, &rectMainWindow);
                         inicio = max((long)0, scrollInfo.nPos + ps.rcPaint.top / ROW_TABLE_HEIGHT);
                         fin = min((long)rows_clients_table - 1, scrollInfo.nPos + ps.rcPaint.bottom / ROW_TABLE_HEIGHT);
 
@@ -569,11 +593,11 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                                         return 0;
                                 while (hTableCurrentRow != hTableCliente[i].container)
                                         i++;
-                                CreateFormClient(FALSE, i);
+                                CreateFormClient(FALSE, i, FALSE);
                         }
                         break;
                 case TOOLBAR_IMAGE_NEW_CLIENTE:
-                        CreateFormClient(TRUE, -1);
+                        CreateFormClient(TRUE, -1, FALSE);
                         break;
 
                 case TOOLBAR_IMAGE_NEW_INVENTARIO:
@@ -829,20 +853,164 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 
         char text[100];
         char name_c[100], password_c[100];
+        char amount[100];
 
         int menu;
+        int row = 0;
+        int productLen = 0;
 
         STRUCTCLIENTESDATA dataC;
         STRUCTPRODUCTOSDATA dataP;
         STRUCTPRODUCTOSDATA newDataP;
+        STRUCTVENTASDATA dataV;
+        char *productos;
 
         switch (msg)
         {
         case WM_COMMAND:
                 switch (wp)
                 {
+                case CREATE_CLIENT_FORM_VENTAS:
+                        GetWindowTextA(hFormClient.name, dataC.name, 100);
+                        GetWindowTextA(hFormClient.lastname, dataC.lastname, 100);
+                        GetWindowTextA(hFormClient.phone, dataC.phone, 20);
+                        GetWindowTextA(hFormClient.TdP, dataC.TdP, 2);
+                        GetWindowTextA(hFormClient.dni, dataC.dni, 20);
+
+                        if (!strcmp(dataC.name, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte un nombre", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+                        if (!strcmp(dataC.lastname, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte un Apellido", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+                        if (!strcmp(dataC.phone, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte un Telefono", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+                        if (!strcmp(dataC.TdP, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte una Naturaleza", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+                        if (!strcmp(dataC.dni, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte un DNI", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+
+                        create_ID(dataC.ID);
+
+                        new_client(dataC.ID, dataC.name, dataC.lastname, dataC.dni, dataC.phone, dataC.TdP);
+
+                        DestroyWindow(hFormClient.container);
+                        DestroyWindow(hBodyClientes);
+                        hTableCurrentRow = NULL;
+
+                        SetWindowTextA(hCurrentClientVentas.name, dataC.name);
+                        SetWindowTextA(hCurrentClientVentas.phone, dataC.phone);
+                        SetWindowTextA(hCurrentClientVentas.dni, dataC.dni);
+                        SetWindowTextA(hCurrentClientVentas.TdP, dataC.TdP);
+                        strcpy(CurrentClientVentas.ID, dataC.ID);
+                        break;
+                case OPEN_FORM_CLIENTS_VENTAS:
+                        CreateFormClient(TRUE, -1, TRUE);
+                        break;
+                case ADD_CLIENT_VENTAS:
+                        if (hTableCurrentRow == NULL)
+                                return 0;
+                        menu = GetMenu(hTableCurrentRow);
+
+                        dataC = dataClient[menu];
+                        CurrentClientVentas = dataClient[menu];
+
+                        SetWindowTextA(hCurrentClientVentas.name, dataC.name);
+                        SetWindowTextA(hCurrentClientVentas.phone, dataC.phone);
+                        SetWindowTextA(hCurrentClientVentas.dni, dataC.dni);
+                        SetWindowTextA(hCurrentClientVentas.TdP, dataC.TdP);
+
+                        DestroyWindow(hBodyClientes);
+                        hTableCurrentRow = NULL;
+                        break;
+                case CLOSE_WINDOW_CLIENTS_VENTAS:
+                        DestroyWindow(hBodyClientes);
+                        hTableCurrentRow = NULL;
+                        break;
+                case SELECT_CLIENT_VENTAS:
+                        CreateWindowClients();
+                        break;
+                case NEW_VENTA:
+                        if (rows_currentProduct_table > 0)
+                        {
+                                int i;
+                                for (i = 0; i < rows_currentProduct_table; i++)
+                                {
+                                        productLen += strlen(CurrentProducts[i].ID);
+                                        sprintf(text, "%d", CurrentProducts[i].amount);
+
+                                        row = search_product(CurrentProducts[i].ID);
+                                        get_stock_product(row, amount);
+
+                                        if (atoi(amount) - CurrentProducts[i].amount < 0)
+                                        {
+                                                sprintf(text, "Error. No hay suficiente inventario de %s", CurrentProducts[i].name);
+                                                MessageBox(NULL, text, NULL, MB_ICONERROR);
+                                                return 0;
+                                        }
+                                        productLen += strlen(text);
+                                        productLen += strlen(CurrentProducts[i].discount);
+                                        productLen += 3;
+                                }
+                                productLen += i;
+
+                                productos = (char *)malloc(sizeof(char));
+                                productos = (char *)realloc(NULL, sizeof(char) * (productLen));
+
+                                productos[0] = '\0';
+                                for (i = 0; i < rows_currentProduct_table; i++)
+                                {
+                                        sprintf(text, "%s=%d?%s", CurrentProducts[i].ID, CurrentProducts[i].amount, CurrentProducts[i].discount);
+                                        if (i != rows_currentProduct_table - 1)
+                                                strcat(text, "/");
+                                        strcat(productos, text);
+                                }
+
+                                if (!strcmp(CurrentClientVentas.ID, ""))
+                                {
+                                        MessageBox(NULL, "Error, Elija al cliente al que se vendera", "Error", MB_OK);
+                                        return 0;
+                                }
+
+                                for (i = 0; i < rows_currentProduct_table; i++)
+                                {
+                                        row = search_product(CurrentProducts[i].ID);
+                                        reduce_stock(row, CurrentProducts[i].amount);
+                                }
+
+                                create_ID(dataV.ID);
+                                new_ventas(dataV.ID, productos, CurrentClientVentas.ID, "0");
+
+                                rows_currentProduct_table = 0;
+
+                                h_rows_currentProduct_table = (HWND *)realloc(NULL, sizeof(HWND));
+                                CurrentProducts = (STRUCTCURRENTPRODUCTOSDATA *)realloc(NULL, sizeof(STRUCTCURRENTPRODUCTOSDATA));
+
+                                DestroyWindow(hBodyVentas);
+
+                                CreateBodyVentasMainWindow();
+
+                                free(productos);
+                        }
+                        break;
                 case CLOSE_FORM_PRODUCT:
                         DestroyWindow(hFormProduct.container);
+                        break;
+                case CLOSE_WINDOW_PRODUCT_VENTAS:
+                        DestroyWindow(hWindowProduct);
                         break;
                 case WINDOW_PRODUCT_VENTAS:
                         Window_product_is_open = 1;
@@ -993,16 +1161,23 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         CreateBodyProductos();
                         break;
                 case DELETE_PRODUCT_VENTAS:
-                        if (hTableCurrentProduct != NULL && rows_currentProduct_table > 0)
+                        if (hTableCurrentRow != NULL && rows_currentProduct_table > 0)
                         {
 
-                                STRUCTCURRENTPRODUCTOSDATA copyData[rows_currentProduct_table];
+                                menu = GetMenu(hTableCurrentRow);
+
+                                STRUCTCURRENTPRODUCTOSDATA copyData[rows_currentProduct_table - 1];
 
                                 int i;
+                                int x = 0;
 
-                                for (i = 0; i < rows_currentProduct_table - 1; i++)
+                                for (i = 0; i < rows_currentProduct_table; i++)
                                 {
-                                        copyData[i] = CurrentProducts[i];
+                                        if (i != menu)
+                                        {
+                                                copyData[x] = CurrentProducts[i];
+                                                x++;
+                                        }
                                 }
 
                                 h_rows_currentProduct_table = (HWND *)realloc(NULL, sizeof(HWND) * (rows_currentProduct_table - 1));
@@ -1076,6 +1251,32 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         GetWindowTextA(hFormClient.TdP, dataC.TdP, 2);
                         GetWindowTextA(hFormClient.dni, dataC.dni, 20);
 
+                        if (!strcmp(dataC.name, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte un nombre", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+                        if (!strcmp(dataC.lastname, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte un Apellido", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+                        if (!strcmp(dataC.phone, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte un Telefono", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+                        if (!strcmp(dataC.TdP, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte una Naturaleza", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+                        if (!strcmp(dataC.dni, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte un DNI", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+
                         create_ID(dataC.ID);
 
                         new_client(dataC.ID, dataC.name, dataC.lastname, dataC.dni, dataC.phone, dataC.TdP);
@@ -1131,6 +1332,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 switch (menu)
                 {
                 case NEW_VENTA:
+                case SELECT_CLIENT_VENTAS:
+                case ADD_CLIENT_VENTAS:
                         InvalidateRect(hWnd, NULL, FALSE);
                         break;
                 case LOGIN_USER:
@@ -1140,6 +1343,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case ADD_PRODUCT_FORM:
                 case WINDOW_PRODUCT_VENTAS:
                 case MODIFY_PRODUCT_FORM:
+                case OPEN_FORM_CLIENTS_VENTAS:
+                case CREATE_CLIENT_FORM_VENTAS:
                         InvalidateRect(hWnd, NULL, FALSE);
                         break;
                 case CLOSE_WINDOW:
@@ -1147,6 +1352,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case CLOSE_WINDOW_PRODUCT_VENTAS:
                 case DELETE_PRODUCT_VENTAS:
                 case CLOSE_FORM_PRODUCT:
+                case CLOSE_WINDOW_CLIENTS_VENTAS:
                         InvalidateRect(hWnd, NULL, FALSE);
                         break;
                 }
@@ -1163,6 +1369,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         switch (menu)
                         {
                         case NEW_VENTA:
+                        case SELECT_CLIENT_VENTAS:
+                        case ADD_CLIENT_VENTAS:
                                 draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE_CLICK), COLOR_BLACK, text);
                                 break;
                         case LOGIN_USER:
@@ -1172,6 +1380,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         case WINDOW_PRODUCT_VENTAS:
                         case ADD_PRODUCT_FORM:
                         case MODIFY_PRODUCT_FORM:
+                        case OPEN_FORM_CLIENTS_VENTAS:
+                        case CREATE_CLIENT_FORM_VENTAS:
                                 draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN_CLICK), COLOR_WHITE, text);
                                 break;
                         case CLOSE_WINDOW:
@@ -1179,6 +1389,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         case CLOSE_CLIENT_FORM:
                         case CLOSE_WINDOW_PRODUCT_VENTAS:
                         case CLOSE_FORM_PRODUCT:
+                        case CLOSE_WINDOW_CLIENTS_VENTAS:
                                 draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED_CLICK), COLOR_WHITE, text);
                                 break;
                                 ReleaseDC(hWnd, hdc);
@@ -1195,6 +1406,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 switch (menu)
                 {
                 case NEW_VENTA:
+                case SELECT_CLIENT_VENTAS:
+                case ADD_CLIENT_VENTAS:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE_HOVER), COLOR_BLACK, text);
                         break;
 
@@ -1205,6 +1418,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case ADD_PRODUCT_FORM:
                 case WINDOW_PRODUCT_VENTAS:
                 case MODIFY_PRODUCT_FORM:
+                case OPEN_FORM_CLIENTS_VENTAS:
+                case CREATE_CLIENT_FORM_VENTAS:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN_HOVER), COLOR_WHITE, text);
                         break;
                 case CLOSE_WINDOW:
@@ -1212,6 +1427,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case DELETE_PRODUCT_VENTAS:
                 case CLOSE_WINDOW_PRODUCT_VENTAS:
                 case CLOSE_FORM_PRODUCT:
+                case CLOSE_WINDOW_CLIENTS_VENTAS:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED_HOVER), COLOR_WHITE, text);
                         break;
                 }
@@ -1228,6 +1444,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 switch (menu)
                 {
                 case NEW_VENTA:
+                case SELECT_CLIENT_VENTAS:
+                case ADD_CLIENT_VENTAS:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE), COLOR_BLACK, text);
                         break;
                 case LOGIN_USER:
@@ -1237,6 +1455,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case MODIFY_CLIENT_FORM:
                 case WINDOW_PRODUCT_VENTAS:
                 case MODIFY_PRODUCT_FORM:
+                case OPEN_FORM_CLIENTS_VENTAS:
+                case CREATE_CLIENT_FORM_VENTAS:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_GREEN), COLOR_BLACK, text);
                         break;
                 case CLOSE_WINDOW:
@@ -1244,6 +1464,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case DELETE_PRODUCT_VENTAS:
                 case CLOSE_WINDOW_PRODUCT_VENTAS:
                 case CLOSE_FORM_PRODUCT:
+                case CLOSE_WINDOW_CLIENTS_VENTAS:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED), COLOR_BLACK, text);
                         break;
                 }
@@ -1266,6 +1487,10 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case ADD_PRODUCT_FORM:
                 case MODIFY_PRODUCT_FORM:
                 case CLOSE_FORM_PRODUCT:
+                case SELECT_CLIENT_VENTAS:
+                case ADD_CLIENT_VENTAS:
+                case CLOSE_WINDOW_CLIENTS_VENTAS:
+                case CREATE_CLIENT_FORM_VENTAS:
                         DestroyWindow(hWnd);
                         break;
                 case CREATE_CLIENT_FORM:

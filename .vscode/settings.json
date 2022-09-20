@@ -22,6 +22,8 @@
                 "colors.h": "c",
                 "productos.h": "c",
                 "mmsystem.h": "c",
-                "winuser.h": "c"
+                "winuser.h": "c",
+                "typeinfo": "c",
+                "ventas.h": "c"
         }
 }

@@ -244,8 +244,17 @@ void modify_col_file(FILE *fp, int row, int col, char *str) // Se cambia el cont
                 strcat(final, "\t");
                 strcat(final, part1);
 
-                add_line_file(fp, final);
-                delete_line_file(fp, row);
+                if (lenStr != len)
+                {
+                        delete_line_file(fp, row);
+                        add_line_file(fp, final);
+                }
+                else
+                {
+                        move_to_line_file(fp, row);
+                        fseek(fp, 0, SEEK_CUR);
+                        fprintf(fp, "%s", final);
+                }
                 return;
         }
 
@@ -289,6 +298,12 @@ void modify_col_file(FILE *fp, int row, int col, char *str) // Se cambia el cont
         {
                 add_line_file(fp, final);
                 delete_line_file(fp, row);
+        }
+        else
+        {
+                move_to_line_file(fp, row);
+                fseek(fp, 0, SEEK_CUR);
+                fprintf(fp, "%s", final);
         }
 }
 
