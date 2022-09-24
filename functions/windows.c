@@ -8,7 +8,9 @@
 #include "../handlers/winProc.h"
 #include "../handlers/productos.h"
 #include "../handlers/clientes.h"
+#include "../handlers/ventas.h"
 #include "../handlers/struct.h"
+#include "../handlers/colors.h"
 
 yTabla = 0;
 FirstMalloc = 0;
@@ -190,6 +192,12 @@ BOOL CreateClasses(HINSTANCE hInstance)
         if (!RegisterClassA(&wBodyRowCell))
                 return FALSE;
 
+        wBodyRowCell.lpszClassName = "BODY_ROW_CELL_HISTORIALVENTAS";
+        wBodyRowCell.lpfnWndProc = BodyRowCellHistorialVentasWindowProcedure;
+
+        if (!RegisterClassA(&wBodyRowCell))
+                return FALSE;
+
         WNDCLASSA wDiv = {0};
 
         wDiv.hCursor = LoadCursor(NULL, IDC_ARROW);
@@ -271,6 +279,9 @@ void CreateMainWindow()
 
         h_rows_currentProduct_table = (HWND *)malloc(sizeof(HWND));
         CurrentProducts = (STRUCTPRODUCTOSDATA *)malloc(sizeof(STRUCTPRODUCTOSDATA));
+
+        dataVentas = (STRUCTVENTASDATA *)malloc(sizeof(STRUCTVENTASDATA));
+        h_rows_ventas_table = (HWND *)malloc(sizeof(HWND));
 
         CreateHeader();
 }
@@ -382,17 +393,27 @@ void CreateBodyClienteMainWindow()
 
 void loadImagesAdd()
 {
-        hImageAdd = (HBITMAP)LoadImageA(NULL, "C:\\Users\\yorman\\Documents\\trabajos yorman\\semestre 2\\tecnicas de programacion\\C\\PROYECTOFINAL\\img\\add.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
+        hImageAdd = (HBITMAP)LoadImageA(NULL, "img\\add.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 }
 
 void loadImagesModify()
 {
-        hImageModify = (HBITMAP)LoadImageA(NULL, "C:\\Users\\yorman\\Documents\\trabajos yorman\\semestre 2\\tecnicas de programacion\\C\\PROYECTOFINAL\\img\\modificar.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
+        hImageModify = (HBITMAP)LoadImageA(NULL, "img\\modificar.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 }
 
 void loadImagesDelete()
 {
-        hImageDelete = (HBITMAP)LoadImageA(NULL, "C:\\Users\\yorman\\Documents\\trabajos yorman\\semestre 2\\tecnicas de programacion\\C\\PROYECTOFINAL\\img\\delete.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
+        hImageDelete = (HBITMAP)LoadImageA(NULL, "img\\delete.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
+}
+
+void loadImagesHistorial()
+{
+        hImageHistorial = (HBITMAP)LoadImageA(NULL, "img\\lista.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
+}
+
+void loadImagesView()
+{
+        hImageVer = (HBITMAP)LoadImageA(NULL, "img\\ver.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 }
 
 void CreateHeader()
@@ -421,7 +442,7 @@ void CreateNavBar()
 
         hToolBarActual = hToolBarVentas;
 
-        CreateBodyVentasMainWindow();
+        CreateBodyVentasMainWindow(TRUE);
 }
 
 // Body
@@ -474,8 +495,11 @@ void CreateToolBarVentas()
 void CreateToolsVentas()
 {
         hNuevaVenta = CreateWindowA("TOOL", "Nueva Venta", WS_VISIBLE | WS_CHILD, 20, 0, 80, 75, hToolBarVentas, TOOLBAR_IMAGE_NEW_VENTAS, NULL, NULL);
-        hEliminarVenta = CreateWindowA("TOOL", "Modificar Venta", WS_VISIBLE | WS_CHILD, 100, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_MODIFY_VENTAS, NULL, NULL);
-        hModificarVenta = CreateWindowA("TOOL", "Eliminar Venta", WS_VISIBLE | WS_CHILD, 190, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_DELETE_VENTAS, NULL, NULL);
+        CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, 110, 10, 1, ToolBarHeight - 20, hToolBarVentas, TOOLBAR_IMAGE_HISTORIAL_VENTAS, NULL, NULL);
+        hToolHistorialVenta = CreateWindowA("TOOL", "Historial de Ventas", WS_VISIBLE | WS_CHILD, 120, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_HISTORIAL_VENTAS, NULL, NULL);
+        hToolVerVenta = CreateWindowA("TOOL", "Ver Venta", WS_VISIBLE | WS_CHILD, 210, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_VER_VENTAS, NULL, NULL);
+        hModificarVenta = CreateWindowA("TOOL", "Modificar Venta", WS_VISIBLE | WS_CHILD, 300, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_MODIFY_VENTAS, NULL, NULL);
+        hEliminarVenta = CreateWindowA("TOOL", "Eliminar Venta", WS_VISIBLE | WS_CHILD, 390, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_DELETE_VENTAS, NULL, NULL);
 }
 
 void CreateTableProductosVentas(STRUCTPRODUCTOSDATA *data, int x)
@@ -745,12 +769,131 @@ void CreateHeaderTableCurrentProducts(HWND hWnd)
         CreateWindowA("HEADER_CELL", "Precio Total", WS_VISIBLE | WS_CHILD, (width * 5), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
 }
 
-void CreateBodyVentasMainWindow()
+void CreateFooterTotalVentas(HWND hWnd, int x, int y, int cx)
+{
+        RECT rect;
+        GetClientRect(hWnd, &rect);
+
+        HWND temp = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE, x, y, cx * 2, ROW_TABLE_HEIGHT, hWnd, NULL, NULL, NULL);
+        CreateWindowA("CELL", "Total:", WS_VISIBLE | WS_CHILD, 0, 0, cx, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        hPrecioTotal = CreateWindowA("HEADER_CELL", NULL, WS_VISIBLE | WS_CHILD, cx, 0, cx, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+}
+
+void CreateHeaderTableProductsVentas(HWND hWnd, int x, int y)
+{
+        RECT rect;
+        GetClientRect(hWnd, &rect);
+        int width = cxColumnTableProductsVentas;
+
+        HWND temp = CreateWindowA("BODY_ROW_CELL_HISTORIALVENTAS", NULL, WS_CHILD | WS_VISIBLE, x + 1, y, width * 4, ROW_TABLE_HEIGHT, hWnd, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Producto", WS_VISIBLE | WS_CHILD, 0, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Cantidad", WS_VISIBLE | WS_CHILD, width, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Descuento", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Precio", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+}
+
+void CreateWindowViewVenta()
+{
+        int cxWindow = 500;
+        int cyWindow = 620;
+        int xWindow = (WWidth / 2) - (cxWindow / 2);
+        int yWindow = (WHeight / 2) - (cyWindow / 2);
+        hWindowViewVenta = CreateWindowA("CLIENT_WINDOW", "Datos Venta", WS_VISIBLE | WS_OVERLAPPEDWINDOW, xWindow, yWindow, cxWindow, cyWindow, NULL, NULL, NULL, NULL);
+
+        STRUCTVENTASDATA data = dataVentas[(int) GetMenu(hTableCurrentRow)];
+
+
+        int cxText = 135;
+        int cyText = 18;
+
+        int margin_left = 50;
+        int margin_top = 40;
+
+        int row;
+
+        char nombre_cliente[100];
+        char descuento[20];
+        
+        row = search_clients(data.ID_cliente);
+        get_name_clients(row, nombre_cliente);
+
+        sprintf(descuento, "%s%%", data.discount);
+
+        CreateWindowA("STATIC", "Cliente: ", WS_VISIBLE | WS_CHILD, margin_left, margin_top, 55, cyText, hWindowViewVenta, NULL, NULL, NULL);
+        CreateWindowA("STATIC", nombre_cliente, WS_VISIBLE | WS_CHILD, margin_left, margin_top + cyText + 1, cxText, cyText, hWindowViewVenta, NULL, NULL, NULL);
+
+        CreateWindowA("STATIC", "Descuento: ", WS_VISIBLE | WS_CHILD, margin_left + cxText + 20, margin_top, 80, cyText, hWindowViewVenta, NULL, NULL, NULL);
+        CreateWindowA("STATIC", descuento, WS_VISIBLE | WS_CHILD | SS_CENTER, margin_left + cxText + 20, margin_top + cyText + 1, 30, cyText, hWindowViewVenta, NULL, NULL, NULL);
+
+        CreateWindowA("STATIC", "Fecha: ", WS_VISIBLE | WS_CHILD, margin_left + cxText + 80 + 40, margin_top, 50, cyText, hWindowViewVenta, NULL, NULL, NULL);
+        CreateWindowA("STATIC", data.date, WS_VISIBLE | WS_CHILD, margin_left + cxText + 80 + 40, margin_top + cyText + 1, cxText, cyText, hWindowViewVenta, NULL, NULL, NULL);
+
+        CreateWindowA("DIV", NULL, WS_VISIBLE | WS_CHILD, margin_left, margin_top + 80, cxWindow - (margin_left * 2), cyWindow - margin_top - 160, hWindowViewVenta, LIST_PRODUCTS_VENTAS, NULL, NULL);
+        CreateHeaderTableProductsVentas(hWindowViewVenta, margin_left, margin_top + 60);
+        CreateFooterTotalVentas(hWindowViewVenta, margin_left + (cxColumnTableProductsVentas * 2), margin_top + 80 + cyWindow - margin_top - 160, cxColumnTableProductsVentas);
+}
+
+void CreateHeaderTableVentas(HWND hWnd, int x, int y)
+{
+        RECT rect;
+        GetClientRect(hBodyClientes, &rect);
+        int width = cxColumnTableVentas;
+
+        HWND temp = CreateWindowA("BODY_ROW_CELL_HISTORIALVENTAS", NULL, WS_CHILD | WS_VISIBLE, x, y, width * 5, ROW_TABLE_HEIGHT, hWnd, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Cliente", WS_VISIBLE | WS_CHILD, 0, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Descuento", WS_VISIBLE | WS_CHILD, width, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Precio", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Precio con IVA", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+}
+
+void CreateTableListofVentas(HWND hWnd, int xTable, int yTable, int cxTable, int cyTable)
+{
+        hTableVentas = CreateWindowA("DIV", NULL, WS_CHILD | WS_VISIBLE, xTable, yTable, cxTable, cyTable, hBodyVentas, LIST_VENTAS, NULL, NULL);
+
+        int i = 0;
+
+        int yRows = 0;
+
+        for (int i = 0; i < rows_ventas_table; i++)
+        {
+                h_rows_ventas_table[i] = CreateWindowA("BODY_ROW_CELL_HISTORIALVENTAS", NULL, WS_CHILD | WS_VISIBLE, 0, yRows, cxColumnTableVentas * 5, ROW_TABLE_HEIGHT, hTableVentas, (HMENU)i, NULL, NULL);
+                yRows += ROW_TABLE_HEIGHT;
+        }
+        CreateHeaderTableVentas(hBodyVentas, 0, 0);
+}
+
+void GetDataTableListofVentas(int cx, int cy)
+{
+        rows_ventas_table = get_jumplines_venta_file();
+        int lines = get_lines_venta_file();
+        dataVentas = (STRUCTVENTASDATA *)realloc(NULL, sizeof(STRUCTVENTASDATA) * (rows_ventas_table + 1));
+        h_rows_ventas_table = (HWND *)realloc(NULL, sizeof(HWND) * (rows_ventas_table + 1));
+
+        int i = 0;
+        int x = 0;
+
+        while (i < lines)
+        {
+                if (!isBlank_venta(i) && get_visibility_venta(i))
+                {
+                        get_ID_venta(i, dataVentas[x].ID);
+                        get_ID_cliente_venta(i, dataVentas[x].ID_cliente);
+                        get_date_venta(i, dataVentas[x].date);
+                        get_discount_venta(i, dataVentas[x].discount);
+                        x++;
+                }
+                i++;
+        }
+        CreateTableListofVentas(hBodyVentas, 0, 20, cx, cy - ROW_TABLE_HEIGHT);
+}
+
+void CreateBodyVentasMainWindow(BOOL newSell)
 {
         RECT rectMainWindow;
         GetClientRect(hMain, &rectMainWindow);
 
-        int margin = 15;
+        int margin = 20;
 
         WINDOWPOS body;
 
@@ -762,7 +905,10 @@ void CreateBodyVentasMainWindow()
         hBodyVentas = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE, x, y, cx, cy, hMain, NULL, NULL, NULL);
         hCurrentBody = hBodyVentas;
 
-        CreateFormVentas();
+        if (newSell == TRUE)
+                CreateFormVentas();
+        else
+                GetDataTableListofVentas(cx, cy);
 }
 
 void CreateWindowProducts()
@@ -919,8 +1065,6 @@ void CreateBodyProductos()
         hBodyInventario = CreateWindowA("CONTAINER_VACIO", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, xBody, yBody, cxBody, cyBody, hMain, NULL, NULL, NULL);
         hCurrentBody = hBodyInventario;
 
-        hTableProduct = CreateWindowA("DIV", NULL, WS_CHILD | WS_VISIBLE, 0, 20, cxBody, cyBody, hBodyInventario, LIST_PRODUCTS, NULL, NULL);
-
         rows_product_table = get_jumplines_product_file();
         int lines = get_lines_product_file();
 
@@ -934,7 +1078,7 @@ void CreateBodyProductos()
 
         while (i < lines)
         {
-                if (get_visibility_product(i))
+                if (!isBlank_product(i) && get_visibility_product(i))
                 {
                         get_ID_product(i, dataProductos[x].ID);
                         get_date_product(i, dataProductos[x].date);
@@ -948,7 +1092,8 @@ void CreateBodyProductos()
                 i++;
         }
 
-        CreateTableProducts(hTableProduct, rows_product_table, 0, 0, cxBody, cyBody - 20);
+
+        CreateTableProducts(hBodyInventario, rows_product_table, 0, 0, cxBody, cyBody - 20);
 
         CreateHeaderTableProducts(hBodyInventario, 0);
 }
@@ -978,6 +1123,7 @@ void CreateHeaderWindowProducts(HWND hWnd, int cxHeader, int cyHeader)
 void CreateTableProducts(HWND hWnd, int len, int x, int y, int cx, int cy)
 {
         hTableProduct = CreateWindowA("DIV", NULL, WS_CHILD | WS_VISIBLE, x, y, cx, cy, hWnd, LIST_PRODUCTS, NULL, NULL);
+
 
         int yRows = 0;
 

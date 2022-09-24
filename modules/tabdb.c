@@ -11,7 +11,7 @@ int get_len_file(FILE *fp) // Devuelve la cantidad de caracteres que contiene el
         return i;
 }
 
-void move_to_line_file(FILE *fp, int row) // Mueve el puntero a una fila en especifico
+int move_to_line_file(FILE *fp, int row) // Mueve el puntero a una fila en especifico
 {
         fseek(fp, 0, SEEK_SET);
         int line = 0;
@@ -23,11 +23,12 @@ void move_to_line_file(FILE *fp, int row) // Mueve el puntero a una fila en espe
                         line++;
                 }
                 if (caracter == EOF)
-                        break;
+                        return 0;
         }
+        return 1;
 }
 
-void move_to_col_file(FILE *fp, int col) // Mueve el puntero a la columna que se le indique. esta columna pertenecera a la
+int move_to_col_file(FILE *fp, int col) // Mueve el puntero a la columna que se le indique. esta columna pertenecera a la
 {                                        // fila donde este actualmente el puntero. En caso de que el puntero este en una columna diferente a la 0 dara error,
                                          // el puntero siempre debe de estar en la columna 0 para funcionar correctamente
         int tabs = 0;
@@ -39,8 +40,9 @@ void move_to_col_file(FILE *fp, int col) // Mueve el puntero a la columna que se
                 if ((caracter = fgetc(fp)) == '\t')
                         tabs++;
                 if (caracter == '\n' || caracter == EOF)
-                        break;
+                        return 0;
         }
+        return 1;
 }
 
 int get_len_line_file(FILE *fp, int row) // Devuelve la longitud (cantidad de caracteres) de la fila especificada
@@ -56,7 +58,7 @@ int get_len_line_file(FILE *fp, int row) // Devuelve la longitud (cantidad de ca
 int get_len_col_file(FILE *fp, int row, int col) // Devuelve la longitud (cantidad de caracteres) de la columna x de la fila especificada
 {
         move_to_line_file(fp, row);
-        size_t i = 0;
+        int i = 0;
         int tabs = 0;
         char caracter;
         while ((caracter = fgetc(fp)) && caracter != '\n' && caracter != EOF)
@@ -145,38 +147,25 @@ int search_data_file(FILE *fp, int col, char *str) // Busca en todas las columna
         int row = 0;
         fseek(fp, 0, SEEK_SET);
 
-        char string[320];
+        int undefined = 1;
 
-        while (strcmp(string, "UNDEFINED"))
+        while (undefined)
         {
-                int from = 0;
-                int to = 0;
-                int tabs = 0;
-                int i = 0;
 
-                read_line_file(fp, row, string);
-                while (string[i] != '\0')
-                {
-                        if (string[i] == '\t')
-                        {
-                                tabs++;
-                                if (tabs == col)
-                                        from = i + 1;
-                        }
-                        if (tabs == col)
-                        {
-                                to++;
-                        }
-                        i++;
-                }
-                char temp[320];
-                substr(temp, string, from, (col == 0) ? from + to : from + to - 1);
-                if (!strcmp(temp, str))
+                if(!move_to_line_file(fp, row))
+                        return -1;
+                
+                int lenCol = get_len_col_file(fp, row, col);
+
+                char string[lenCol + 1];
+
+                read_col_file(fp, row, col, string);
+        
+                if (!strcmp(string, str))
                         return row;
 
                 row++;
         }
-        return -1;
 }
 
 void delete_line_file(FILE *fp, int row) // A pesar de que diga que elimina la linea especificada este no la elimina, esta funcion sustituye

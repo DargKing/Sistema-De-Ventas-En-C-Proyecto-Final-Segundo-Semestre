@@ -95,7 +95,7 @@ int get_date_venta(int row, char *date)
         return 0;
 }
 
-int get_productos_venta(int row, char *name)
+int get_productos_venta(int row, char *productos)
 {
 
         FILE *fp;
@@ -104,12 +104,12 @@ int get_productos_venta(int row, char *name)
         if (fp == NULL)
                 return -1;
 
-        read_col_file(fp, row, 2, name);
+        read_col_file(fp, row, 2, productos);
         fclose(fp);
         return 0;
 }
 
-int get_ID_cliente_venta(int row, char *price)
+int get_ID_cliente_venta(int row, char *id_client)
 {
 
         FILE *fp;
@@ -118,7 +118,7 @@ int get_ID_cliente_venta(int row, char *price)
         if (fp == NULL)
                 return -1;
 
-        read_col_file(fp, row, 3, price);
+        read_col_file(fp, row, 3, id_client);
         fclose(fp);
         return 0;
 }
@@ -179,12 +179,12 @@ int get_jumplines_venta_file()
         if (fp == NULL)
                 return -1;
 
-        int lines = get_lines_product_file();
+        int lines = get_lines_venta_file();
         int i = 0;
         int jumplines = 0;
 
         while(i < lines){
-                if(get_visibility_product(i)){
+                if(!isBlank_venta(i) && get_visibility_venta(i)){
                         jumplines++;
                 }
                 i++;
@@ -194,6 +194,19 @@ int get_jumplines_venta_file()
         return jumplines;
 }
 
+int get_len_col_ventas(int row, int col){
+        FILE *fp;
+
+        fp = fopen("database/ventas.txt", "r+");
+        if (fp == NULL)
+                return -1;
+
+        int len = get_len_col_file(fp, row, col);
+
+        fclose(fp);
+        return len;
+}
+
 int isBlank_venta(int row)
 {
         FILE *fp;
@@ -201,7 +214,7 @@ int isBlank_venta(int row)
         if (fp == NULL)
                 return -1;
 
-        int blank = get_visibility_product(row);
+        int blank = is_blank(fp, row);
 
         fclose(fp);
         return blank;

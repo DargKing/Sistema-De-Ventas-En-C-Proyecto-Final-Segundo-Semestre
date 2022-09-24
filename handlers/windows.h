@@ -39,11 +39,14 @@ void CreateHeaderWindowProducts(HWND hWnd, int cxHeader, int cyHeader);
 void CreateTableProducts(HWND hWnd, int len, int x, int y, int cx, int cy);
 void CreateHeaderTableProducts(HWND hWnd, int y);
 
+void CreateWindowViewVenta();
+void CreateTableListofVentas(HWND hWnd, int xTable, int yTable, int cxTable, int cyTable);
+
 void CreateTableListOfProducts(int x, int y, int cx, int cy);
 void CreateHeaderTableCurrentProducts(HWND hWnd);
 
 void CreateBodyClienteMainWindow();
-void CreateBodyVentasMainWindow();
+void CreateBodyVentasMainWindow(BOOL type);
 
 void CreateWindowClients();
 void CreateHeaderClientsVentas(HWND hWnd, int cxHeader, int cyHeader);
@@ -52,6 +55,8 @@ void CreateTableListOfClients(HWND hWnd, int x, int y, int cxTable, int cyTable)
 void loadImagesAdd();
 void loadImagesModify();
 void loadImagesDelete();
+void loadImagesHistorial();
+void loadImagesView();
 
 void CreateFormClient(BOOL newClient, UINT client, BOOL ventas);
 void CreateFormProduct(BOOL newProduct, UINT product);
@@ -71,6 +76,8 @@ int nColumnsTable;
 int Window_product_is_open;
 int cxColumnTableProduct;
 int cxColumnTableCurrentProduct;
+int cxColumnTableVentas;
+int cxColumnTableProductsVentas;
 
 #define HeaderHeight 100
 #define NavHeight 25

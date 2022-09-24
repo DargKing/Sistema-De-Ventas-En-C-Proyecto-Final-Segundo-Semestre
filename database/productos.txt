@@ -1,4 +1,6 @@
-220916040647PM	19-09-2022	Platanito	100	0	Comida	6	T
+                                                    
 220916040726PM	19-09-2022	PC GAMER	2000	0	Electronica	0	T
+                                                 
 220916040703PM	19-09-2022	Doritos	50	0	Comida	2	T
+220916040647PM	19-09-2022	Platanito	100	0	Comida	6	T
 

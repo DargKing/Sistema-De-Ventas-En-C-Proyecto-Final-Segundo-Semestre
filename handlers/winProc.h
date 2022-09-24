@@ -38,6 +38,8 @@
 #define LIST_CURRENT_PRODUCTS 1
 #define LIST_PRODUCTS 2
 #define LIST_CLIENTS 3
+#define LIST_VENTAS 4 
+#define LIST_PRODUCTS_VENTAS 5
 
 #define TOOLBAR_IMAGE_NEW_INVENTARIO 1
 #define TOOLBAR_IMAGE_DELETE_INVENTARIO 2
@@ -50,11 +52,14 @@
 #define TOOLBAR_IMAGE_NEW_VENTAS 7
 #define TOOLBAR_IMAGE_DELETE_VENTAS 8
 #define TOOLBAR_IMAGE_MODIFY_VENTAS 9
+#define TOOLBAR_IMAGE_HISTORIAL_VENTAS 10
+#define TOOLBAR_IMAGE_VER_VENTAS 11
 
 int First;
 int yTabla;
 int rows_clients_table;
 int rows_product_table;
+int rows_ventas_table;
 int rows_currentProduct_table;
 
 HWND hAlto, hAncho;
@@ -90,8 +95,8 @@ HWND hNuevoProducto, hEliminarProducto, hModificarProducto;
 HWND hNuevoCliente, hEliminarCliente, hModificarCliente;
 
 // Ventas
-HWND hNuevaVenta, hEliminarVenta, hModificarVenta;
-
+HWND hNuevaVenta, hEliminarVenta, hModificarVenta, hToolHistorialVenta, hToolVerVenta;
+HWND hWindowViewVenta;
 // Forms
 
 typedef struct CLIENTESHWND
@@ -129,7 +134,7 @@ typedef struct PRODUCTOSDATA
 typedef struct VENTASDATA
 {
     char ID[20];
-    char ID_cliente[20];
+    char ID_cliente[30];
     char discount[20];
     char productos[1000];
     char date[20];
@@ -165,6 +170,7 @@ HWND hTableCurrentRow;
 
 STRUCTCLIENTESDATA *dataClient;
 
+STRUCTVENTASDATA *dataVentas;
 STRUCTPRODUCTOSDATA *dataProductos;
 HWND *h_rows_product_table;
 HWND hTableContainer;
@@ -173,6 +179,9 @@ HWND hScrollBar;
 
 HWND hWindowProduct;
 
+HWND hTableVentas;
+HWND hPrecioTotal;
+
 HWND hTableProduct;
 HWND hTableCurrentProduct;
 
@@ -180,6 +189,7 @@ STRUCTCLIENTESHWND hCurrentClientVentas;
 STRUCTCLIENTESDATA CurrentClientVentas;
 STRUCTCURRENTPRODUCTOSDATA *CurrentProducts;
 HWND* h_rows_currentProduct_table;
+HWND* h_rows_ventas_table;
 
 // Form
 STRUCTCLIENTESHWND hFormClient;
@@ -191,10 +201,10 @@ STRUCTPRODUCTOSDATA currentDataP;
 HWND hCurrentBody;
 
 // Images
-HBITMAP hImageModify, hImageAdd, hImageDelete;
+HBITMAP hImageModify, hImageAdd, hImageDelete, hImageHistorial, hImageVer;
 HBITMAP hNuevoProductoImage, hEliminarProductoImage, hModificarProductoImage,
     hNuevoClienteImage, hModificarClienteImage, hEliminarClienteImage,
-    hNuevaVentaImage, hModificarVentaImage, hEliminarVentaImage;
+    hNuevaVentaImage, hModificarVentaImage,  hHistorialVentaImage, hEliminarVentaImage, hVerVentaImage;
 
 LRESULT CALLBACK DivWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK WinProc(HWND, UINT, WPARAM, LPARAM);
@@ -221,5 +231,6 @@ LRESULT CALLBACK BodyClientWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK BodyRowCellWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK BodyRowCellProductWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK BodyRowCellCurrentProductWindowProcedure(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK BodyRowCellHistorialVentasWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK CellWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK HeaderCellWindowProcedure(HWND, UINT, WPARAM, LPARAM);

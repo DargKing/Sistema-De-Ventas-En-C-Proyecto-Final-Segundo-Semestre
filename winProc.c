@@ -84,6 +84,46 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         else
                                 cxColumnTableCurrentProduct = (rect.right) / 6;
                 }
+                else if (menu == LIST_VENTAS)
+                {
+                        GetClientRect(hWnd, &rect);
+                        if (rows_ventas_table > rect.bottom / ROW_TABLE_HEIGHT)
+                                cxColumnTableVentas = (rect.right - 15) / 5;
+                        else
+                                cxColumnTableVentas = (rect.right / 5);
+                }
+                else if (menu == LIST_PRODUCTS_VENTAS)
+                {
+                        GetClientRect(hWnd, &rect);
+
+                        int position = GetMenu(hTableCurrentRow);
+
+                        char ID_venta[20];
+                        STRUCTVENTASDATA data = dataVentas[position];
+
+                        char *productos;
+
+                        int row = search_venta_ID_venta(data.ID);
+                        int lenColProductos = get_len_col_ventas(row, 2);
+                        int cantidadDeProductos = 1;
+
+                        productos = (char *)malloc(sizeof(char) * (lenColProductos + 2));
+
+                        get_productos_venta(row, productos);
+
+                        for (int i = 0; i < lenColProductos; i++)
+                        {
+                                if (productos[i] == '/')
+                                        cantidadDeProductos++;
+                        }
+
+                        if (cantidadDeProductos > rect.bottom / ROW_TABLE_HEIGHT)
+                                cxColumnTableProductsVentas = (rect.right - SCROLLBAR_WIDTH) / 4;
+                        else
+                                cxColumnTableProductsVentas = (rect.right / 4);
+                        
+                        free(productos);
+                }
                 break;
         case WM_SIZE:
 
@@ -153,6 +193,59 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                                 SetScrollInfo(hWnd, SB_VERT, &sbInfo, TRUE);
                                 display_scrollbar = 1;
                         }
+                }
+                else if (menu == LIST_VENTAS)
+                {
+                        sbInfo.nPos = 0;
+                        sbInfo.nMin = 0;
+                        sbInfo.cbSize = sizeof(SCROLLINFO);
+
+                        if (rows_ventas_table > cyClient / ROW_TABLE_HEIGHT)
+                        {
+                                sbInfo.nMax = rows_ventas_table - 1;
+                                sbInfo.nPage = (cyClient / ROW_TABLE_HEIGHT);
+                                sbInfo.fMask = SIF_ALL;
+                                SetScrollInfo(hWnd, SB_VERT, &sbInfo, TRUE);
+                                display_scrollbar = 1;
+                        }
+                }
+                else if (menu == LIST_PRODUCTS_VENTAS)
+                {
+                        menu = GetMenu(hTableCurrentRow);
+
+                        char ID_venta[20];
+                        strcpy(ID_venta, dataVentas[menu].ID);
+
+                        char *productos;
+
+                        int row = search_venta_ID_venta(ID_venta);
+                        int lenColProductos = get_len_col_ventas(row, 2);
+                        int cantidadDeProductos = 1;
+
+                        productos = (char *)malloc(sizeof(char) * (lenColProductos + 2));
+
+                        get_productos_venta(row, productos);
+
+                        for (int i = 0; i < lenColProductos; i++)
+                        {
+                                if (productos[i] == '/')
+                                        cantidadDeProductos++;
+                        }
+
+                        sbInfo.nPos = 0;
+                        sbInfo.nMin = 0;
+                        sbInfo.cbSize = sizeof(SCROLLINFO);
+
+                        if (cantidadDeProductos > cyClient / ROW_TABLE_HEIGHT)
+                        {
+                                sbInfo.nMax = cantidadDeProductos - 1;
+                                sbInfo.nPage = (cyClient / ROW_TABLE_HEIGHT);
+                                sbInfo.fMask = SIF_ALL;
+                                SetScrollInfo(hWnd, SB_VERT, &sbInfo, TRUE);
+                                display_scrollbar = 1;
+                        }
+
+                        free(productos);
                 }
                 break;
         case WM_VSCROLL:
@@ -230,7 +323,6 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 }
                 else if (menu == LIST_PRODUCTS)
                 {
-
                         inicio = max((long)0, scrollInfo.nPos + ps.rcPaint.top / ROW_TABLE_HEIGHT);
                         fin = min((long)rows_product_table - 1, scrollInfo.nPos + ps.rcPaint.bottom / ROW_TABLE_HEIGHT);
 
@@ -251,6 +343,164 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                                 y = ROW_TABLE_HEIGHT * (i - scrollInfo.nPos);
                                 InvalidateRect(h_rows_currentProduct_table[i], NULL, TRUE);
                         }
+                }
+                else if (menu == LIST_VENTAS)
+                {
+
+                        inicio = max((long)0, scrollInfo.nPos + ps.rcPaint.top / ROW_TABLE_HEIGHT);
+                        fin = min((long)rows_ventas_table - 1, scrollInfo.nPos + ps.rcPaint.bottom / ROW_TABLE_HEIGHT);
+
+                        for (int i = inicio; i <= fin; i++)
+                        {
+                                y = ROW_TABLE_HEIGHT * (i - scrollInfo.nPos);
+                                InvalidateRect(h_rows_ventas_table[i], NULL, TRUE);
+                        }
+                }
+                else if (menu == LIST_PRODUCTS_VENTAS)
+                {
+                        int position = GetMenu(hTableCurrentRow);
+
+                        char ID_venta[20];
+                        STRUCTVENTASDATA data = dataVentas[position];
+
+                        char *productos;
+
+                        int row = search_venta_ID_venta(data.ID);
+                        int lenColProductos = get_len_col_ventas(row, 2);
+                        int cantidadDeProductos = 1;
+
+                        productos = (char *)malloc(sizeof(char) * (lenColProductos + 2));
+
+                        get_productos_venta(row, productos);
+
+                        for (int i = 0; i < lenColProductos; i++)
+                        {
+                                if (productos[i] == '/')
+                                        cantidadDeProductos++;
+                        }
+
+                        GetClientRect(hWnd, &rect);
+
+                        int nPos = 0;
+
+                        if (cantidadDeProductos > rect.bottom / ROW_TABLE_HEIGHT)
+                                nPos = scrollInfo.nPos;
+
+                        inicio = max((long)0, nPos + ps.rcPaint.top / ROW_TABLE_HEIGHT);
+                        fin = min((long)cantidadDeProductos - 1, nPos + ps.rcPaint.bottom / ROW_TABLE_HEIGHT);
+
+                        int width = cxColumnTableProductsVentas;
+                        FillRect(hdc, &rect, CreateSolidBrush(COLOR_WHITE));
+
+                        STRUCTCURRENTPRODUCTOSDATA productosVenta[cantidadDeProductos + 1];
+
+                        char subProducto[50];
+                        int x = 0;
+                        int w = 0;
+                        char comprobacionDeCaracter[2];
+
+                        for (int i = 0; i < lenColProductos; i++)
+                        {
+                                if (productos[i] != '/' && productos[i] != '\0')
+                                {
+                                        subProducto[x] = productos[i];
+                                }
+                                else
+                                {
+                                        subProducto[x] = '\0';
+
+                                        // Estas variable se encargan de marcar cuando termina ID, precio y descuento
+                                        int fID;
+                                        int fCantidad;
+                                        int fDescuento;
+
+                                        for (int j = 0; j < x + 1; j++)
+                                        {
+                                                if (subProducto[j] == '=')
+                                                        fID = j;
+                                                if (subProducto[j] == '?')
+                                                        fCantidad = j;
+                                                if (subProducto[j] == '\0')
+                                                        fDescuento = j;
+                                        }
+
+                                        char amount[20];
+
+                                        substr(productosVenta[w].ID, subProducto, 0, fID);
+                                        substr(amount, subProducto, fID + 1, fCantidad);
+                                        substr(productosVenta[w].discount, subProducto, fCantidad + 1, fDescuento);
+
+                                        productosVenta[w].amount = atoi(amount);
+
+                                        x = -1;
+                                        w++;
+                                }
+                                x++;
+                        }
+                        w = 0;
+
+                        float precioTotal = 0;
+
+                        for (int i = inicio; i <= fin; i++)
+                        {
+                                y = ROW_TABLE_HEIGHT * (i - nPos);
+
+                                char precio[20];
+                                char nombre[20];
+                                char descuento[20];
+                                char amount[20];
+
+                                int rowProducto = search_product(productosVenta[i].ID);
+
+                                get_name_product(rowProducto, nombre);
+                                get_discount_product(rowProducto, descuento);
+                                get_price_product(rowProducto, precio);
+
+                                precioTotal += (float)(atof(precio) - (atof(precio) * (atof(descuento) / 100))) * productosVenta[i].amount;
+                                
+                                sprintf(amount, "%d", productosVenta[i].amount);
+                                sprintf(descuento, "%s%%", descuento);
+                                sprintf(precio, "%s Bs", precio);
+
+                                int lenName = strlen(nombre);
+                                int lenDescuento = strlen(descuento) + 1;
+                                int lenPrecio = strlen(precio) + 1;
+                                int lenAmount = strlen(amount) + 1;
+
+                                draw_cell(nombre, hdc, 0, y, width, ROW_TABLE_HEIGHT);
+                                draw_cell(amount, hdc, width, y, width, ROW_TABLE_HEIGHT);
+                                draw_cell(descuento, hdc, width * 2, y, width, ROW_TABLE_HEIGHT);
+                                draw_cell(precio, hdc, width * 3, y, width, ROW_TABLE_HEIGHT);
+
+                                SetRect(&rect, 0, y, 2, y + ROW_TABLE_HEIGHT);
+                                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                                SetRect(&rect, width, y, width + 1, y + ROW_TABLE_HEIGHT);
+                                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                                SetRect(&rect, (width * 2), y, (width * 2) + 1, y + ROW_TABLE_HEIGHT);
+                                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                                SetRect(&rect, (width * 3), y, (width * 3) + 1, y + ROW_TABLE_HEIGHT);
+                                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                                SetRect(&rect, (width * 4) - 1, y, (width * 4) + 2, y + ROW_TABLE_HEIGHT);
+                                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                                SetRect(&rect, 0, y, width * 4, y + 1);
+                                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                                SetRect(&rect, 0, y + ROW_TABLE_HEIGHT - 1, width * 4, y + ROW_TABLE_HEIGHT);
+                                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                        }
+
+                        free(productos);
+
+                        precioTotal *= 1.16;
+
+                        sprintf(text, "%.2f Bs", precioTotal);
+                        SetWindowTextA(hPrecioTotal, text);
                 }
 
                 EndPaint(hWnd, &ps);
@@ -476,7 +726,7 @@ LRESULT CALLBACK ToolBarWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                                 ShowWindow(hToolBarVentas, SW_SHOW);
                                 hToolBarActual = hToolBarVentas;
                                 DestroyWindow(hCurrentBody);
-                                CreateBodyVentasMainWindow();
+                                CreateBodyVentasMainWindow(TRUE);
                         }
                         break;
                 }
@@ -624,9 +874,23 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 
                         CreateBodyProductos();
                         break;
-                }
 
-                break;
+                case TOOLBAR_IMAGE_HISTORIAL_VENTAS:
+                        DestroyWindow(hBodyVentas);
+                        hTableCurrentRow == NULL;
+                        CreateBodyVentasMainWindow(FALSE);
+                        break;
+                case TOOLBAR_IMAGE_NEW_VENTAS:
+                        DestroyWindow(hBodyVentas);
+                        hTableCurrentRow == NULL;
+                        CreateBodyVentasMainWindow(TRUE);
+                        break;
+                case TOOLBAR_IMAGE_VER_VENTAS:
+                        if (hTableCurrentRow == NULL)
+                                return 0;
+                        CreateWindowViewVenta();
+                        break;
+                }
         case WM_CREATE:
                 menu = GetMenu(hWnd);
                 switch (menu)
@@ -663,6 +927,12 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         break;
                 case TOOLBAR_IMAGE_MODIFY_VENTAS:
                         hModificarVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
+                        break;
+                case TOOLBAR_IMAGE_HISTORIAL_VENTAS:
+                        hHistorialVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
+                        break;
+                case TOOLBAR_IMAGE_VER_VENTAS:
+                        hVerVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
                         break;
                 }
                 break;
@@ -735,6 +1005,12 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 case TOOLBAR_IMAGE_DELETE_VENTAS:
                         InvalidateRect(hEliminarVentaImage, NULL, TRUE);
                         break;
+                case TOOLBAR_IMAGE_HISTORIAL_VENTAS:
+                        InvalidateRect(hHistorialVentaImage, NULL, TRUE);
+                        break;
+                case TOOLBAR_IMAGE_VER_VENTAS:
+                        InvalidateRect(hVerVentaImage, NULL, TRUE);
+                        break;
                 }
 
                 ReleaseDC(hWnd, hdc);
@@ -796,6 +1072,14 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         loadImagesDelete();
                         SendMessageA(hEliminarVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageDelete);
                         break;
+                case TOOLBAR_IMAGE_HISTORIAL_VENTAS:
+                        loadImagesHistorial();
+                        SendMessageA(hHistorialVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageHistorial);
+                        break;
+                case TOOLBAR_IMAGE_VER_VENTAS:
+                        loadImagesView();
+                        SendMessageA(hVerVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageVer);
+                        break;
                 }
 
                 EndPaint(hWnd, &ps);
@@ -820,12 +1104,12 @@ LRESULT CALLBACK STransparentWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPA
 
                 hdc = BeginPaint(hWnd, &ps);
 
+                menu = GetMenu(hWnd);
                 SetTextColor(hdc, RGB(0, 0, 0));
+
                 SetBkMode(hdc, TRANSPARENT);
 
                 GetWindowTextA(hWnd, text, 100);
-
-                menu = GetMenu(hWnd);
 
                 if (menu == SS_CENTER)
                         DrawTextA(hdc, text, -1, &rect, DT_SINGLELINE | DT_VCENTER | DT_CENTER);
@@ -1001,7 +1285,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 
                                 DestroyWindow(hBodyVentas);
 
-                                CreateBodyVentasMainWindow();
+                                CreateBodyVentasMainWindow(TRUE);
 
                                 free(productos);
                         }
@@ -1649,19 +1933,6 @@ LRESULT CALLBACK CellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
         int menu;
         switch (msg)
         {
-        case WM_LBUTTONDOWN:
-                menu = GetMenu(hWnd);
-                if (hTableCurrentRow == hTableCliente[menu].container)
-                        return 0;
-                if (hTableCurrentRow != NULL)
-                {
-                        GetClientRect(hTableCurrentRow, &rect);
-                        InvalidateRect(hTableCurrentRow, &rect, TRUE);
-                        hTableCurrentRow = NULL;
-                }
-                hTableCurrentRow = hTableCliente[menu].container;
-                SendMessageA(hTableCliente[menu].container, WM_PRINT, NULL, PRF_CHECKVISIBLE);
-                break;
         case WM_PAINT:
                 GetClientRect(hWnd, &rect);
 
@@ -1685,6 +1956,164 @@ LRESULT CALLBACK CellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 EndPaint(hWnd, &ps);
 
                 return 0;
+                break;
+        case WM_DESTROY:
+                DeleteDC(hdc);
+                DestroyWindow(hWnd);
+                break;
+        default:
+                DefWindowProcA(hWnd, msg, wp, lp);
+        }
+}
+
+LRESULT CALLBACK BodyRowCellHistorialVentasWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+        PAINTSTRUCT ps;
+        HDC hdc;
+        RECT rect;
+        char text[100];
+        char amount[20];
+        char discount[5];
+        char precio[20];
+        char precioIVA[20];
+
+        char *productos;
+        char productoSeparado[100];
+        int colLenProducts;
+
+        float precioTotal = 0;
+        char name[100];
+        int menu;
+        int width;
+        int row;
+        int x = 0;
+
+        HWND temp;
+
+        STRUCTVENTASDATA data;
+
+        switch (msg)
+        {
+        case WM_LBUTTONDOWN:
+                menu = GetMenu(hWnd);
+                if (hTableCurrentRow == h_rows_ventas_table[menu])
+                        return 0;
+                if (hTableCurrentRow != NULL)
+                {
+                        temp = hTableCurrentRow;
+                        hTableCurrentRow = NULL;
+                        GetClientRect(temp, &rect);
+                        InvalidateRect(temp, &rect, TRUE);
+                }
+                GetClientRect(hWnd, &rect);
+                hTableCurrentRow = h_rows_ventas_table[menu];
+                InvalidateRect(hTableCurrentRow, &rect, TRUE);
+                break;
+        case WM_PAINT:
+                hdc = BeginPaint(hWnd, &ps);
+
+                GetClientRect(hWnd, &rect);
+                menu = GetMenu(hWnd);
+
+                data = dataVentas[menu];
+
+                width = rect.right / 5;
+
+                // Obtener el nombre del cliente
+                row = search_clients(data.ID_cliente);
+                get_name_clients(row, name);
+
+                // Obtener la lista de productos comprados
+                row = search_venta_ID_venta(data.ID);
+                colLenProducts = get_len_col_ventas(row, 2);
+                productos = (char *)malloc((colLenProducts + 1) * sizeof(char));
+                get_productos_venta(row, productos);
+
+                for (int i = 0; i < colLenProducts + 1; i++)
+                {
+                        if (productos[i] != '/' && productos[i] != '\0')
+                                productoSeparado[x] = productos[i];
+                        else
+                        {
+                                productoSeparado[x] = '\0';
+
+                                char strCantidad[20];
+                                char strDescuento[20];
+                                char ID_producto[20];
+                                char strPrecio[20];
+                                int precio;
+                                int descuento;
+                                int cantidad;
+
+                                // Estas variable se encargan de marcar cuando termina ID, precio y descuento
+                                int fID;
+                                int fCantidad;
+                                int fDescuento;
+
+                                for (int j = 0; j < x + 1; j++)
+                                {
+                                        if (productoSeparado[j] == '=')
+                                                fID = j;
+                                        if (productoSeparado[j] == '?')
+                                                fCantidad = j;
+                                        if (productoSeparado[j] == '\0')
+                                                fDescuento = j;
+                                }
+
+                                substr(ID_producto, productoSeparado, 0, fID);
+                                substr(strCantidad, productoSeparado, fID + 1, fCantidad);
+                                substr(strDescuento, productoSeparado, fCantidad + 1, fDescuento);
+
+                                row = search_product(ID_producto);
+
+                                get_price_product(row, strPrecio);
+
+                                precio = atoi(strPrecio);
+                                descuento = atoi(strDescuento);
+                                cantidad = atoi(strCantidad);
+
+                                precioTotal += (precio - (precio * (descuento / 100))) * cantidad;
+
+                                x = -1;
+                        }
+                        x++;
+                }
+
+                sprintf(precio, "%.2f Bs", precioTotal);
+                sprintf(precioIVA, "%.2f Bs", precioTotal * 1.16);
+                sprintf(discount, "%s%%", data.discount);
+
+                draw_cell(name, hdc, 0, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(discount, hdc, width, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(precio, hdc, width * 2, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(precioIVA, hdc, width * 3, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(data.date, hdc, width * 4, 0, width, ROW_TABLE_HEIGHT);
+
+                free(productos);
+
+                if (hTableCurrentRow != hWnd)
+                        draw_border(hdc, rect, CreateSolidBrush(RGB(0, 0, 0)), 2);
+                else
+                {
+                        draw_border(hdc, rect, CreateSolidBrush(COLOR_YELLOW), 3);
+                }
+
+                SetRect(&rect, width - 1, 0, width + 2, ROW_TABLE_HEIGHT);
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                SetRect(&rect, (width * 2) - 1, 0, (width * 2) + 2, ROW_TABLE_HEIGHT);
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                SetRect(&rect, (width * 3) - 1, 0, (width * 3) + 2, ROW_TABLE_HEIGHT);
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                SetRect(&rect, (width * 4) - 1, 0, (width * 4) + 2, ROW_TABLE_HEIGHT);
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                SetRect(&rect, (width * 5) - 1, 0, (width * 5) + 2, ROW_TABLE_HEIGHT);
+                FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+
+                EndPaint(hWnd, &ps);
                 break;
         case WM_DESTROY:
                 DeleteDC(hdc);
@@ -1783,6 +2212,7 @@ LRESULT CALLBACK BodyRowCellCurrentProductWindowProcedure(HWND hWnd, UINT msg, W
                 DefWindowProcA(hWnd, msg, wp, lp);
         }
 }
+
 LRESULT CALLBACK BodyRowCellProductWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         PAINTSTRUCT ps;
