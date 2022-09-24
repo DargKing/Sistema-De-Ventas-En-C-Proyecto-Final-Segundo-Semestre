@@ -49,7 +49,7 @@ int delete_invoice(char *ID)
         return 0;
 }
 
-char read_ID_invoice(int i, char *str)  //      Devuelve el id de la factura
+char get_ID_invoice(int i, char *str)  //      Devuelve el id de la factura
 {
         FILE *fp;
         fp = fopen("database/facturas.txt", "r+");
@@ -63,7 +63,7 @@ char read_ID_invoice(int i, char *str)  //      Devuelve el id de la factura
         fclose(fp);
 }
 
-char read_code_invoice(int i, char *str)        // Devuelve el codigo unico de la factura
+char get_code_invoice(int i, char *str)        // Devuelve el codigo unico de la factura
 {       
         FILE *fp;
         fp = fopen("database/facturas.txt", "r+");
@@ -144,7 +144,7 @@ int get_date_invoice(int row, char *str)
 
 // Obtener ID de la venta
 
-int get_ID_venta_invoice(int row, char *str)
+int get_id_client_invoice(int row, char *str)
 {
         FILE *fp;
         fp = fopen("database/facturas.txt", "r+");

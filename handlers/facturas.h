@@ -1,9 +1,9 @@
 /*
 Haremos uso de la libreria tabdb y funciones propias para ser usadas en el fichero "facturas.txt",
 aqui se almacenara los datos del usuario como si se tratase de una factura fisica.
-Contamos con (por el momento) 8 columna que se encuentran calsificadas en:
+Contamos con (por el momento) 8 columna que se encuentran clasificadas en:
 
-CODIGO DE LA FACTURA	NUMERO DE FACTURA	NOMBRE DEL USUARIO	DOMICILIO DEL USUARIO	DNI	FECHA	ID DE VENTA	PRECIO
+CODIGO DE LA FACTURA	NUMERO DE FACTURA	NOMBRE DEL USUARIO	DOMICILIO DEL USUARIO	DNI	FECHA	ID DEL CLIENTE	PRECIO
 
 Las funciones se dividiran en:
 
@@ -14,13 +14,13 @@ Las funciones se dividiran en:
 		delete_invoice();
 
 	Lectura de datos:
-		char read_ID_invoice();	
-		char read_code_invoice();	
+		char get_ID_invoice();	
+		char get_code_invoice();	
 		int get_name_invoice();
 		int get_zone_invoice();
 		int get_dni_invoice();
 		int get_date_invoice();
-		int get_ID_venta_invoice();
+		int get_id_client_invoice();
 		int get_price_invoice();
 		char get_naturaleza();
 		int extension();
@@ -46,13 +46,13 @@ Las funciones se dividiran en:
 int create_new_invoices(char *code, char *name, char *zone, char *dni, char *id_venta, char *price);
 int delete_invoice(char *ID);
 
-char read_ID_invoice(int i, char *str);	
-char read_code_invoice(int i, char *str);	
+char get_ID_invoice(int i, char *str);	
+char get_code_invoice(int i, char *str);	
 int get_name_invoice(int row, char *str);
 int get_zone_invoice(int row, char *str);
 int get_dni_invoice(int row, char *str);
 int get_date_invoice(int row, char *str);
-int get_ID_venta_invoice(int row, char *str);
+int get_id_client_invoice(int row, char *str);
 int get_price_invoice(int row, char *str);
 char get_naturaleza(int row);
 
