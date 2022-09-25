@@ -35,7 +35,7 @@ int login(char *email, char *password)
         return fila;
 }
 
-int create_new_user(char *email, char *password, char *username, char* range)
+int create_new_user(char *username, char *password, char* range, char* rif, char* direccion)
 {
         FILE *fp;
 
@@ -43,30 +43,16 @@ int create_new_user(char *email, char *password, char *username, char* range)
         if (fp == NULL)
                 return -1;
 
-        if (search_data_file(fp, 1, email) != -1)
+        if (search_data_file(fp, 1, username) != -1)
                 return 0;
 
-        time_t rawtime;
-        struct tm *info;
         char ID[20];
 
-        time(&rawtime);
-
-        info = localtime(&rawtime);
-
-        strftime(ID, 20, "%y%m%H%I%M%S%p", info);
+        create_ID(ID);
 
         char line[320];
 
-        strcpy(line, ID);
-        strcat(line, "\t");
-        strcat(line, email);
-        strcat(line, "\t");
-        strcat(line, password);
-        strcat(line, "\t");
-        strcat(line, username);
-        strcat(line, "\t");
-        strcat(line, "USER");
+        sprintf(line, "%s\t%s\t%s\t%s\t%s\t%s", ID, username, password, "USER", rif, direccion);
 
         add_line_file(fp, line);
 
@@ -75,7 +61,7 @@ int create_new_user(char *email, char *password, char *username, char* range)
         return 1;
 }
 
-int search_user(char *email)
+int search_user(char *username)
 {
         FILE *fp;
 
@@ -83,7 +69,7 @@ int search_user(char *email)
         if (fp == NULL)
                 return -1;
 
-        int resul = search_data_file(fp, 1, email);
+        int resul = search_data_file(fp, 1, username);
 
         if (resul == -1)
                 return -2;
@@ -92,7 +78,7 @@ int search_user(char *email)
         return resul;
 }
 
-int get_data_user(int row, char *ID, char *email, char *password, char *username, char *range)
+int get_data_user(int row, char *ID, char *username, char *password, char *range, char* rif, char* direccion)
 {
         FILE *fp;
 
@@ -101,12 +87,14 @@ int get_data_user(int row, char *ID, char *email, char *password, char *username
                 return -1;
 
         read_col_file(fp, row, 0, ID);
-        read_col_file(fp, row, 1, email);
+        read_col_file(fp, row, 1, username);
         read_col_file(fp, row, 2, password);
-        read_col_file(fp, row, 3, username);
-        read_col_file(fp, row, 4, range);
+        read_col_file(fp, row, 3, range);
+        read_col_file(fp, row, 4, rif);
+        read_col_file(fp, row, 5, direccion);
 
         fclose(fp);
+        return 0;
 }
 
 int change_password(char *ID, char *newPassword)
@@ -155,7 +143,7 @@ int change_username(char *ID, char *newUsername)
         }
 
         char temp[100];
-        read_col_file(fp, search, 2, temp);
+        read_col_file(fp, search, 1, temp);
 
         if (!strcmp(temp, newUsername))
         {
@@ -163,7 +151,7 @@ int change_username(char *ID, char *newUsername)
                 return 2;
         }
 
-        modify_col_file(fp, search, 3, newUsername);
+        modify_col_file(fp, search, 1, newUsername);
 
         fclose(fp);
         return 1;
@@ -205,7 +193,7 @@ int set_admin(char *ID)
                 return -1;
         }
 
-        modify_col_file(fp, row, 4, "ADMIN");
+        modify_col_file(fp, row, 3, "ADMIN");
 
         fclose(fp);
         return 1;
@@ -226,7 +214,7 @@ int set_user(char *ID)
                 return -1;
         }
 
-        modify_col_file(fp, row, 4, "USER");
+        modify_col_file(fp, row, 3, "USER");
 
         fclose(fp);
         return 1;

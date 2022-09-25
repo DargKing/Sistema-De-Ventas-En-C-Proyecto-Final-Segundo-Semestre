@@ -2,6 +2,7 @@
 #include <windowsx.h>
 #include <wchar.h>
 #include <string.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <wingdi.h>
@@ -18,6 +19,7 @@
 #include "handlers/struct.h"
 #include "handlers/caracteres.h"
 #include "handlers/clientes.h"
+#include "handlers/facturas.h"
 
 int destroyingWindow = 0;
 int mouseTranking = 0;
@@ -931,6 +933,12 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         break;
 
                 case TOOLBAR_IMAGE_HISTORIAL_VENTAS:
+                        i = get_jumplines_venta_file();
+                        if (i == 0)
+                        {
+                                MessageBox(NULL, "Error: Debe Registrar una venta", NULL, MB_ICONERROR);
+                                return 0;
+                        }
                         DestroyWindow(hBodyVentas);
                         hTableCurrentRow == NULL;
                         CreateBodyVentasMainWindow(FALSE);
@@ -1202,6 +1210,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
         STRUCTPRODUCTOSDATA dataP;
         STRUCTPRODUCTOSDATA newDataP;
         STRUCTVENTASDATA dataV;
+        STRUCTUSERDATA dataUserSingup;
         char *productos;
 
         switch (msg)
@@ -1209,24 +1218,77 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
         case WM_COMMAND:
                 switch (wp)
                 {
+                case SINGUP_USER:
+                        GetWindowTextA(hName, dataUserSingup.username, 100);
+                        GetWindowTextA(hPassword, dataUserSingup.password, 100);
+                        GetWindowTextA(hRifCompany, dataUserSingup.rif_company, 100);
+                        GetWindowTextA(hDireccionCompany, dataUserSingup.direccion, 100);
+
+                        if (!strcmp(dataUserSingup.username, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte un Usuario", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+
+                        if (search_user(dataUserSingup.username) >= 0)
+                        {
+                                MessageBoxA(NULL, "Error, Usuario Ya Existente", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+
+                        if (!strcmp(dataUserSingup.password, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte una contraseña", NULL, MB_ICONERROR);
+                        }
+
+                        if (!strcmp(dataUserSingup.direccion, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte una direccion", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+
+                        if (!strcmp(dataUserSingup.rif_company, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte un RIF", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+
+                        if (solo_number(dataUserSingup.rif_company))
+                        {
+                                MessageBoxA(NULL, "Error, Solo se aceptan numeros en el RIF", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+
+                        if (create_new_user(dataUserSingup.username, dataUserSingup.password, "USER",
+                                            dataUserSingup.rif_company, dataUserSingup.direccion) == 1)
+                        {
+                                MessageBox(NULL, "Usuario a sido creado Existosamente", NULL, MB_OK);
+                        }
+                        else
+                        {
+                                MessageBox(NULL, "Error, user.txt no encontrado", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+                        ShowWindow(hSingUp, SW_HIDE);
+                        ShowWindow(hLogin, SW_SHOW);
+                        break;
+                case OPEN_SINGUP_USER_WINDOW:
+                        CreateSingupWindow();
+                        ShowWindow(hLogin, SW_HIDE);
+                        break;
                 case VIEW_FACTURA:
                         CreateWindowFactura();
                         break;
                 case CREATE_CLIENT_FORM_VENTAS:
                         GetWindowTextA(hFormClient.name, dataC.name, 100);
-                        GetWindowTextA(hFormClient.lastname, dataC.lastname, 100);
                         GetWindowTextA(hFormClient.phone, dataC.phone, 20);
                         GetWindowTextA(hFormClient.TdP, dataC.TdP, 2);
                         GetWindowTextA(hFormClient.dni, dataC.dni, 20);
+                        GetWindowTextA(hFormClient.zone, dataC.zone, 100);
 
                         if (!strcmp(dataC.name, ""))
                         {
                                 MessageBoxA(NULL, "Error, Inserte un nombre", NULL, MB_ICONERROR);
-                                return 0;
-                        }
-                        if (!strcmp(dataC.lastname, ""))
-                        {
-                                MessageBoxA(NULL, "Error, Inserte un Apellido", NULL, MB_ICONERROR);
                                 return 0;
                         }
                         if (!strcmp(dataC.phone, ""))
@@ -1244,10 +1306,16 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                                 MessageBoxA(NULL, "Error, Inserte un DNI", NULL, MB_ICONERROR);
                                 return 0;
                         }
+                        if (!strcmp(dataC.zone, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte una Direccion", NULL, MB_ICONERROR);
+                                return 0;
+                        }
 
                         create_ID(dataC.ID);
 
-                        new_client(dataC.ID, dataC.name, dataC.lastname, dataC.dni, dataC.phone, dataC.TdP);
+                        new_client(dataC.ID, dataC.name, dataC.dni, dataC.phone, dataC.TdP);
+                        create_new_invoices(dataC.zone, currentUser.rif_company, dataC.ID, currentUser.direccion);
 
                         DestroyWindow(hFormClient.container);
                         DestroyWindow(hBodyClientes);
@@ -1543,10 +1611,10 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         break;
                 case MODIFY_CLIENT_FORM:
                         GetWindowTextA(hFormClient.name, dataC.name, 100);
-                        GetWindowTextA(hFormClient.lastname, dataC.lastname, 100);
                         GetWindowTextA(hFormClient.phone, dataC.phone, 20);
                         GetWindowTextA(hFormClient.TdP, dataC.TdP, 2);
                         GetWindowTextA(hFormClient.dni, dataC.dni, 20);
+                        GetWindowTextA(hFormClient.zone, dataC.zone, 100);
 
                         int row;
 
@@ -1554,12 +1622,6 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         {
                                 row = search_clients(currentDataC.ID);
                                 modify_name_clients(row, dataC.name);
-                        }
-
-                        if (strcmp(dataC.lastname, currentDataC.lastname))
-                        {
-                                row = search_clients(currentDataC.ID);
-                                modify_lastname_clients(row, dataC.lastname);
                         }
 
                         if (strcmp(dataC.dni, currentDataC.dni))
@@ -1580,6 +1642,27 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                                 modify_TdP_clients(row, dataC.TdP);
                         }
 
+                        char direccion[100];
+
+                        int rowFactura = search_invoice_id_client(currentDataC.ID);
+
+                        get_zone_invoice(rowFactura, direccion);
+
+                        if (strcmp(dataC.zone, direccion))
+                        {
+                                char ID_factura[20];
+                                char rif_company[100];
+                                char date[20];
+                                char direccion_company[100];
+
+                                get_ID_invoice(rowFactura, ID_factura);
+                                get_rif_company_invoice(rowFactura, rif_company);
+                                get_date_invoice(rowFactura, date);
+                                get_direction_company_invoice(rowFactura, direccion_company);
+
+                                modify_invoices(ID_factura, dataC.zone, rif_company, date, currentDataC.ID, direccion_company);
+                        }
+
                         DestroyWindow(hFormClient.container);
                         DestroyWindow(hBodyClientes);
                         hTableCurrentRow = NULL;
@@ -1588,19 +1671,14 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         break;
                 case CREATE_CLIENT_FORM:
                         GetWindowTextA(hFormClient.name, dataC.name, 100);
-                        GetWindowTextA(hFormClient.lastname, dataC.lastname, 100);
                         GetWindowTextA(hFormClient.phone, dataC.phone, 20);
                         GetWindowTextA(hFormClient.TdP, dataC.TdP, 2);
                         GetWindowTextA(hFormClient.dni, dataC.dni, 20);
+                        GetWindowTextA(hFormClient.zone, dataC.zone, 100);
 
                         if (!strcmp(dataC.name, ""))
                         {
                                 MessageBoxA(NULL, "Error, Inserte un nombre", NULL, MB_ICONERROR);
-                                return 0;
-                        }
-                        if (!strcmp(dataC.lastname, ""))
-                        {
-                                MessageBoxA(NULL, "Error, Inserte un Apellido", NULL, MB_ICONERROR);
                                 return 0;
                         }
                         if (!strcmp(dataC.phone, ""))
@@ -1618,10 +1696,16 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                                 MessageBoxA(NULL, "Error, Inserte un DNI", NULL, MB_ICONERROR);
                                 return 0;
                         }
+                        if (!strcmp(dataC.zone, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte una Direccion", NULL, MB_ICONERROR);
+                                return 0;
+                        }
 
                         create_ID(dataC.ID);
 
-                        new_client(dataC.ID, dataC.name, dataC.lastname, dataC.dni, dataC.phone, dataC.TdP);
+                        new_client(dataC.ID, dataC.name, dataC.dni, dataC.phone, dataC.TdP);
+                        create_new_invoices(dataC.zone, currentUser.rif_company, dataC.ID, currentUser.direccion);
 
                         DestroyWindow(hFormClient.container);
                         DestroyWindow(hBodyClientes);
@@ -1638,9 +1722,11 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                                 MessageBox(NULL, "Error, Database Not Exist", "ERROR", MB_ICONERROR);
                         if (log >= 0)
                         {
+                                get_data_user(log, currentUser.ID, currentUser.username, currentUser.password,
+                                              currentUser.range, currentUser.rif_company, currentUser.direccion);
                                 CreateMainWindow();
                                 destroyingWindow = 1;
-                                DestroyWindow(hWnd);
+                                DestroyWindow(hLogin);
                         }
                         break;
                 case CLOSE_WINDOW:
@@ -1677,6 +1763,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case SELECT_CLIENT_VENTAS:
                 case ADD_CLIENT_VENTAS:
                 case VIEW_FACTURA:
+                case OPEN_SINGUP_USER_WINDOW:
+                case SINGUP_USER:
                         InvalidateRect(hWnd, NULL, FALSE);
                         break;
                 case LOGIN_USER:
@@ -1715,6 +1803,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         case SELECT_CLIENT_VENTAS:
                         case ADD_CLIENT_VENTAS:
                         case VIEW_FACTURA:
+                        case OPEN_SINGUP_USER_WINDOW:
+                        case SINGUP_USER:
                                 draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE_CLICK), COLOR_BLACK, text);
                                 break;
                         case LOGIN_USER:
@@ -1753,6 +1843,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case SELECT_CLIENT_VENTAS:
                 case ADD_CLIENT_VENTAS:
                 case VIEW_FACTURA:
+                case OPEN_SINGUP_USER_WINDOW:
+                case SINGUP_USER:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE_HOVER), COLOR_BLACK, text);
                         break;
 
@@ -1792,6 +1884,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case SELECT_CLIENT_VENTAS:
                 case ADD_CLIENT_VENTAS:
                 case VIEW_FACTURA:
+                case OPEN_SINGUP_USER_WINDOW:
+                case SINGUP_USER:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE), COLOR_BLACK, text);
                         break;
                 case LOGIN_USER:
@@ -1827,6 +1921,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case LOGIN_USER:
                         SendMessageA(hLogin, WM_COMMAND, CLOSE_WINDOW, NULL);
                         break;
+                case SINGUP_USER:
                 case CLOSE_WINDOW:
                 case WINDOW_PRODUCT_VENTAS:
                 case CLOSE_WINDOW_PRODUCT_VENTAS:
@@ -1838,6 +1933,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case CLOSE_WINDOW_CLIENTS_VENTAS:
                 case CREATE_CLIENT_FORM_VENTAS:
                 case VIEW_FACTURA:
+                case OPEN_SINGUP_USER_WINDOW:
                         DestroyWindow(hWnd);
                         break;
                 case CREATE_CLIENT_FORM:
@@ -2398,7 +2494,7 @@ LRESULT CALLBACK BodyRowCellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPAR
                 menu = GetMenu(hWnd);
 
                 data = dataClient[menu];
-                width = rect.right / 6;
+                width = rect.right / 5;
 
                 char TipoDePersona[20];
 
@@ -2412,11 +2508,10 @@ LRESULT CALLBACK BodyRowCellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPAR
                         strcpy(TipoDePersona, "Juridico");
 
                 draw_cell(data.name, hdc, 0, 0, width, ROW_TABLE_HEIGHT);
-                draw_cell(data.lastname, hdc, width, 0, width, ROW_TABLE_HEIGHT);
-                draw_cell(data.dni, hdc, width * 2, 0, width, ROW_TABLE_HEIGHT);
-                draw_cell(data.phone, hdc, width * 3, 0, width, ROW_TABLE_HEIGHT);
-                draw_cell(TipoDePersona, hdc, width * 4, 0, width, ROW_TABLE_HEIGHT);
-                draw_cell(data.date, hdc, width * 5, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(data.dni, hdc, width, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(data.phone, hdc, width * 2, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(TipoDePersona, hdc, width * 3, 0, width, ROW_TABLE_HEIGHT);
+                draw_cell(data.date, hdc, width * 4, 0, width, ROW_TABLE_HEIGHT);
 
                 if (hTableCurrentRow != hWnd)
                         draw_border(hdc, rect, CreateSolidBrush(RGB(0, 0, 0)), 2);

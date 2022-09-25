@@ -17,6 +17,7 @@
 char main_class[5];
 
 void CreateLoginWindow();
+void CreateSingupWindow();
 void CreateMainWindow();
 void CreateHeader();
 void CreateNavBar();
@@ -45,6 +46,7 @@ void CreateTableListofVentas(HWND hWnd, int xTable, int yTable, int cxTable, int
 
 void CreateTableListOfProducts(int x, int y, int cx, int cy);
 void CreateHeaderTableCurrentProducts(HWND hWnd);
+void CreateHeaderTableProductsVentas(HWND hWnd, int x, int y, int cx);
 
 void CreateBodyClienteMainWindow();
 void CreateBodyVentasMainWindow(BOOL type);

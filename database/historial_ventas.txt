@@ -1,4 +1,0 @@
-ID      CLIENTE         FECHA           PRODUCTOS                               TOTAL
-AB1     JUANA TORRES    24-07-2022      PLATANITO=1/RUFLES=3/AGUA MINERAL=2     145
-AB2     PEDRO PEREZ     22-05-2022      PLATANITO=1/RUFLES=2                    55
-AB3     FULANITO DETAL  30-01-2022      AGUA MINERAL=2                          70

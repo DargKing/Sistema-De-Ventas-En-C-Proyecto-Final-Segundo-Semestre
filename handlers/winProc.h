@@ -28,6 +28,7 @@
 #define OPEN_FORM_CLIENTS_VENTAS 18
 #define CREATE_CLIENT_FORM_VENTAS 19
 #define VIEW_FACTURA 20
+#define OPEN_SINGUP_USER_WINDOW 21
 
 
 // Others
@@ -75,10 +76,10 @@ HWND hBody, hBodyInventario, hBodyClientes, hBodyVentas;
 HWND hNavActual, hToolBarActual;
 
 // Ventanas
-HWND hMain, hLogin;
+HWND hMain, hLogin, hSingUp;
 
 // Edits
-HWND hName, hPassword;
+HWND hName, hPassword, hRifCompany, hDireccionCompany;
 
 // Statics
 HWND hStatic1, hStatic2;
@@ -104,6 +105,7 @@ typedef struct CLIENTESHWND
 {
     HWND container;
     HWND name;
+    HWND zone;
     HWND lastname;
     HWND dni;
     HWND phone;
@@ -115,6 +117,7 @@ typedef struct CLIENTESDATA
     char ID[20];
     char name[100];
     char lastname[100];
+    char zone[100];
     char dni[20];
     char phone[20];
     char TdP[2];
@@ -162,7 +165,20 @@ typedef struct CURRENTPRODUCTOSDATA
     char category[100];
 } STRUCTCURRENTPRODUCTOSDATA;
 
+// User
+
+typedef struct USERDATA{
+    char ID[20];
+    char username[100];
+    char range[100];
+    char password[100];
+    char rif_company[100];
+    char direccion[100];
+} STRUCTUSERDATA;
+STRUCTUSERDATA currentUser;
+
 // Tabla
+
 
 STRUCTCLIENTESHWND *hTableCliente;
 // HWND *hTableCliente;
