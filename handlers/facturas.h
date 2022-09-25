@@ -43,18 +43,20 @@ Las funciones se dividiran en:
 		char naturaleza();	"Opcional"
 */
 
+#include <stdbool.h>
+
 int create_new_invoices(char *zone, char *rif_company, char *id_client, char *direction_company);
+int modify_invoices(char *ID, char *zone, char *rif_company, char *date, char *id_client, char *direction_company);
 int delete_invoice(char *ID);
 
+int hide_invoice(int i);
+
 char get_ID_invoice(int i, char *str);	
-char get_code_invoice(int i, char *str);	
-int get_name_invoice(int row, char *str);
-int get_zone_invoice(int row, char *str);
-int get_dni_invoice(int row, char *str);
+int get_zone_invoice(int i, char *str);
 int get_date_invoice(int row, char *str);
 int get_id_client_invoice(int row, char *str);
-int get_price_invoice(int row, char *str);
-char get_naturaleza(int row);
+int get_rif_company_invoice(int row, char *str);
+int get_direction_company_invoice(int row, char *str);
 
 int admit_rif(char nationality[], char str[]);
 int extension(char str[]);	
@@ -68,7 +70,6 @@ int gets_jumplines_invoice();
 char naturaleza(char opcion);	
 char no_repeat(char rif[]);	
 
-bool solo_number(char *str);	
+int search_invoice_id_client(char ID[]);
 
-void sort_date_invoice(struct STRUCTINVOICEDATA *DATOS, int p);
-void sort_code_invoice(struct STRUCTINVOICEDATA *DATOS, int p);
+bool solo_number(char *str);	

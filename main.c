@@ -21,8 +21,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInst, LPSTR args, int ncm
 
         MSG msg = {0};
 
-        // CreateLoginWindow();
-        CreateMainWindow();
+        CreateLoginWindow();
+        // CreateMainWindow();
 
         while (GetMessage(&msg, NULL, NULL, NULL))
         {
