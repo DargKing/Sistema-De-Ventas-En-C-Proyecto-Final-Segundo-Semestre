@@ -17,6 +17,7 @@ estructura HWND que contendra el identificador de la ventana a la cual se acopla
 
 Siguiendo con el tema de las clases, para crear una clase se tiene que crear una variable con la estructura WNDCLASS y despues rellenar los datos de esta,
 despues de rellenar los datos se pasa por la funcion RegisterClass, despues de eso la clase estara registrada
+Una cosa escencial en una clase es el manejador de mensajes, este manejador se explicara en winProc.c
 */
 
 #include <windows.h>

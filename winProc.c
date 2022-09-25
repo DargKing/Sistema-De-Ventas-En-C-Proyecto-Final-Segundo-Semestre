@@ -1,3 +1,31 @@
+/*
+winProc.c se encarga de manejar los mensajes de las ventanas.
+
+Los mensajes son los eventos o acciones que le esten sucediendo a la ventana, al clickar una ventana se esta mandando el mensaje
+WM_LBUTTONDOWN y al pintarse una ventana se esta mandando el evento WM_PAINT.
+
+Para manejar los mensajes se hacen uso de funciones las cuales contienen un switch y analizan el parametro msg, 
+dependiendo del mensaje se hara una accion u otra.
+
+Los mensajes tienen un orden en el que se ejecutan, ejemplo WM_CREATE es un mensaje que se manda a la funcion cuando
+la ventana se creo (No es del todo exacto ya que WM_CREATE se manda unos mensajes despues de crearse, el primer mensaje cuando se crea es
+WM_NCCREATE). cuando la ventana se esta pintando es WM_PAINT, y cuando se presiona es WM_LBUTTONDOWN
+
+Algunos mensajes
+
+WM_COMMAND = Este mensaje lo manda el desarrollador y se utiliza para realizar acciones especiales
+WM_DESTROY = La ventana se esta cerrando
+WM_CREATE = La ventana se esta Creando
+WM_SIZE = la ventana esta ajustando su tamaño
+WM_VSCROLL = La ventana detecto que el scrollbar se movio
+WM_PAINT = La pantalla se esta dibujando
+WM_LBUTTONDOWN = La ventana fue presionada por el click derecho del mouse
+WM_LBUTTONUP = La ventana dejo de ser presionada por el click derecho del mouse
+WM_MOUSEMOVE = El mouse esta encima de la ventana
+WM_MOUSELEAVE = El mouse salio de la ventana
+
+*/
+
 #include <windows.h>
 #include <windowsx.h>
 #include <wchar.h>
@@ -25,6 +53,18 @@ int destroyingWindow = 0;
 int mouseTranking = 0;
 int mouseTrack = 0;
 int display_scrollbar = 0;
+
+/*
+
+DivWindowProcedure. Este manejador se encarga de manejar las tablas de datos, ejemplo la tabla de clientes, ventas o productos.
+
+Mensajes
+        WM_CREATE = En este mensaje se usa para ajustar el tamaño de las columnas de la tabla
+        WM_PAINT = Se usa para pintar correctamente la ventana cuando se mueva el scrollbar
+        WM_SIZE = Durante este mensaje se inserta el scrollbar si es necesario
+        WM_VSCROLL = Se usa para controlar el scrollbar
+
+*/
 
 LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -463,74 +503,12 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
         }
 }
 
-LRESULT CALLBACK ScrollBarProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
-{
-        char text[100];
-        int newPos;
-        int oldPos;
-        SCROLLINFO scrollInfo;
-        RECT rect;
+/*
+ClientWindowProcedure. Esta funcion es una vacia, sirve para manejar las ventanas que no son la principal
 
-        switch (msg)
-        {
-        case WM_VSCROLL:
-
-                scrollInfo.cbSize = sizeof(SCROLLINFO);
-                scrollInfo.fMask = SIF_POS | SIF_RANGE | SIF_TRACKPOS | SIF_PAGE;
-
-                GetScrollInfo(hWnd, SB_VERT, &scrollInfo);
-
-                oldPos = scrollInfo.nPos;
-
-                switch (LOWORD(wp))
-                {
-                case SB_PAGEUP:
-                        scrollInfo.nPos -= rect.bottom - HeaderHeight;
-                        break;
-                case SB_PAGEDOWN:
-                        GetClientRect(hMain, &rect);
-                        scrollInfo.nPos += rect.bottom - HeaderHeight;
-                        break;
-                case SB_BOTTOM:
-                        scrollInfo.nPos = scrollInfo.nMax;
-                        break;
-                case SB_TOP:
-                        scrollInfo.nPos = scrollInfo.nMin;
-                        break;
-                case SB_LINEUP:
-                        if (scrollInfo.nPos > 0)
-                                scrollInfo.nPos -= 20;
-                        break;
-                case SB_LINEDOWN:
-                        GetClientRect(hTableContainer, &rect);
-
-                        if (scrollInfo.nPos < rect.bottom - scrollInfo.nPage)
-                                scrollInfo.nPos += 20;
-                        break;
-                case SB_THUMBTRACK:
-                        scrollInfo.nPos = HIWORD(wp);
-                        break;
-                }
-
-                scrollInfo.fMask = SIF_POS;
-                SetScrollInfo(hWnd, SB_VERT, &scrollInfo, TRUE);
-
-                newPos = scrollInfo.nPos;
-
-                if (newPos != oldPos)
-                {
-                        GetClientRect(hTableContainer, &rect);
-                        ScrollWindowEx(hTableContainer, 0, oldPos - newPos, &rect, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN);
-                        rect.top = newPos;
-                        rect.bottom = newPos + scrollInfo.nPage;
-                        // InvalidateRect(hTableContainer, &rect, TRUE);
-                        UpdateWindow(hTableContainer);
-                }
-                break;
-        default:
-                CallWindowProcA(DefWindowProcA, hWnd, msg, wp, lp);
-        }
-}
+Message
+        WM_DESTROY = Destruye la ventana
+*/
 
 LRESULT CALLBACK ClientWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -551,6 +529,17 @@ LRESULT CALLBACK ClientWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
                 DefWindowProcA(hWnd, msg, wp, lp);
         }
 }
+
+/*
+ClientFacturaWindowProcedure. Se encarga de manejar la ventana Factura. 
+
+Message
+        WM_COMMAND = Dependiendo de lo que contenga el parametro wp sucedera...:
+                CLOSE_WINDOW = Cierra la ventana
+        WM_DESTROY = Cierra la ventana
+        WM_SIZE = Establece el ScrollBar si es necesario
+        WM_VSCROLL = Maneja el scrollbar
+*/
 
 LRESULT CALLBACK ClientFacturaWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -659,6 +648,15 @@ LRESULT CALLBACK ClientFacturaWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LP
         }
 }
 
+/*
+MainWindowProcedure. Controla la ventana principal, no hace nada ademas de cerrar la aplicacion en general
+
+Message
+        WM_COMMAND = Dependiendo de lo que contenga el parametro wp sucedera...:
+                CLOSE_WINDOW = Cierra la ventana
+        WM_DESTROY = Acaba la ejecucion del programa
+*/
+
 LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         switch (msg)
@@ -678,6 +676,15 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 DefWindowProcA(hWnd, msg, wp, lp);
         }
 }
+
+/*
+LoginWindowProcedure. Esta ventana se encarga de manejar la ventana Login, Sirve para la clase LOGIN
+
+Message
+        WM_COMMAND = Dependiendo de lo que contenga el parametro wp sucedera...:
+                CLOSE_WINDOW = Destruye la ventana
+        WM_DESTROY = Termina la ejecucion del programa
+*/
 
 LRESULT CALLBACK LoginWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -701,6 +708,10 @@ LRESULT CALLBACK LoginWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
         }
 }
 
+/*
+        MainHeaderWindowProcedure. Este es un manejador vacio, no hace nada sirve para la clase HEADER
+*/
+
 LRESULT CALLBACK MainHeaderWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         RECT rect;
@@ -717,6 +728,14 @@ LRESULT CALLBACK MainHeaderWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARA
                 DefWindowProcA(hWnd, msg, wp, lp);
         }
 }
+
+/*
+MainNavWindowProcedure. Maneja el contenedor del nav.
+
+Message
+        WM_DESTROY = Cierra la ventana
+        WM_PAINT = Pinta la ventana
+*/
 
 LRESULT CALLBACK MainNavWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -742,6 +761,24 @@ LRESULT CALLBACK MainNavWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 DefWindowProcA(hWnd, msg, wp, lp);
         }
 }
+
+/*
+ToolBarWindowProcedure. Maneja los mensajes de la barra de navegacion. Cuando se preciona una de las pestañas se cierra lo que se esta 
+viendo y se cambia a otra
+
+Message 
+        WM_COMMAND = Dependiendo de lo que especifique el parametro wp hara lo siguiente
+                NAV_INVENTARIO = Cerrara el body actual y llamara a la funcion CreateBodyProductos
+                NAV_CLIENTES = Cerrara el body actual y llamara a la funcion CreateBodyClienteMainWindow
+                NAV_VENTAS = Cerrara el body actual y llamara a la funcion CreateBodyVentasMainWindow
+        
+        WM_DESTROY = Cierra la ventana
+        WM_MOUSEHOVER = Se hace un poco mas oscuro el fondo
+        WM_MOUSELEAVE = Se reestablece el fondo
+        WM_MOUSEMOVE = Se trakea el mouse para saber en que lugar esta en todo momento
+        WM_LBUTTONDOWN = Se envia un mensaje a WM_COMMAND con el parametro wp segun su menu
+        WM_PAINT = Pinta la ventana
+*/
 
 LRESULT CALLBACK ToolBarWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -863,6 +900,32 @@ LRESULT CALLBACK ToolBarWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
         }
 }
 
+/*
+ToolWindowProcedure. Maneja la clase TOOL, esta clase es parecida a los botones ya que cumplen la misma funcion pero con diferente diseño
+
+Message
+        WM_DESTROY = Destruye la ventana
+        WM_LBUTTONDOWN = Despendiendo de el Menu de la ventana hara una accion diferente al presionarse
+                TOOLBAR_IMAGE_DELETE_CLIENTE = Elimina el cliente seleccionado
+                TOOLBAR_IMAGE_MODIFY_CLIENTE = Abre el formulario para modificar clientes
+                TOOLBAR_IMAGE_NEW_CLIENTE = Abre el formulario para Crear Clientes
+
+                TOOLBAR_IMAGE_NEW_INVENTARIO = Abre el formulario para crear productos
+                TOOLBAR_IMAGE_MODIFY_INVENTARIO - Abre el formulario para modificar productos
+                TOOLBAR_IMAGE_DELETE_INVENTARIO = Elimina el producto Seleccionado
+
+                TOOLBAR_IMAGE_NEW_VENTAS = Cierra la seccion de ventas actual y abre la de nueva venta
+                TOOLBAR_IMAGE_HISTORIAL_VENTAS = Cierra la seccion de ventas actual y abre el historial de ventas
+                TOOLBAR_IMAGE_VER_VENTAS = Abre una ventana mostrando a detalle la venta seleccionada
+        
+        WM_CREATE = Al crearse la ventana se crea una ventana clase STATIC la cual servira para mostrar una imagen
+        WM_MOUSEMOVE = Trakea el mouse
+        WM_MOUSEHOVER = Si el mouse esta encima de la ventana entonces cambia a un color amarillo verdoso
+        WM_MOUSELEAVE = El color se reestablece
+        WM_PAINT = Se pinta en pantalla la ventana, despues de eso a la ventana dentro de esta se le establece una imagen especificada por su menu
+
+*/
+
 LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         RECT rect;
@@ -982,12 +1045,13 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         break;
 
                 // Ventas
-                case TOOLBAR_IMAGE_NEW_VENTAS:
-                        hNuevaVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 40 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_NEW_INVENTARIO, NULL, NULL);
-                        break;
-                case TOOLBAR_IMAGE_DELETE_VENTAS:
-                        hEliminarVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_DELETE_INVENTARIO, NULL, NULL);
-                        break;
+                // case TOOLBAR_IMAGE_NEW_VENTAS:
+                //         hNuevaVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 40 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_NEW_INVENTARIO, NULL, NULL);
+                //         break;
+                // case TOOLBAR_IMAGE_DELETE_VENTAS:
+                //         hEliminarVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_DELETE_INVENTARIO, NULL, NULL);
+                //         break;
+                
                 case TOOLBAR_IMAGE_MODIFY_VENTAS:
                         hModificarVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
                         break;
@@ -1152,6 +1216,14 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
         }
 }
 
+/*
+STransparentWindowProcedure. Este manejador se encarga de la clase S_TRANSPARENT, esta clase es como un STATIC normal pero transparente
+
+Message
+        WM_PAINT = Pinta el texto con un fondo transparente, si en el Menu se le especifica SS_CENTER se centrara el texto
+        WM_DESTROY = Destruye la ventana
+*/
+
 LRESULT CALLBACK STransparentWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         PAINTSTRUCT ps;
@@ -1191,13 +1263,77 @@ LRESULT CALLBACK STransparentWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPA
         }
 }
 
+/*
+ButtonsWindowProcedure. Este se encarga de manejar los mensajes de los botones, este es el manejador mas extenso y el que mas uso se le da.
+
+Mensajes
+
+WM_PAINT = Se encarga de pintar los botones, los colores de este dependera de lo que se obtenga de su GetMenu
+        Color Azul  
+                NEW_VENTA:
+                SELECT_CLIENT_VENTAS:
+                ADD_CLIENT_VENTAS:
+                VIEW_FACTURA:
+                OPEN_SINGUP_USER_WINDOW:
+                SINGUP_USER:
+
+
+        Color Verde
+                LOGIN_USER:
+                CREATE_CLIENT_FORM:
+                ADD_PRODUCT_VENTAS:
+                ADD_PRODUCT_FORM:
+                MODIFY_CLIENT_FORM:
+                WINDOW_PRODUCT_VENTAS:
+                MODIFY_PRODUCT_FORM:
+                OPEN_FORM_CLIENTS_VENTAS:
+                CREATE_CLIENT_FORM_VENTAS:
+
+
+        Color Rojo
+                CLOSE_WINDOW:
+                CLOSE_CLIENT_FORM:
+                DELETE_PRODUCT_VENTAS:
+                CLOSE_WINDOW_PRODUCT_VENTAS:
+                CLOSE_FORM_PRODUCT:
+                CLOSE_WINDOW_CLIENTS_VENTAS:
+
+WM_MOUSEMOVE = Trakea el mouse para saber si este se esta moviendo en la ventana
+WM_MOUSEHOVER = Si el mouse pasa por encima de la ventana cambia a un color mas oscuro
+WM_LBUTTONDOWN = El color de la ventana se vuelve mas oscuro que el de WM_MOUSEHOVER
+WM_LBUTTONUP = El color de la ventana se reestablece y manda WM_COMMAND a si mismo
+WM_MOUSELEAVE = El color de la ventana se reinicia al del comienzo si detecta que el mouse salio del area del boton
+WM_DESTROY = Se destruye la ventana
+
+WM_COMMAND = Al recibir este comando dependiendo del contenido en el paramentro wp hara lo siguiente
+        SINGUP_USER = Creara un nuevo usuario, ocultara la ventana singup y mostrara de neuvo la ventana login
+        OPEN_SINGUP_USER_WINDOW = Crea la ventana SingUp y cierra la ventana login
+        LOGIN_USER = Logeara el usuario y destruira la ventana login
+        VIEW_FACTURA = Mostrara la factura de la venta seleccionada
+        CREATE_CLIENT_FORM_VENTAS = Crea un nuevo cliente tomando los datos del formulario clientes
+        OPEN_FORM_CLIENTS_VENTAS = Crea el formulario para crear un cliente fuera de la pestaña clientes
+        ADD_CLIENT_VENTAS = Se establecera como el que comprara el producto en la pestaña ventas
+        CLOSE_WINDOW_CLIENTS_VENTAS = Cierra la ventana para seleccionar clientes
+        SELECT_CLIENT_VENTAS = Crea la ventana para seleccionar el cliente para la venta
+        NEW_VENTA = Registra una nueva venta
+        CLOSE_FORM_PRODUCT = Cierra el formulario de productos
+        CLOSE_WINDOW_PRODUCT_VENTAS = Cierra la ventana donde se seleccionan los productos que se compraran
+        WINDOW_PRODUCT_VENTAS = Crea la ventana donde se seleccionaran los productos a vender
+        ADD_PRODUCT_VENTAS = Añade el producto a la tabla de productos a vender
+        DELETE_PRODUCT_VENTAS = Elimina el producto de la tabla de productos a vender
+        ADD_PRODUCT_FORM = Crea un producto a partir de los datos de el formulario para crear productos
+        MODIFY_PRODUCT_FORM = Modifica el producto especificado
+        CREATE_CLIENT_FORM = Crea un nuevo usuario a partir de los datos del formulario de clientes
+        CLOSE_WINDOW = Termina la ejecucion del programa
+        CLOSE_CLIENT_FORM = Cierra el formulario para agregar o modificar clientes
+*/
+
 LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         PAINTSTRUCT ps;
         HDC hdc;
 
         RECT rect;
-
         char text[100];
         char name_c[100], password_c[100];
         char amount[100];
@@ -1950,97 +2086,15 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
         }
 }
 
-LRESULT CALLBACK ButtonRedWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
-{
-        POINT pt;
-        char Coords[100];
+/*
+HeaderCellWindowProcedure. Se encarga de manejar una unica celda, este se usa en la clase HEADER_CELL y esta para celdas individuales.
+Su proposito esta en la creacion de headers para las tablas y asi identificar las columnas
 
-        PAINTSTRUCT ps;
-        HDC hdc;
+mensajes
 
-        RECT rect;
-        RECT rect_temp;
-
-        char text[100];
-        char name_c[100], password_c[100];
-
-        switch (msg)
-        {
-        case WM_COMMAND:
-                switch (wp)
-                {
-                case CLOSE_WINDOW:
-                        PostQuitMessage(0);
-                        break;
-                }
-                break;
-        case WM_LBUTTONUP:
-                SendMessageA(hWnd, WM_COMMAND, CLOSE_WINDOW, NULL);
-                break;
-        case WM_MOUSEMOVE:
-                if (!mouseTranking)
-                {
-                        TRACKMOUSEEVENT mouse;
-                        mouse.cbSize = sizeof(mouse);
-                        mouse.hwndTrack = hWnd;
-                        mouse.dwFlags = TME_HOVER | TME_LEAVE;
-                        mouse.dwHoverTime = 10;
-                        TrackMouseEvent(&mouse);
-                        mouseTranking = 1;
-                }
-                break;
-        case WM_MOUSELEAVE:
-                mouseTranking = 0;
-
-                GetClientRect(hWnd, &rect);
-
-                hdc = GetDC(hWnd);
-                GetWindowTextA(hWnd, text, 100);
-
-                draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED), COLOR_BLACK, text);
-
-                ReleaseDC(hWnd, hdc);
-                break;
-        case WM_LBUTTONDOWN:
-                if (mouseTranking)
-                {
-                        GetClientRect(hWnd, &rect);
-                        GetWindowTextA(hWnd, text, 100);
-
-                        hdc = GetDC(hWnd);
-
-                        draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED_CLICK), COLOR_WHITE, text);
-                        ReleaseDC(hWnd, hdc);
-                }
-                break;
-        case WM_MOUSEHOVER:
-                GetClientRect(hWnd, &rect);
-                hdc = GetDC(hWnd);
-
-                GetWindowTextA(hWnd, text, 100);
-                draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED_HOVER), COLOR_WHITE, text);
-
-                ReleaseDC(hWnd, hdc);
-                break;
-        case WM_PAINT:
-                GetClientRect(hWnd, &rect);
-
-                hdc = BeginPaint(hWnd, &ps);
-                GetWindowTextA(hWnd, text, 100);
-
-                draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED), COLOR_BLACK, text);
-
-                EndPaint(hWnd, &ps);
-                return 0;
-                break;
-        case WM_DESTROY:
-                DeleteDC(hdc);
-                DestroyWindow(hWnd);
-                break;
-        default:
-                DefWindowProcA(hWnd, msg, wp, lp);
-        }
-}
+WM_PAINT = Pinta el texto y los bordes
+WM_DESTROY = Se destruira la ventana
+*/
 
 LRESULT CALLBACK HeaderCellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -2083,6 +2137,15 @@ LRESULT CALLBACK HeaderCellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARA
         }
 }
 
+/*
+CellWindowProcedure. Se encarga de manejar una unica celda, este se usa en la clase CELL y esta para celdas individuales
+
+mensajes
+
+WM_PAINT = Pinta el texto y los bordes
+WM_DESTROY = Se destruira la ventana
+*/
+
 LRESULT CALLBACK CellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         PAINTSTRUCT ps;
@@ -2124,6 +2187,18 @@ LRESULT CALLBACK CellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 DefWindowProcA(hWnd, msg, wp, lp);
         }
 }
+
+/*
+BodyRowCellHistorialVentasWindowProcedure. Se encarga de manejar los mensajes de la clase BODY_ROW_CELL_HISTORIALVENTAS, 
+esta clase seria la que se encarga de ser las filas en la tabla de Ventas
+
+Mensajes
+
+WM_LBUTTONDOWN = Al precionar se pone el identificador de su ventana en hTableCurrentRow
+WM_PAINT = Se pinta las columnas junto con la informacion correspondiente de la fila, ademas si la ventana es igual a hTableCurrentRow
+        entonces se le pintara un borde mas grueso
+WM_DESTROY = Se destruira la ventana
+*/
 
 LRESULT CALLBACK BodyRowCellHistorialVentasWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -2283,6 +2358,18 @@ LRESULT CALLBACK BodyRowCellHistorialVentasWindowProcedure(HWND hWnd, UINT msg, 
         }
 }
 
+/*
+BodyRowCellCurrentProductWindowProcedure. Se encarga de manejar los mensajes de la clase BODY_ROW_CELL_CURRENTPRODUCT, 
+esta clase seria la que se encarga de ser las filas en la tabla de productos a comprar en el formulario de ventas
+
+mensajes
+
+WM_LBUTTONDOWN = Al precionar se pone el identificador de su ventana en hTableCurrentRow
+WM_PAINT = Se pinta las columnas junto con la informacion correspondiente de la fila, ademas si la ventana es igual a hTableCurrentRow
+        entonces se le pintara un borde mas grueso
+        WM_DESTROY = Se destruira la ventana
+*/
+
 LRESULT CALLBACK BodyRowCellCurrentProductWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         PAINTSTRUCT ps;
@@ -2372,6 +2459,18 @@ LRESULT CALLBACK BodyRowCellCurrentProductWindowProcedure(HWND hWnd, UINT msg, W
         }
 }
 
+/*
+BodyRowCellProductWindowProcedure. Se encarga de manejar los mensajes de la clase BODY_ROW_CELL_PRODUCT, esta clase seria la que se encarga de ser
+las filas en la tabla de Productos
+
+mensajes
+
+WM_LBUTTONDOWN = Al precionar se pone el identificador de su ventana en hTableCurrentRow
+WM_PAINT = Se pinta las columnas junto con la informacion correspondiente de la fila, ademas si la ventana es igual a hTableCurrentRow
+        entonces se le pintara un borde mas grueso
+        WM_DESTROY = Se destruira la ventana
+*/
+
 LRESULT CALLBACK BodyRowCellProductWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         PAINTSTRUCT ps;
@@ -2455,6 +2554,18 @@ LRESULT CALLBACK BodyRowCellProductWindowProcedure(HWND hWnd, UINT msg, WPARAM w
                 DefWindowProcA(hWnd, msg, wp, lp);
         }
 }
+
+/*
+BodyRowCellWindowProcedure. Se encarga de manejar los mensajes de la clase BODY_ROW_CELL, esta clase seria la que se encarga de ser
+las filas en la tabla de clientes
+
+mensajes
+
+WM_LBUTTONDOWN = Al precionar se pone su identificador en hTableCurrentRow
+WM_PAINT = Se pinta las columnas junto con la informacion correspondiente de la fila, ademas si la ventana es igual a hTableCurrentRow
+        entonces se le pintara un borde mas grueso
+        WM_DESTROY = Se destruira la ventana
+*/
 
 LRESULT CALLBACK BodyRowCellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -2546,6 +2657,14 @@ LRESULT CALLBACK BodyRowCellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPAR
         }
 }
 
+/*
+BodyClientWindowProcedure. Este manejador se usa en la clase BODY, esta clase ya no se usa
+
+Mensajes
+        WM_LBUTTONDOWN = si hTableCurrentRow contiene un identificador este cambia su valor por NULL
+        WM_DESTROY = Destruye la ventana
+*/
+
 LRESULT CALLBACK BodyClientWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
         PAINTSTRUCT ps;
@@ -2571,6 +2690,14 @@ LRESULT CALLBACK BodyClientWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARA
                 DefWindowProcA(hWnd, msg, wp, lp);
         }
 }
+
+/*
+WinProc. Este manejador es uno vacio, el cual se utiliza para clases sin proposito y que no necesitan nada especial
+
+Mensajes
+        WM_DESTROY = Destruye la ventana
+
+*/
 
 LRESULT CALLBACK WinProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
