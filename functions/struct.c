@@ -6,6 +6,114 @@
 #include "../handlers/struct.h"
 #include "../handlers/caracteres.h"
 
+int filas = 0;
+
+/* Función para acomodar la lista según el nombre por orden alfabetico, de
+la A a la Z */
+
+void order_alphabetically ()
+{
+    for (int i = 0; i < filas-1; i++)
+    {
+        for (int j = i+1; j < filas; j++)
+        {
+            if (strcmp(lista[i].name, lista[j].name) > 0)
+            {
+                reordering (i, j);
+            }
+        }
+    }
+}
+
+
+//Función para ordenar la lista según el precio del producto
+
+void order_by_price ()
+{
+    int total_price[999];
+
+    for (int i = 0; i < filas-1; i++)
+    {
+        for (int j = i+1; j < filas; j++)
+        {
+            total_price[i] = atof(lista[i].price) - (atof(lista[i].price) * (atof(lista[i].descount) / 100));
+            total_price[j] = atof(lista[j].price) - (atof(lista[j].price) * (atof(lista[j].descount) / 100));
+
+            if (total_price[i] < total_price[j])
+            {
+                reordering (i, j);
+            }
+        }
+    }
+}
+
+
+//Función para ordenar la lista según el descount que tenga el producto
+
+void order_by_discount ()
+{
+    for (int i = 0; i < filas; i++)
+    {
+        for (int j = 0; j < filas; j++)
+        {
+            if (atof(lista[i].descount) < atof(lista[j].descount))
+            {
+                reordering (i, j);
+            }
+        }
+    }
+}
+
+
+
+/* Función para invertir el orden de los elementos de la lista, se usará después de
+haber llamado otra función de ordenamiento. Todas las funciones de ordenamiento
+acomodan los valores de forma ascendente, por lo que esta función reordanaría la
+lista de forma descendente */
+
+void invest_list ()
+{
+    for (int i = 0; i < filas-1; i++)
+    {
+        for (int j = i+1; j < filas; j++)
+        {
+            reordering (i, j);
+        }
+    }
+}
+
+
+/* Función para reordenar la lista. Toma un valor "i" y un valor "j" que
+son las ublicaciones en los arrays y los intercambia de lugar */
+
+void reordering (int i, int j)
+{
+    char c_ordenar[26];
+    float f_ordenar;
+    int i_ordenar;
+
+    strcpy(c_ordenar, lista[i].name);
+    strcpy(lista[i].name, lista[j].name);
+    strcpy(lista[j].name, c_ordenar);
+
+    f_ordenar      = lista[i].price;
+    lista[i].price = lista[j].price;
+    lista[j].price = f_ordenar;
+
+    f_ordenar         = lista[i].descount;
+    lista[i].descount = lista[j].descount;
+    lista[j].descount = f_ordenar;
+
+    i_ordenar   = lista[i].ID;
+    lista[i].ID = lista[j].ID;
+    lista[j].ID = i_ordenar;
+
+    i_ordenar      = lista[i].stock;
+    lista[i].stock = lista[j].stock;
+    lista[j].stock = i_ordenar;
+}
+
+
 void delete_table_row_client(char* ID)
 {
         int row = search_clients(ID);
