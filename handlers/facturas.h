@@ -43,7 +43,7 @@ Las funciones se dividiran en:
 		char naturaleza();	"Opcional"
 */
 
-int create_new_invoices(char *code, char *name, char *zone, char *dni, char *id_venta, char *price);
+int create_new_invoices(char *zone, char *rif_company, char *id_client, char *direction_company);
 int delete_invoice(char *ID);
 
 char get_ID_invoice(int i, char *str);	

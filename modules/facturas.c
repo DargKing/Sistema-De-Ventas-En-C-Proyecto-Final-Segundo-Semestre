@@ -8,7 +8,7 @@
 
 // Crear Nueva Factura
 
-int create_new_invoices(char *code, char *name, char *zone, char *dni, char *id_venta, char *price)
+int create_new_invoices(char *zone, char *rif_company, char *id_client, char *direction_company)
 {
 
         FILE *fp;
@@ -23,7 +23,7 @@ int create_new_invoices(char *code, char *name, char *zone, char *dni, char *id_
 
         create_date(date);
         create_ID(ID);
-        sprintf(str, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", code, ID, name, zone, dni, date, id_venta, price);
+        sprintf(str, "%s\t%s\t%s\t%s\t%s\t%s", ID, zone, rif_company, date, id_client, direction_company);
 
         add_line_file(fp, str);
 
@@ -49,7 +49,9 @@ int delete_invoice(char *ID)
         return 0;
 }
 
-char get_ID_invoice(int i, char *str)  //      Devuelve el id de la factura
+// Devuelve el id de la factura
+
+char get_ID_invoice(int i, char *str)  
 {
         FILE *fp;
         fp = fopen("database/facturas.txt", "r+");
@@ -63,7 +65,9 @@ char get_ID_invoice(int i, char *str)  //      Devuelve el id de la factura
         fclose(fp);
 }
 
-char get_code_invoice(int i, char *str)        // Devuelve el codigo unico de la factura
+// Devuelve el codigo unico de la factura
+
+char get_code_invoice(int i, char *str)        
 {       
         FILE *fp;
         fp = fopen("database/facturas.txt", "r+");
@@ -183,7 +187,6 @@ char get_naturaleza(int row)
         get_dni_invoice(row, dni);
         return dni[0];
 }
-
 
 // No permitira que se repita el mismo rif    
 
@@ -340,7 +343,7 @@ int admit_rif(char nationality[], char str[])
         return -1;
 }
 
-// Devulve el numero de caracteres de una cadena (string)
+// Devuelve el numero de caracteres de una cadena (string)
 
 int extension(char str[])       
 {       
