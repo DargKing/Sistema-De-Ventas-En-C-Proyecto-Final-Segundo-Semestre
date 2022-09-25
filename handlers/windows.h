@@ -39,6 +39,7 @@ void CreateHeaderWindowProducts(HWND hWnd, int cxHeader, int cyHeader);
 void CreateTableProducts(HWND hWnd, int len, int x, int y, int cx, int cy);
 void CreateHeaderTableProducts(HWND hWnd, int y);
 
+void CreateWindowFactura();
 void CreateWindowViewVenta();
 void CreateTableListofVentas(HWND hWnd, int xTable, int yTable, int cxTable, int cyTable);
 

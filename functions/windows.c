@@ -43,6 +43,13 @@ BOOL CreateClasses(HINSTANCE hInstance)
         if (!RegisterClassA(&wClientWindow))
                 return FALSE;
 
+        wClientWindow.lpfnWndProc = ClientFacturaWindowProcedure;
+        wClientWindow.hbrBackground = (HBRUSH)CreateSolidBrush(COLOR_WHITE);
+        wClientWindow.lpszClassName = "CLIENT_FACTURA";
+
+        if (!RegisterClassA(&wClientWindow))
+                return FALSE;
+
         WNDCLASSA wLogin = {0};
 
         wLogin.hbrBackground = (HBRUSH)CreateSolidBrush(RGB(255, 255, 255));
@@ -777,19 +784,136 @@ void CreateFooterTotalVentas(HWND hWnd, int x, int y, int cx)
         HWND temp = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE, x, y, cx * 2, ROW_TABLE_HEIGHT, hWnd, NULL, NULL, NULL);
         CreateWindowA("CELL", "Total:", WS_VISIBLE | WS_CHILD, 0, 0, cx, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         hPrecioTotal = CreateWindowA("HEADER_CELL", NULL, WS_VISIBLE | WS_CHILD, cx, 0, cx, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+
+        int position = GetMenu(hTableCurrentRow);
+
+        STRUCTVENTASDATA data = dataVentas[position];
+        int cantidadDeProductos = get_amounts_products_venta(data.ID);
+        int row = search_venta_ID_venta(data.ID);
+        int lenColProductos = get_len_col_ventas(row, 2);
+
+        char productos[lenColProductos + 4];
+
+        get_productos_venta(row, productos);
+
+        char subProducto[50];
+        x = 0;
+        int w = 0;
+        char comprobacionDeCaracter[2];
+
+        STRUCTCURRENTPRODUCTOSDATA productosVenta[cantidadDeProductos + 1];
+        float precioTotal = 0;
+
+        for (int i = 0; i < lenColProductos; i++)
+        {
+                if (productos[i] != '/' && productos[i] != '\0')
+                {
+                        subProducto[x] = productos[i];
+                }
+                else
+                {
+                        subProducto[x] = '\0';
+
+                        // Estas variable se encargan de marcar cuando termina ID, precio y descuento
+                        int fID;
+                        int fCantidad;
+                        int fDescuento;
+
+                        for (int j = 0; j < x + 1; j++)
+                        {
+                                if (subProducto[j] == '=')
+                                        fID = j;
+                                if (subProducto[j] == '?')
+                                        fCantidad = j;
+                                if (subProducto[j] == '\0')
+                                        fDescuento = j;
+                        }
+
+                        char amount[20];
+
+                        substr(productosVenta[w].ID, subProducto, 0, fID);
+                        substr(amount, subProducto, fID + 1, fCantidad);
+                        substr(productosVenta[w].discount, subProducto, fCantidad + 1, fDescuento);
+
+                        productosVenta[w].amount = atoi(amount);
+                        char precioProducto[100];
+                        get_price_product(search_product(productosVenta[w].ID), precioProducto);
+
+                        precioTotal += (float)(productosVenta[w].amount * (atoi(precioProducto) - (atoi(precioProducto) * (atoi(productosVenta[w].discount) / 100))));
+
+                        x = -1;
+                        w++;
+                }
+                x++;
+        }
+
+        precioTotal *= 1.16;
+
+        char precioFactura[100];
+        sprintf(precioFactura, "%.2f Bs", precioTotal);
+
+        SetWindowTextA(hPrecioTotal, precioFactura);
 }
 
-void CreateHeaderTableProductsVentas(HWND hWnd, int x, int y)
+void CreateHeaderTableProductsVentas(HWND hWnd, int x, int y, int cx)
 {
         RECT rect;
         GetClientRect(hWnd, &rect);
-        int width = cxColumnTableProductsVentas;
+        int width = cx;
 
         HWND temp = CreateWindowA("BODY_ROW_CELL_HISTORIALVENTAS", NULL, WS_CHILD | WS_VISIBLE, x + 1, y, width * 4, ROW_TABLE_HEIGHT, hWnd, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Producto", WS_VISIBLE | WS_CHILD, 0, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Cantidad", WS_VISIBLE | WS_CHILD, width, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Descuento", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Precio", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+}
+
+void CreateWindowFactura()
+{
+        int cxWindow = 500;
+        int cyWindow = 500;
+        int xWindow = (WWidth / 4) - (cxWindow / 2);
+        int yWindow = (WHeight / 2) - (cyWindow / 2);
+
+        hFacturaWindow = CreateWindowA("CLIENT_FACTURA", "Factura", WS_VISIBLE | WS_OVERLAPPEDWINDOW, xWindow, yWindow, cxWindow, cyWindow, NULL, NULL, NULL, NULL);
+        int position = GetMenu(hTableCurrentRow);
+
+        STRUCTVENTASDATA data = dataVentas[position];
+
+        char nombre[100];
+        char direccionCliente[] = "Direccion: Calle crotolamo";
+        char dniCliente[] = "Identificacion: J-29467539-7";
+        int margin_left = 20;
+        int margin_top = 10;
+        cxWindow -= 15;
+
+        CreateWindowA("S_TRANSPARENT", "SENIAT", WS_CHILD | WS_VISIBLE, cxWindow / 2 - 50 + margin_left, margin_top, 100, 20, hFacturaWindow, NULL, NULL, NULL);
+
+        CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, margin_left, margin_top + 20, cxWindow - (margin_left * 2), 1, hFacturaWindow, NULL, NULL, NULL);
+
+        int datosCliente = margin_top + 20;
+        int rowCliente = search_clients(data.ID_cliente);
+        get_name_clients(rowCliente, nombre);
+
+        char text[120];
+
+        sprintf(text, "Nombre: %s", nombre);
+
+        CreateWindowA("S_TRANSPARENT", text, WS_CHILD | WS_VISIBLE, margin_left, datosCliente + 20, strlen(text) * 8, 20, hFacturaWindow, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "Direccion: Calle crotolamo", WS_CHILD | WS_VISIBLE, margin_left, datosCliente + 40, strlen(direccionCliente) * 8, 20, hFacturaWindow, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "Identificacion: J-29467539-7", WS_CHILD | WS_VISIBLE, margin_left, datosCliente + 60, strlen(dniCliente) * 8, 20, hFacturaWindow, NULL, NULL, NULL);
+
+        CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, margin_left, datosCliente + 100, cxWindow - (margin_left * 2), 1, hFacturaWindow, NULL, NULL, NULL);
+
+        int datosProducto = datosCliente + 100;
+        int cantidadDeProductos = get_amounts_products_venta(data.ID);
+        int cyTable = cantidadDeProductos * ROW_TABLE_HEIGHT;
+
+        int yFooter = cyTable + datosProducto + 30;
+
+        CreateWindowA("DIV", NULL, WS_CHILD | WS_VISIBLE, margin_left, datosProducto + 30, cxWindow - (margin_left * 2), cyTable, hFacturaWindow, LIST_PRODUCTS_VENTAS, NULL, NULL);
+        // CreateHeaderTableProductsVentas(hWindowViewVenta, margin_left, yTable - 20);
+        CreateFooterTotalVentas(hFacturaWindow, margin_left + (cxColumnTableProductsVentas * 2), yFooter, cxColumnTableProductsVentas);
 }
 
 void CreateWindowViewVenta()
@@ -800,8 +924,7 @@ void CreateWindowViewVenta()
         int yWindow = (WHeight / 2) - (cyWindow / 2);
         hWindowViewVenta = CreateWindowA("CLIENT_WINDOW", "Datos Venta", WS_VISIBLE | WS_OVERLAPPEDWINDOW, xWindow, yWindow, cxWindow, cyWindow, NULL, NULL, NULL, NULL);
 
-        STRUCTVENTASDATA data = dataVentas[(int) GetMenu(hTableCurrentRow)];
-
+        STRUCTVENTASDATA data = dataVentas[(int)GetMenu(hTableCurrentRow)];
 
         int cxText = 135;
         int cyText = 18;
@@ -813,7 +936,7 @@ void CreateWindowViewVenta()
 
         char nombre_cliente[100];
         char descuento[20];
-        
+
         row = search_clients(data.ID_cliente);
         get_name_clients(row, nombre_cliente);
 
@@ -824,13 +947,20 @@ void CreateWindowViewVenta()
 
         CreateWindowA("STATIC", "Descuento: ", WS_VISIBLE | WS_CHILD, margin_left + cxText + 20, margin_top, 80, cyText, hWindowViewVenta, NULL, NULL, NULL);
         CreateWindowA("STATIC", descuento, WS_VISIBLE | WS_CHILD | SS_CENTER, margin_left + cxText + 20, margin_top + cyText + 1, 30, cyText, hWindowViewVenta, NULL, NULL, NULL);
-
         CreateWindowA("STATIC", "Fecha: ", WS_VISIBLE | WS_CHILD, margin_left + cxText + 80 + 40, margin_top, 50, cyText, hWindowViewVenta, NULL, NULL, NULL);
         CreateWindowA("STATIC", data.date, WS_VISIBLE | WS_CHILD, margin_left + cxText + 80 + 40, margin_top + cyText + 1, cxText, cyText, hWindowViewVenta, NULL, NULL, NULL);
 
-        CreateWindowA("DIV", NULL, WS_VISIBLE | WS_CHILD, margin_left, margin_top + 80, cxWindow - (margin_left * 2), cyWindow - margin_top - 160, hWindowViewVenta, LIST_PRODUCTS_VENTAS, NULL, NULL);
-        CreateHeaderTableProductsVentas(hWindowViewVenta, margin_left, margin_top + 60);
-        CreateFooterTotalVentas(hWindowViewVenta, margin_left + (cxColumnTableProductsVentas * 2), margin_top + 80 + cyWindow - margin_top - 160, cxColumnTableProductsVentas);
+        int cxTable = cxWindow - (margin_left * 2);
+        int cyTable = cyWindow - margin_top - 160;
+        int yTable = margin_top + 80;
+
+        CreateWindowA("DIV", NULL, WS_VISIBLE | WS_CHILD, margin_left, yTable, cxTable, cyTable, hWindowViewVenta, LIST_PRODUCTS_VENTAS, NULL, NULL);
+
+        int yFooter = cyTable + yTable;
+
+        CreateHeaderTableProductsVentas(hWindowViewVenta, margin_left, yTable - 20, cxColumnTableProductsVentas);
+        CreateFooterTotalVentas(hWindowViewVenta, margin_left + (cxColumnTableProductsVentas * 2), yFooter, cxColumnTableProductsVentas);
+        CreateWindowA("BUTTON_P", "Ver Factura", WS_VISIBLE | WS_CHILD | WS_BORDER, margin_left, yFooter + 5, 150, 30, hWindowViewVenta, VIEW_FACTURA, NULL, NULL);
 }
 
 void CreateHeaderTableVentas(HWND hWnd, int x, int y)
@@ -1092,7 +1222,6 @@ void CreateBodyProductos()
                 i++;
         }
 
-
         CreateTableProducts(hBodyInventario, rows_product_table, 0, 0, cxBody, cyBody - 20);
 
         CreateHeaderTableProducts(hBodyInventario, 0);
@@ -1123,7 +1252,6 @@ void CreateHeaderWindowProducts(HWND hWnd, int cxHeader, int cyHeader)
 void CreateTableProducts(HWND hWnd, int len, int x, int y, int cx, int cy)
 {
         hTableProduct = CreateWindowA("DIV", NULL, WS_CHILD | WS_VISIBLE, x, y, cx, cy, hWnd, LIST_PRODUCTS, NULL, NULL);
-
 
         int yRows = 0;
 

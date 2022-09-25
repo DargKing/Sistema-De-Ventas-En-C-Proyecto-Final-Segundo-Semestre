@@ -5,7 +5,7 @@
 #include "../handlers/tabdb.h"
 #include <time.h>
 
-int new_ventas(char *ID, char* productos, char *ID_cliente, char *discount)
+int new_ventas(char *ID, char *productos, char *ID_cliente, char *discount)
 {
         char product[100 + strlen(productos)];
         char date[14];
@@ -27,7 +27,7 @@ int new_ventas(char *ID, char* productos, char *ID_cliente, char *discount)
         return 0;
 }
 
-int modify_venta(char *ID, char* productos, char *ID_cliente, char *discount)
+int modify_venta(char *ID, char *productos, char *ID_cliente, char *discount)
 {
 
         char product[strlen(productos) + 100];
@@ -183,8 +183,10 @@ int get_jumplines_venta_file()
         int i = 0;
         int jumplines = 0;
 
-        while(i < lines){
-                if(!isBlank_venta(i) && get_visibility_venta(i)){
+        while (i < lines)
+        {
+                if (!isBlank_venta(i) && get_visibility_venta(i))
+                {
                         jumplines++;
                 }
                 i++;
@@ -194,7 +196,8 @@ int get_jumplines_venta_file()
         return jumplines;
 }
 
-int get_len_col_ventas(int row, int col){
+int get_len_col_ventas(int row, int col)
+{
         FILE *fp;
 
         fp = fopen("database/ventas.txt", "r+");
@@ -205,6 +208,32 @@ int get_len_col_ventas(int row, int col){
 
         fclose(fp);
         return len;
+}
+
+int get_amounts_products_venta(char *ID)
+{
+        FILE *fp;
+        fp = fopen("database/ventas.txt", "r+");
+        if (fp == NULL)
+                return -1;
+
+
+        int row = search_venta_ID_venta(ID);
+        int lenColProductos = get_len_col_ventas(row, 2);
+        int cantidadDeProductos = 1;
+
+        char productos[lenColProductos + 2];
+
+        get_productos_venta(row, productos);
+
+        for (int i = 0; i < lenColProductos; i++)
+        {
+                if (productos[i] == '/')
+                        cantidadDeProductos++;
+        }
+
+        fclose(fp);
+        return cantidadDeProductos;
 }
 
 int isBlank_venta(int row)

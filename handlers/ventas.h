@@ -13,6 +13,7 @@ int get_visibility_venta(int row);
 int get_lines_venta_file();
 int get_jumplines_venta_file();
 int get_len_col_ventas(int row, int col);
+int get_amounts_products_venta(char *ID);
 
 int isBlank_venta(int row);
 int search_venta_ID_venta(char *ID);

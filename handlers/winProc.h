@@ -27,6 +27,7 @@
 #define ADD_CLIENT_VENTAS 17
 #define OPEN_FORM_CLIENTS_VENTAS 18
 #define CREATE_CLIENT_FORM_VENTAS 19
+#define VIEW_FACTURA 20
 
 
 // Others
@@ -181,6 +182,7 @@ HWND hWindowProduct;
 
 HWND hTableVentas;
 HWND hPrecioTotal;
+HWND hFacturaWindow;
 
 HWND hTableProduct;
 HWND hTableCurrentProduct;
@@ -212,6 +214,7 @@ LRESULT CALLBACK ScrollBarProc(HWND, UINT, WPARAM, LPARAM);
 
 LRESULT CALLBACK LoginWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK ClientWindowProcedure(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK ClientFacturaWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
 LRESULT CALLBACK MainWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK MainHeaderWindowProcedure(HWND, UINT, WPARAM, LPARAM);

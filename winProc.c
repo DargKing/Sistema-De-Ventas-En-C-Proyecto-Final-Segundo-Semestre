@@ -101,28 +101,12 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         char ID_venta[20];
                         STRUCTVENTASDATA data = dataVentas[position];
 
-                        char *productos;
-
-                        int row = search_venta_ID_venta(data.ID);
-                        int lenColProductos = get_len_col_ventas(row, 2);
-                        int cantidadDeProductos = 1;
-
-                        productos = (char *)malloc(sizeof(char) * (lenColProductos + 2));
-
-                        get_productos_venta(row, productos);
-
-                        for (int i = 0; i < lenColProductos; i++)
-                        {
-                                if (productos[i] == '/')
-                                        cantidadDeProductos++;
-                        }
+                        int cantidadDeProductos = get_amounts_products_venta(data.ID);
 
                         if (cantidadDeProductos > rect.bottom / ROW_TABLE_HEIGHT)
                                 cxColumnTableProductsVentas = (rect.right - SCROLLBAR_WIDTH) / 4;
                         else
                                 cxColumnTableProductsVentas = (rect.right / 4);
-                        
-                        free(productos);
                 }
                 break;
         case WM_SIZE:
@@ -214,23 +198,9 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         menu = GetMenu(hTableCurrentRow);
 
                         char ID_venta[20];
-                        strcpy(ID_venta, dataVentas[menu].ID);
+                        STRUCTVENTASDATA data = dataVentas[menu];
 
-                        char *productos;
-
-                        int row = search_venta_ID_venta(ID_venta);
-                        int lenColProductos = get_len_col_ventas(row, 2);
-                        int cantidadDeProductos = 1;
-
-                        productos = (char *)malloc(sizeof(char) * (lenColProductos + 2));
-
-                        get_productos_venta(row, productos);
-
-                        for (int i = 0; i < lenColProductos; i++)
-                        {
-                                if (productos[i] == '/')
-                                        cantidadDeProductos++;
-                        }
+                        int cantidadDeProductos = get_amounts_products_venta(data.ID);
 
                         sbInfo.nPos = 0;
                         sbInfo.nMin = 0;
@@ -244,8 +214,6 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                                 SetScrollInfo(hWnd, SB_VERT, &sbInfo, TRUE);
                                 display_scrollbar = 1;
                         }
-
-                        free(productos);
                 }
                 break;
         case WM_VSCROLL:
@@ -363,21 +331,13 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         char ID_venta[20];
                         STRUCTVENTASDATA data = dataVentas[position];
 
-                        char *productos;
-
                         int row = search_venta_ID_venta(data.ID);
                         int lenColProductos = get_len_col_ventas(row, 2);
-                        int cantidadDeProductos = 1;
+                        int cantidadDeProductos = get_amounts_products_venta(data.ID);
 
-                        productos = (char *)malloc(sizeof(char) * (lenColProductos + 2));
+                        char productos[lenColProductos + 4];
 
                         get_productos_venta(row, productos);
-
-                        for (int i = 0; i < lenColProductos; i++)
-                        {
-                                if (productos[i] == '/')
-                                        cantidadDeProductos++;
-                        }
 
                         GetClientRect(hWnd, &rect);
 
@@ -439,8 +399,6 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         }
                         w = 0;
 
-                        float precioTotal = 0;
-
                         for (int i = inicio; i <= fin; i++)
                         {
                                 y = ROW_TABLE_HEIGHT * (i - nPos);
@@ -456,8 +414,6 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                                 get_discount_product(rowProducto, descuento);
                                 get_price_product(rowProducto, precio);
 
-                                precioTotal += (float)(atof(precio) - (atof(precio) * (atof(descuento) / 100))) * productosVenta[i].amount;
-                                
                                 sprintf(amount, "%d", productosVenta[i].amount);
                                 sprintf(descuento, "%s%%", descuento);
                                 sprintf(precio, "%s Bs", precio);
@@ -492,15 +448,7 @@ LRESULT CALLBACK DivWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 
                                 SetRect(&rect, 0, y + ROW_TABLE_HEIGHT - 1, width * 4, y + ROW_TABLE_HEIGHT);
                                 FillRect(hdc, &rect, CreateSolidBrush(RGB(0, 0, 0)));
-
                         }
-
-                        free(productos);
-
-                        precioTotal *= 1.16;
-
-                        sprintf(text, "%.2f Bs", precioTotal);
-                        SetWindowTextA(hPrecioTotal, text);
                 }
 
                 EndPaint(hWnd, &ps);
@@ -596,6 +544,113 @@ LRESULT CALLBACK ClientWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
                 break;
         case WM_DESTROY:
                 DestroyWindow(hWnd);
+                break;
+        default:
+                DefWindowProcA(hWnd, msg, wp, lp);
+        }
+}
+
+LRESULT CALLBACK ClientFacturaWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+
+        int cxClient;
+        int cyClient;
+        int totalHeight;
+
+        int newPos;
+        int oldPos;
+
+        char text[100];
+
+        SCROLLINFO sbInfo;
+        RECT rect;
+        int cantidadDeProductos = 1;
+        STRUCTVENTASDATA data;
+
+        switch (msg)
+        {
+        case WM_COMMAND:
+                switch (wp)
+                {
+                case CLOSE_WINDOW:
+                        DestroyWindow(hWnd);
+                        break;
+                }
+                break;
+        case WM_DESTROY:
+                DestroyWindow(hWnd);
+                break;
+        case WM_SIZE:
+                cxClient = LOWORD(lp);
+                cyClient = HIWORD(lp);
+
+                data = dataVentas[(int)GetMenu(hTableCurrentRow)];
+
+                cantidadDeProductos = get_amounts_products_venta(data.ID);
+
+                totalHeight = cantidadDeProductos + (200 / ROW_TABLE_HEIGHT);
+
+                sbInfo.nPos = 0;
+                sbInfo.nMin = 0;
+                sbInfo.cbSize = sizeof(SCROLLINFO);
+
+                if (totalHeight > cyClient / ROW_TABLE_HEIGHT)
+                {
+                        sbInfo.nMax = totalHeight - 1;
+                        sbInfo.nPage = (cyClient / ROW_TABLE_HEIGHT);
+                        sbInfo.fMask = SIF_ALL;
+                        SetScrollInfo(hWnd, SB_VERT, &sbInfo, TRUE);
+                        display_scrollbar = 1;
+                }
+                break;
+        case WM_VSCROLL:
+                sbInfo.cbSize = sizeof(SCROLLINFO);
+                sbInfo.fMask = SIF_POS | SIF_RANGE | SIF_TRACKPOS | SIF_PAGE;
+
+                GetScrollInfo(hWnd, SB_VERT, &sbInfo);
+
+                oldPos = sbInfo.nPos;
+
+                switch (LOWORD(wp))
+                {
+                case SB_PAGEUP:
+                        sbInfo.nPos -= sbInfo.nPage;
+                        break;
+                case SB_PAGEDOWN:
+                        GetClientRect(hMain, &rect);
+                        sbInfo.nPos += sbInfo.nPage;
+                        break;
+                case SB_BOTTOM:
+                        sbInfo.nPos = sbInfo.nMax;
+                        break;
+                case SB_TOP:
+                        sbInfo.nPos = sbInfo.nMin;
+                        break;
+                case SB_LINEUP:
+                        if (sbInfo.nPos > 0)
+                                sbInfo.nPos -= 1;
+                        break;
+                case SB_LINEDOWN:
+                        if (sbInfo.nPos < sbInfo.nMax - (sbInfo.nPage - 1))
+                                sbInfo.nPos += 1;
+                        break;
+                case SB_THUMBTRACK:
+                case SB_THUMBPOSITION:
+                        sbInfo.nPos = HIWORD(wp);
+                        break;
+                }
+
+                sbInfo.fMask = SIF_POS;
+                SetScrollInfo(hWnd, SB_VERT, &sbInfo, TRUE);
+
+                newPos = sbInfo.nPos;
+
+                if (newPos != oldPos)
+                {
+                        GetClientRect(hWnd, &rect);
+                        ScrollWindow(hWnd, 0, ROW_TABLE_HEIGHT * (oldPos - newPos), NULL, NULL);
+                        UpdateWindow(hWnd);
+                }
                 break;
         default:
                 DefWindowProcA(hWnd, msg, wp, lp);
@@ -1154,6 +1209,9 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
         case WM_COMMAND:
                 switch (wp)
                 {
+                case VIEW_FACTURA:
+                        CreateWindowFactura();
+                        break;
                 case CREATE_CLIENT_FORM_VENTAS:
                         GetWindowTextA(hFormClient.name, dataC.name, 100);
                         GetWindowTextA(hFormClient.lastname, dataC.lastname, 100);
@@ -1618,6 +1676,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case NEW_VENTA:
                 case SELECT_CLIENT_VENTAS:
                 case ADD_CLIENT_VENTAS:
+                case VIEW_FACTURA:
                         InvalidateRect(hWnd, NULL, FALSE);
                         break;
                 case LOGIN_USER:
@@ -1655,6 +1714,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         case NEW_VENTA:
                         case SELECT_CLIENT_VENTAS:
                         case ADD_CLIENT_VENTAS:
+                        case VIEW_FACTURA:
                                 draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE_CLICK), COLOR_BLACK, text);
                                 break;
                         case LOGIN_USER:
@@ -1692,6 +1752,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case NEW_VENTA:
                 case SELECT_CLIENT_VENTAS:
                 case ADD_CLIENT_VENTAS:
+                case VIEW_FACTURA:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE_HOVER), COLOR_BLACK, text);
                         break;
 
@@ -1730,6 +1791,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case NEW_VENTA:
                 case SELECT_CLIENT_VENTAS:
                 case ADD_CLIENT_VENTAS:
+                case VIEW_FACTURA:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE), COLOR_BLACK, text);
                         break;
                 case LOGIN_USER:
@@ -1775,6 +1837,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case ADD_CLIENT_VENTAS:
                 case CLOSE_WINDOW_CLIENTS_VENTAS:
                 case CREATE_CLIENT_FORM_VENTAS:
+                case VIEW_FACTURA:
                         DestroyWindow(hWnd);
                         break;
                 case CREATE_CLIENT_FORM:
