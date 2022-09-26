@@ -4,7 +4,7 @@ winProc.c se encarga de manejar los mensajes de las ventanas.
 Los mensajes son los eventos o acciones que le esten sucediendo a la ventana, al clickar una ventana se esta mandando el mensaje
 WM_LBUTTONDOWN y al pintarse una ventana se esta mandando el evento WM_PAINT.
 
-Para manejar los mensajes se hacen uso de funciones las cuales contienen un switch y analizan el parametro msg, 
+Para manejar los mensajes se hacen uso de funciones las cuales contienen un switch y analizan el parametro msg,
 dependiendo del mensaje se hara una accion u otra.
 
 Los mensajes tienen un orden en el que se ejecutan, ejemplo WM_CREATE es un mensaje que se manda a la funcion cuando
@@ -50,6 +50,7 @@ WM_MOUSELEAVE = El mouse salio de la ventana
 #include "handlers/facturas.h"
 
 int destroyingWindow = 0;
+int destroyingWindowMain = 0;
 int mouseTranking = 0;
 int mouseTrack = 0;
 int display_scrollbar = 0;
@@ -531,7 +532,7 @@ LRESULT CALLBACK ClientWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp
 }
 
 /*
-ClientFacturaWindowProcedure. Se encarga de manejar la ventana Factura. 
+ClientFacturaWindowProcedure. Se encarga de manejar la ventana Factura.
 
 Message
         WM_COMMAND = Dependiendo de lo que contenga el parametro wp sucedera...:
@@ -654,7 +655,7 @@ MainWindowProcedure. Controla la ventana principal, no hace nada ademas de cerra
 Message
         WM_COMMAND = Dependiendo de lo que contenga el parametro wp sucedera...:
                 CLOSE_WINDOW = Cierra la ventana
-        WM_DESTROY = Acaba la ejecucion del programa
+        WM_DESTROY = Acaba la ejecucion del programa o simplemente cierra la ventana
 */
 
 LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -670,7 +671,9 @@ LRESULT CALLBACK MainWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 }
                 break;
         case WM_DESTROY:
-                PostQuitMessage(0);
+                if (!destroyingWindowMain)
+                        PostQuitMessage(0);
+                destroyingWindowMain = 0;
                 break;
         default:
                 DefWindowProcA(hWnd, msg, wp, lp);
@@ -702,6 +705,8 @@ LRESULT CALLBACK LoginWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
         case WM_DESTROY:
                 if (!destroyingWindow)
                         PostQuitMessage(0);
+                else
+                        DestroyWindow(hWnd);
                 break;
         default:
                 DefWindowProcA(hWnd, msg, wp, lp);
@@ -763,15 +768,15 @@ LRESULT CALLBACK MainNavWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
 }
 
 /*
-ToolBarWindowProcedure. Maneja los mensajes de la barra de navegacion. Cuando se preciona una de las pestañas se cierra lo que se esta 
+ToolBarWindowProcedure. Maneja los mensajes de la barra de navegacion. Cuando se preciona una de las pestañas se cierra lo que se esta
 viendo y se cambia a otra
 
-Message 
+Message
         WM_COMMAND = Dependiendo de lo que especifique el parametro wp hara lo siguiente
                 NAV_INVENTARIO = Cerrara el body actual y llamara a la funcion CreateBodyProductos
                 NAV_CLIENTES = Cerrara el body actual y llamara a la funcion CreateBodyClienteMainWindow
                 NAV_VENTAS = Cerrara el body actual y llamara a la funcion CreateBodyVentasMainWindow
-        
+
         WM_DESTROY = Cierra la ventana
         WM_MOUSEHOVER = Se hace un poco mas oscuro el fondo
         WM_MOUSELEAVE = Se reestablece el fondo
@@ -821,6 +826,15 @@ LRESULT CALLBACK ToolBarWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                                 hToolBarActual = hToolBarVentas;
                                 DestroyWindow(hCurrentBody);
                                 CreateBodyVentasMainWindow(TRUE);
+                        }
+                        break;
+                case NAV_OTROS:
+                        if (hToolBarActual != hToolBarOtros)
+                        {
+                                ShowWindow(hToolBarActual, SW_HIDE);
+                                ShowWindow(hToolBarOtros, SW_SHOW);
+                                hToolBarActual = hToolBarOtros;
+                                DestroyWindow(hCurrentBody);
                         }
                         break;
                 }
@@ -917,7 +931,7 @@ Message
                 TOOLBAR_IMAGE_NEW_VENTAS = Cierra la seccion de ventas actual y abre la de nueva venta
                 TOOLBAR_IMAGE_HISTORIAL_VENTAS = Cierra la seccion de ventas actual y abre el historial de ventas
                 TOOLBAR_IMAGE_VER_VENTAS = Abre una ventana mostrando a detalle la venta seleccionada
-        
+
         WM_CREATE = Al crearse la ventana se crea una ventana clase STATIC la cual servira para mostrar una imagen
         WM_MOUSEMOVE = Trakea el mouse
         WM_MOUSEHOVER = Si el mouse esta encima de la ventana entonces cambia a un color amarillo verdoso
@@ -1016,6 +1030,31 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                                 return 0;
                         CreateWindowViewVenta();
                         break;
+
+                case TOOLBAR_IMAGE_EXIT_PROGRAM:
+                        PostQuitMessage(0);
+                        break;
+                case TOOLBAR_IMAGE_CLOSE_SESION:
+                        destroyingWindowMain = 1;
+                        DestroyWindow(hMain);
+                        CreateLoginWindow();
+                        break;
+                case TOOLBAR_IMAGE_DELETE_USER:
+                        if (MessageBox(NULL, "Esta Seguro de Eliminar el Usuario?", NULL, MB_ICONWARNING | MB_OKCANCEL))
+                        {
+                                destroyingWindowMain = 1;
+                                DestroyWindow(hMain);
+                                CreateLoginWindow();
+
+                                delete_user(currentUser.ID);
+                        }
+                        break;
+                case TOOLBAR_IMAGE_CHANGE_PASSWORD:
+                        CreateWindowFormUser();
+                        break;
+                case TOOLBAR_IMAGE_ABOUT:
+                        CreateWindowAbout();
+                        break;
                 }
         case WM_CREATE:
                 menu = GetMenu(hWnd);
@@ -1045,21 +1084,37 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         break;
 
                 // Ventas
-                // case TOOLBAR_IMAGE_NEW_VENTAS:
-                //         hNuevaVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 40 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_NEW_INVENTARIO, NULL, NULL);
-                //         break;
+                case TOOLBAR_IMAGE_NEW_VENTAS:
+                        hNuevaVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 40 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_NEW_INVENTARIO, NULL, NULL);
+                        break;
                 // case TOOLBAR_IMAGE_DELETE_VENTAS:
                 //         hEliminarVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_DELETE_INVENTARIO, NULL, NULL);
                 //         break;
-                
-                case TOOLBAR_IMAGE_MODIFY_VENTAS:
-                        hModificarVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
-                        break;
+
+                // case TOOLBAR_IMAGE_MODIFY_VENTAS:
+                //         hModificarVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
+                //         break;
                 case TOOLBAR_IMAGE_HISTORIAL_VENTAS:
                         hHistorialVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
                         break;
                 case TOOLBAR_IMAGE_VER_VENTAS:
                         hVerVentaImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
+                        break;
+
+                case TOOLBAR_IMAGE_ABOUT:
+                        hAboutImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 40 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
+                        break;
+                case TOOLBAR_IMAGE_CHANGE_PASSWORD:
+                        hChangePasswordImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
+                        break;
+                case TOOLBAR_IMAGE_CLOSE_SESION:
+                        hCloseSesionImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
+                        break;
+                case TOOLBAR_IMAGE_DELETE_USER:
+                        hDeleteUserImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
+                        break;
+                case TOOLBAR_IMAGE_EXIT_PROGRAM:
+                        hExitImage = CreateWindowA("STATIC", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP, 45 - 15, 5, 30, 30, hWnd, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
                         break;
                 }
                 break;
@@ -1138,6 +1193,22 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 case TOOLBAR_IMAGE_VER_VENTAS:
                         InvalidateRect(hVerVentaImage, NULL, TRUE);
                         break;
+
+                case TOOLBAR_IMAGE_ABOUT:
+                        InvalidateRect(hAboutImage, NULL, TRUE);
+                        break;
+                case TOOLBAR_IMAGE_CHANGE_PASSWORD:
+                        InvalidateRect(hChangePasswordImage, NULL, TRUE);
+                        break;
+                case TOOLBAR_IMAGE_DELETE_USER:
+                        InvalidateRect(hDeleteUserImage, NULL, TRUE);
+                        break;
+                case TOOLBAR_IMAGE_CLOSE_SESION:
+                        InvalidateRect(hCloseSesionImage, NULL, TRUE);
+                        break;
+                case TOOLBAR_IMAGE_EXIT_PROGRAM:
+                        InvalidateRect(hExitImage, NULL, TRUE);
+                        break;
                 }
 
                 ReleaseDC(hWnd, hdc);
@@ -1191,14 +1262,14 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                         loadImagesAdd();
                         SendMessageA(hNuevaVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageAdd);
                         break;
-                case TOOLBAR_IMAGE_MODIFY_VENTAS:
-                        loadImagesModify();
-                        SendMessageA(hModificarVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageModify);
-                        break;
-                case TOOLBAR_IMAGE_DELETE_VENTAS:
-                        loadImagesDelete();
-                        SendMessageA(hEliminarVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageDelete);
-                        break;
+                // case TOOLBAR_IMAGE_MODIFY_VENTAS:
+                //         loadImagesModify();
+                //         SendMessageA(hModificarVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageModify);
+                //         break;
+                // case TOOLBAR_IMAGE_DELETE_VENTAS:
+                //         loadImagesDelete();
+                //         SendMessageA(hEliminarVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageDelete);
+                //         break;
                 case TOOLBAR_IMAGE_HISTORIAL_VENTAS:
                         loadImagesHistorial();
                         SendMessageA(hHistorialVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageHistorial);
@@ -1206,6 +1277,28 @@ LRESULT CALLBACK ToolWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
                 case TOOLBAR_IMAGE_VER_VENTAS:
                         loadImagesView();
                         SendMessageA(hVerVentaImage, STM_SETIMAGE, IMAGE_BITMAP, hImageVer);
+                        break;
+
+                // Otros
+                case TOOLBAR_IMAGE_ABOUT:
+                        loadImagesAbout();
+                        SendMessageA(hAboutImage, STM_SETIMAGE, IMAGE_BITMAP, hImageAbout);
+                        break;
+                case TOOLBAR_IMAGE_CHANGE_PASSWORD:
+                        loadImagesModify();
+                        SendMessageA(hChangePasswordImage, STM_SETIMAGE, IMAGE_BITMAP, hImageModify);
+                        break;
+                case TOOLBAR_IMAGE_DELETE_USER:
+                        loadImagesDelete();
+                        SendMessageA(hDeleteUserImage, STM_SETIMAGE, IMAGE_BITMAP, hImageDelete);
+                        break;
+                case TOOLBAR_IMAGE_CLOSE_SESION:
+                        loadImagesCloseSesion();
+                        SendMessageA(hCloseSesionImage, STM_SETIMAGE, IMAGE_BITMAP, hImageCloseSesion);
+                        break;
+                case TOOLBAR_IMAGE_EXIT_PROGRAM:
+                        loadImagesExit();
+                        SendMessageA(hExitImage, STM_SETIMAGE, IMAGE_BITMAP, hImageExit);
                         break;
                 }
 
@@ -1269,7 +1362,7 @@ ButtonsWindowProcedure. Este se encarga de manejar los mensajes de los botones, 
 Mensajes
 
 WM_PAINT = Se encarga de pintar los botones, los colores de este dependera de lo que se obtenga de su GetMenu
-        Color Azul  
+        Color Azul
                 NEW_VENTA:
                 SELECT_CLIENT_VENTAS:
                 ADD_CLIENT_VENTAS:
@@ -1346,7 +1439,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
         STRUCTPRODUCTOSDATA dataP;
         STRUCTPRODUCTOSDATA newDataP;
         STRUCTVENTASDATA dataV;
-        STRUCTUSERDATA dataUserSingup;
+        STRUCTUSERDATA dataUser;
+        STRUCTUSERDATA newUserData;
         char *productos;
 
         switch (msg)
@@ -1354,49 +1448,99 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
         case WM_COMMAND:
                 switch (wp)
                 {
-                case SINGUP_USER:
-                        GetWindowTextA(hName, dataUserSingup.username, 100);
-                        GetWindowTextA(hPassword, dataUserSingup.password, 100);
-                        GetWindowTextA(hRifCompany, dataUserSingup.rif_company, 100);
-                        GetWindowTextA(hDireccionCompany, dataUserSingup.direccion, 100);
+                case MODIFY_USER:
+                        GetWindowTextA(hFormUserModify.username, dataUser.username, 100);
+                        GetWindowTextA(hFormUserModify.password, dataUser.password, 100);
+                        GetWindowTextA(hFormUserModify.rif_company, dataUser.rif_company, 100);
+                        GetWindowTextA(hFormUserModify.direccion, dataUser.direccion, 100);
 
-                        if (!strcmp(dataUserSingup.username, ""))
+                        newUserData = currentUser;
+
+                        if (strcmp(currentUser.username, dataUser.username) && search_user(dataUser.username) >= 0)
                         {
-                                MessageBoxA(NULL, "Error, Inserte un Usuario", NULL, MB_ICONERROR);
+                                MessageBoxA(NULL, "Error, Nombre de usuario ya existente", NULL, MB_ICONERROR);
                                 return 0;
                         }
 
-                        if (search_user(dataUserSingup.username) >= 0)
+                        if (strcmp(dataUser.username, currentUser.username))
                         {
-                                MessageBoxA(NULL, "Error, Usuario Ya Existente", NULL, MB_ICONERROR);
-                                return 0;
+                                strcpy(newUserData.username, dataUser.username);
                         }
 
-                        if (!strcmp(dataUserSingup.password, ""))
+                        if (strcmp(dataUser.password, currentUser.password))
                         {
-                                MessageBoxA(NULL, "Error, Inserte una contraseña", NULL, MB_ICONERROR);
+                                strcpy(newUserData.password, dataUser.password);
                         }
 
-                        if (!strcmp(dataUserSingup.direccion, ""))
+                        if (strcmp(dataUser.direccion, currentUser.direccion))
                         {
-                                MessageBoxA(NULL, "Error, Inserte una direccion", NULL, MB_ICONERROR);
-                                return 0;
+                                strcpy(newUserData.direccion, dataUser.direccion);
                         }
 
-                        if (!strcmp(dataUserSingup.rif_company, ""))
-                        {
-                                MessageBoxA(NULL, "Error, Inserte un RIF", NULL, MB_ICONERROR);
-                                return 0;
-                        }
-
-                        if (solo_number(dataUserSingup.rif_company))
+                        if (solo_number(dataUser.rif_company))
                         {
                                 MessageBoxA(NULL, "Error, Solo se aceptan numeros en el RIF", NULL, MB_ICONERROR);
                                 return 0;
                         }
 
-                        if (create_new_user(dataUserSingup.username, dataUserSingup.password, "USER",
-                                            dataUserSingup.rif_company, dataUserSingup.direccion) == 1)
+                        if (strcmp(dataUser.rif_company, currentUser.rif_company))
+                        {
+                                strcpy(newUserData.rif_company, dataUser.rif_company);
+                        }
+
+                        modify_user(newUserData.ID, newUserData.username, newUserData.password, newUserData.rif_company, newUserData.direccion);
+
+                        destroyingWindowMain = 1;
+                        DestroyWindow(hMain);
+                        DestroyWindow(hFormUserModify.container);
+                        CreateLoginWindow();
+                        break;
+                case CLOSE_FORM_MODIFY_USER:
+                        DestroyWindow(hFormUserModify.container);
+                        break;
+                case SINGUP_USER:
+                        GetWindowTextA(hName, dataUser.username, 100);
+                        GetWindowTextA(hPassword, dataUser.password, 100);
+                        GetWindowTextA(hRifCompany, dataUser.rif_company, 100);
+                        GetWindowTextA(hDireccionCompany, dataUser.direccion, 100);
+
+                        if (!strcmp(dataUser.username, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte un Usuario", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+
+                        if (search_user(dataUser.username) >= 0)
+                        {
+                                MessageBoxA(NULL, "Error, Usuario Ya Existente", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+
+                        if (!strcmp(dataUser.password, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte una contraseña", NULL, MB_ICONERROR);
+                        }
+
+                        if (!strcmp(dataUser.direccion, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte una direccion", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+
+                        if (!strcmp(dataUser.rif_company, ""))
+                        {
+                                MessageBoxA(NULL, "Error, Inserte un RIF", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+
+                        if (solo_number(dataUser.rif_company))
+                        {
+                                MessageBoxA(NULL, "Error, Solo se aceptan numeros en el RIF", NULL, MB_ICONERROR);
+                                return 0;
+                        }
+
+                        if (create_new_user(dataUser.username, dataUser.password, "USER",
+                                            dataUser.rif_company, dataUser.direccion) == 1)
                         {
                                 MessageBox(NULL, "Usuario a sido creado Existosamente", NULL, MB_OK);
                         }
@@ -1901,6 +2045,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case VIEW_FACTURA:
                 case OPEN_SINGUP_USER_WINDOW:
                 case SINGUP_USER:
+                case MODIFY_USER:
                         InvalidateRect(hWnd, NULL, FALSE);
                         break;
                 case LOGIN_USER:
@@ -1920,6 +2065,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case DELETE_PRODUCT_VENTAS:
                 case CLOSE_FORM_PRODUCT:
                 case CLOSE_WINDOW_CLIENTS_VENTAS:
+                case CLOSE_FORM_MODIFY_USER:
                         InvalidateRect(hWnd, NULL, FALSE);
                         break;
                 }
@@ -1941,6 +2087,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         case VIEW_FACTURA:
                         case OPEN_SINGUP_USER_WINDOW:
                         case SINGUP_USER:
+                        case MODIFY_USER:
                                 draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE_CLICK), COLOR_BLACK, text);
                                 break;
                         case LOGIN_USER:
@@ -1960,6 +2107,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                         case CLOSE_WINDOW_PRODUCT_VENTAS:
                         case CLOSE_FORM_PRODUCT:
                         case CLOSE_WINDOW_CLIENTS_VENTAS:
+                        case CLOSE_FORM_MODIFY_USER:
                                 draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED_CLICK), COLOR_WHITE, text);
                                 break;
                                 ReleaseDC(hWnd, hdc);
@@ -1981,6 +2129,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case VIEW_FACTURA:
                 case OPEN_SINGUP_USER_WINDOW:
                 case SINGUP_USER:
+                case MODIFY_USER:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE_HOVER), COLOR_BLACK, text);
                         break;
 
@@ -2001,6 +2150,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case CLOSE_WINDOW_PRODUCT_VENTAS:
                 case CLOSE_FORM_PRODUCT:
                 case CLOSE_WINDOW_CLIENTS_VENTAS:
+                case CLOSE_FORM_MODIFY_USER:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED_HOVER), COLOR_WHITE, text);
                         break;
                 }
@@ -2022,6 +2172,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case VIEW_FACTURA:
                 case OPEN_SINGUP_USER_WINDOW:
                 case SINGUP_USER:
+                case MODIFY_USER:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_BLUE), COLOR_BLACK, text);
                         break;
                 case LOGIN_USER:
@@ -2041,6 +2192,7 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case CLOSE_WINDOW_PRODUCT_VENTAS:
                 case CLOSE_FORM_PRODUCT:
                 case CLOSE_WINDOW_CLIENTS_VENTAS:
+                case CLOSE_FORM_MODIFY_USER:
                         draw_bg_button(hdc, rect, CreateSolidBrush(COLOR_RED), COLOR_BLACK, text);
                         break;
                 }
@@ -2070,6 +2222,8 @@ LRESULT CALLBACK ButtonsWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM l
                 case CREATE_CLIENT_FORM_VENTAS:
                 case VIEW_FACTURA:
                 case OPEN_SINGUP_USER_WINDOW:
+                case MODIFY_USER:
+                case CLOSE_FORM_MODIFY_USER:
                         DestroyWindow(hWnd);
                         break;
                 case CREATE_CLIENT_FORM:
@@ -2189,7 +2343,7 @@ LRESULT CALLBACK CellWindowProcedure(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 }
 
 /*
-BodyRowCellHistorialVentasWindowProcedure. Se encarga de manejar los mensajes de la clase BODY_ROW_CELL_HISTORIALVENTAS, 
+BodyRowCellHistorialVentasWindowProcedure. Se encarga de manejar los mensajes de la clase BODY_ROW_CELL_HISTORIALVENTAS,
 esta clase seria la que se encarga de ser las filas en la tabla de Ventas
 
 Mensajes
@@ -2359,7 +2513,7 @@ LRESULT CALLBACK BodyRowCellHistorialVentasWindowProcedure(HWND hWnd, UINT msg, 
 }
 
 /*
-BodyRowCellCurrentProductWindowProcedure. Se encarga de manejar los mensajes de la clase BODY_ROW_CELL_CURRENTPRODUCT, 
+BodyRowCellCurrentProductWindowProcedure. Se encarga de manejar los mensajes de la clase BODY_ROW_CELL_CURRENTPRODUCT,
 esta clase seria la que se encarga de ser las filas en la tabla de productos a comprar en el formulario de ventas
 
 mensajes

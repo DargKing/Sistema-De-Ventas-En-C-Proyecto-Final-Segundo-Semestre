@@ -1,7 +1,7 @@
 /*
 windows.c es el archivo encargado de la creacion de ventanas y componentes de la aplicacion.
 
-Para la interfaz grafica usamos winapi32, en esta libreria los componentes como botones, texto y demas se llaman ventanas, a las ventanas se les puede 
+Para la interfaz grafica usamos winapi32, en esta libreria los componentes como botones, texto y demas se llaman ventanas, a las ventanas se les puede
 imaginar como cajas vacias las cuales se tienen que pintar con datos establecidos por el desarrollador
 
 Para crear una ventana se usa la funcion CreateWindowA(); Los argumentos de esta son
@@ -278,9 +278,8 @@ BOOL CreateClasses(HINSTANCE hInstance)
         return TRUE;
 }
 
-
 /*
-        CreateSingUp. Esta funcion se encarga de crear la ventana de crear usuario, en esta ventana se rellena el formulario y 
+        CreateSingUp. Esta funcion se encarga de crear la ventana de crear usuario, en esta ventana se rellena el formulario y
         si no hay ningun error en los datos se crea el usuario, despues de crearse se oculta la ventana (No se cierra).
         Si se preciona el boton Close, la ejecucion del programa completo termina
 
@@ -310,7 +309,7 @@ void CreateSingupWindow()
         hRifCompany = CreateWindowA("EDIT", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, 90, 150, 210, 20, hSingUp, NULL, NULL, NULL);
 
         CreateWindowW(L"S_TRANSPARENT", L"Direccion Compañia:", WS_CHILD | WS_VISIBLE, 50, 180, 250, 20, hSingUp, NULL, NULL, NULL);
-        hDireccionCompany = CreateWindowA("EDIT", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, 50, 200, 250, 20, hSingUp, NULL, NULL, NULL);
+        hDireccionCompany = CreateWindowA("EDIT", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 50, 200, 250, 20, hSingUp, NULL, NULL, NULL);
 
         int cxButton = 120;
 
@@ -356,7 +355,7 @@ void CreateLoginWindow()
 }
 
 /*
-CreateMainWindow. Despues de iniciar sesion se llama a la funcion CreateMainWindow, esta va a ser la ventana principal del programa. Esta Ventana estara 
+CreateMainWindow. Despues de iniciar sesion se llama a la funcion CreateMainWindow, esta va a ser la ventana principal del programa. Esta Ventana estara
 maximizada (No se debe salir de este modo ya que el programa no se le a agregado el rezise del contenido), despues de crearse esta ventana se llama a la funcion
 CreateHeader, el cual creara el Header Principal del programa.
 Esta funcion tambien tiene como objetivo el de poner en las variables puntero, que se encargaran de almacenar los datos de las tablas, un malloc para que puedan manipularse
@@ -378,7 +377,10 @@ void CreateMainWindow()
         int WPositionX = (WWidth / 2) - (CMainWidth / 2);
         int WPositionY = (WHeight / 2) - (CMainHeight / 2);
 
-        hMain = CreateWindowA(main_class, "Sistema De Ventas", WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE, WPositionX, WPositionY, CMainWidth, CMainHeight,
+        char text[200];
+        sprintf(text, "%s | %s", NOMBRE_SISTEMA, currentUser.username);
+
+        hMain = CreateWindowA(main_class, text, WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE, WPositionX, WPositionY, CMainWidth, CMainHeight,
                               NULL, NULL, NULL, NULL);
 
         UpdateWindow(hMain);
@@ -436,13 +438,17 @@ void CreateNavBar()
         First = 0;
         hVentas = CreateWindowA("TOOL_BAR", "Ventas", WS_VISIBLE | WS_CHILD, 20, 0, 100, NavHeight, hMainNav, NAV_VENTAS, NULL, NULL);
         First = 1;
+
         hInventario = CreateWindowA("TOOL_BAR", "Inventario", WS_VISIBLE | WS_CHILD, 120, 0, 100, NavHeight, hMainNav, NAV_INVENTARIO, NULL, NULL);
         hClientes = CreateWindowA("TOOL_BAR", "Clientes", WS_VISIBLE | WS_CHILD, 220, 0, 100, NavHeight, hMainNav, NAV_CLIENTES, NULL, NULL);
+        hOtros = CreateWindowA("TOOL_BAR", "Mas", WS_VISIBLE | WS_CHILD, 320, 0, 100, NavHeight, hMainNav, NAV_OTROS, NULL, NULL);
+
         hNavActual = hVentas;
 
         CreateToolBarVentas();
         CreateToolBarInventario();
         CreateToolBarClientes();
+        CreateToolBarOtros();
 
         hToolBarActual = hToolBarVentas;
 
@@ -483,7 +489,6 @@ void CreateToolsInventario()
         hEliminarProducto = CreateWindowA("TOOL", "Eliminar Producto", WS_VISIBLE | WS_CHILD, 220, 0, 100, 75, hToolBarInventario, TOOLBAR_IMAGE_DELETE_INVENTARIO, NULL, NULL);
 }
 
-
 /*
 CreateToolBarClientes. Esta funcion crea el contenedor para las herramientas, este contenedor seria la barra de tareas, al finalizar la funcion llama a la funcion
 CreateToolsClientes para crear las herramientas para manejar la table de clientes.
@@ -503,7 +508,7 @@ void CreateToolBarClientes()
 /*
         CreateToolsClientes. Esta funcion crea las herramientas para manejar la tabla de inventario. Estas herramientas son
         Crear cliente, eliminar cliente y modificar cliente. al hacer click en Nuevo Cliente se crea un formulario en el que se debe de introducir
-        Los datos del Cliente. al precionar modificar producto mientras se tiene una fila seleccionada de la tabla se crea otro formulario en el que se modificaran los 
+        Los datos del Cliente. al precionar modificar producto mientras se tiene una fila seleccionada de la tabla se crea otro formulario en el que se modificaran los
         datos actuales del Cliente. Eliminar Cliente elimina la fila seleccionada
 
         Parametros Ninguno
@@ -517,8 +522,6 @@ void CreateToolsClientes()
         hModificarCliente = CreateWindowA("TOOL", "Modificar Cliente", WS_VISIBLE | WS_CHILD, 120, 0, 100, 75, hToolBarClientes, TOOLBAR_IMAGE_MODIFY_CLIENTE, NULL, NULL);
         hEliminarCliente = CreateWindowA("TOOL", "Eliminar Cliente", WS_VISIBLE | WS_CHILD, 220, 0, 100, 75, hToolBarClientes, TOOLBAR_IMAGE_DELETE_CLIENTE, NULL, NULL);
 }
-
-
 
 /*
 CreateToolBarVentas. Esta funcion crea el contenedor para las herramientas, este contenedor seria la barra de tareas, al finalizar la funcion llama a la funcion
@@ -554,6 +557,128 @@ void CreateToolsVentas()
         hToolVerVenta = CreateWindowA("TOOL", "Ver Venta", WS_VISIBLE | WS_CHILD, 210, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_VER_VENTAS, NULL, NULL);
         // hModificarVenta = CreateWindowA("TOOL", "Modificar Venta", WS_VISIBLE | WS_CHILD, 300, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_MODIFY_VENTAS, NULL, NULL);
         // hEliminarVenta = CreateWindowA("TOOL", "Eliminar Venta", WS_VISIBLE | WS_CHILD, 390, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_DELETE_VENTAS, NULL, NULL);
+}
+
+/*
+CreateToolBarVentas. Esta funcion crea el contenedor para las herramientas, este contenedor seria la barra de tareas, al finalizar la funcion llama a la funcion
+CreateToolsVentas para crear las herramientas para manejar el formulario y tabla de ventas.
+
+Parametros Ninguno
+
+Return void
+*/
+
+void CreateToolBarOtros()
+{
+        hToolBarOtros = CreateWindowA("TOOLBAR_CONTAINER", NULL, WS_VISIBLE | WS_CHILD, 0, 25, CRect.right, ToolBarHeight, hMainHeader, NULL, NULL, NULL);
+        ShowWindow(hToolBarOtros, SW_HIDE);
+        CreateToolsOtros();
+}
+
+/*
+        CreateToolsVentas. Esta funcion crea las herramientas para manejar el formulario de ventas y la tabla de ventas. Estas herramientas son
+        Nueva Venta, Historial de Ventas y Ver Venta. Al hacer click en nueva venta se crea un formulario donde se podra introducir las nuevas ventas,
+        si se preciona Historial de Ventas ese anterior formulario se cerrara y se abrira una tabla mostrando todas las ventas realizadas.
+        Si se tiene precionado una fila en la tabla de ventas y se preciona Ver Venta entonces se mostrara en pantalla otra ventana mostrando el contenido de la venta
+
+        Parametros Ninguno
+
+        Return void
+*/
+
+void CreateToolsOtros()
+{
+        hAbout = CreateWindowA("TOOL", "Acerca De", WS_VISIBLE | WS_CHILD, 20, 0, 80, 75, hToolBarOtros, TOOLBAR_IMAGE_ABOUT, NULL, NULL);
+        CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, 110, 10, 1, ToolBarHeight - 20, hToolBarOtros, NULL, NULL, NULL);
+        hChangePassword = CreateWindowA("TOOL", "Change User", WS_VISIBLE | WS_CHILD, 120, 0, 90, 75, hToolBarOtros, TOOLBAR_IMAGE_CHANGE_PASSWORD, NULL, NULL);
+        hDeleteUser = CreateWindowA("TOOL", "Eliminar Usuario", WS_VISIBLE | WS_CHILD, 220, 0, 90, 75, hToolBarOtros, TOOLBAR_IMAGE_DELETE_USER, NULL, NULL);
+        hCloseSesion = CreateWindowA("TOOL", "Cerrar Sesion", WS_VISIBLE | WS_CHILD, 320, 0, 90, 75, hToolBarOtros, TOOLBAR_IMAGE_CLOSE_SESION, NULL, NULL);
+        CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, 420, 10, 1, ToolBarHeight - 20, hToolBarOtros, NULL, NULL, NULL);
+        hExit = CreateWindowA("TOOL", "Salir", WS_VISIBLE | WS_CHILD, 430, 0, 90, 75, hToolBarOtros, TOOLBAR_IMAGE_EXIT_PROGRAM, NULL, NULL);
+}
+
+void CreateWindowAbout()
+{
+        int margin_left = 50;
+        int margin_top = 30;
+
+        int cxWindow = 400, cyWindow = (margin_top * 4) + 296;
+        int xWindow = WWidth / 2 - (cxWindow / 2), yWindow = WHeight / 2 - (cyWindow / 2);
+
+        hAbout = CreateWindowA("CLIENT_FACTURA", "ABOUT", WS_OVERLAPPEDWINDOW | WS_VISIBLE, xWindow, yWindow, cxWindow, cyWindow, NULL, NULL, NULL, NULL);
+
+        char nombreDelSistema[50];
+        char nombreDeUsuarioActual[150];
+
+        sprintf(nombreDelSistema, "Sistema: %s", NOMBRE_SISTEMA);
+        sprintf(nombreDeUsuarioActual, "Sesion Actual: %s", currentUser.username);
+
+        cxWindow -= 15;
+
+        CreateWindowA("S_TRANSPARENT", nombreDelSistema, WS_VISIBLE | WS_CHILD, margin_left, margin_top, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "Version: 1.0 | 2022 Semestre II", WS_VISIBLE | WS_CHILD, margin_left, margin_top + 20, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", nombreDeUsuarioActual, WS_VISIBLE | WS_CHILD, margin_left, margin_top + 40, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+        
+        CreateWindowA("SEPARATOR", NULL, WS_VISIBLE | WS_CHILD, margin_left, margin_top + 70, cxWindow - (margin_left * 2), 1, hAbout, NULL, NULL, NULL);
+        
+        CreateWindowA("S_TRANSPARENT", "Grupo:", WS_VISIBLE | WS_CHILD, margin_left, margin_top + 80, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "Yorman Balan | CI: 31.782.211", WS_VISIBLE | WS_CHILD, margin_left, margin_top + 100, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "Javier Chacin | CI: 30.994.015", WS_VISIBLE | WS_CHILD, margin_left, margin_top + 120, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "Keimel Rodriguez | CI: 31.103.314", WS_VISIBLE | WS_CHILD, margin_left, margin_top + 140, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "Patricia Duran | CI: 31.406.947", WS_VISIBLE | WS_CHILD, margin_left, margin_top + 160, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "Nangerly Salas | CI: 30.437.436", WS_VISIBLE | WS_CHILD, margin_left, margin_top + 180, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+
+        CreateWindowA("SEPARATOR", NULL, WS_VISIBLE | WS_CHILD, margin_left, margin_top + 210, cxWindow - (margin_left * 2), 1, hAbout, NULL, NULL, NULL);
+
+        CreateWindowA("S_TRANSPARENT", "Semestre II", WS_VISIBLE | WS_CHILD, margin_left, margin_top + 220, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "Carrera: Ingeniera en Informatica", WS_VISIBLE | WS_CHILD, margin_left, margin_top + 240, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "Materia: Tecnicas de Programacion I", WS_VISIBLE | WS_CHILD, margin_left, margin_top + 260, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "Universidad Nacional Experimental", WS_VISIBLE | WS_CHILD, margin_left, margin_top + 280, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+        CreateWindowA("S_TRANSPARENT", "de Guayana", WS_VISIBLE | WS_CHILD, margin_left, margin_top + 296, cxWindow - (margin_left * 2), 20, hAbout, NULL, NULL, NULL);
+}
+
+void CreateWindowFormUser()
+{
+        int CContainerWidth = 500;
+        int CContainerHeight = 250;
+
+        WINDOWPOS containerPos;
+        WINDOWPOS namePos;
+        WINDOWPOS passwordPos;
+        WINDOWPOS direccionPos;
+        WINDOWPOS rifPos;
+        WINDOWPOS buttonRegisterPos;
+        WINDOWPOS buttonClosePos;
+
+        SetWindowPosition(&containerPos, WWidth / 2 - (CContainerWidth / 2), WHeight / 2 - (CContainerHeight / 2), CContainerWidth, CContainerHeight);
+
+        SetWindowPosition(&namePos, CContainerWidth * 0.08, 20, CContainerWidth * 0.35, 18);
+        SetWindowPosition(&passwordPos, CContainerWidth * 0.55, 20, CContainerWidth * 0.35, 18);
+
+        SetWindowPosition(&direccionPos, CContainerWidth * 0.08, 90, CContainerWidth * 0.35, 18);
+        SetWindowPosition(&rifPos, CContainerWidth * 0.55, 90, CContainerWidth * 0.35, 18);
+
+        CContainerWidth -= 15;
+
+        SetWindowPosition(&buttonRegisterPos, CContainerWidth / 2 - 110, 160, 100, 30);
+        SetWindowPosition(&buttonClosePos, CContainerWidth / 2 + 10, 160, 100, 30);
+
+        hFormUserModify.container = CreateWindowA("CLIENT_WINDOW", "Modificar Usuario", WS_VISIBLE | WS_OVERLAPPEDWINDOW, containerPos.x, containerPos.y, containerPos.cx, containerPos.cy, NULL, NULL, NULL, NULL);
+
+        CreateWindowA("STATIC", "Nombre:", WS_VISIBLE | WS_CHILD, namePos.x, namePos.y, 9 * 7, namePos.cy, hFormUserModify.container, NULL, NULL, NULL);
+        hFormUserModify.username = CreateWindowA("EDIT", currentUser.username, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, namePos.x, namePos.y + 25, namePos.cx, namePos.cy, hFormUserModify.container, NULL, NULL, NULL);
+
+        CreateWindowW(L"STATIC", L"Contraseña:", WS_VISIBLE | WS_CHILD, passwordPos.x, passwordPos.y, 12 * 7, passwordPos.cy, hFormUserModify.container, NULL, NULL, NULL);
+        hFormUserModify.password = CreateWindowA("EDIT", currentUser.password, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, passwordPos.x, passwordPos.y + 25, passwordPos.cx, passwordPos.cy, hFormUserModify.container, NULL, NULL, NULL);
+
+        CreateWindowW(L"STATIC", L"Direccion Compañia:", WS_VISIBLE | WS_CHILD, direccionPos.x, direccionPos.y, 20 * 7, direccionPos.cy, hFormUserModify.container, NULL, NULL, NULL);
+        hFormUserModify.direccion = CreateWindowA("EDIT", currentUser.direccion, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, direccionPos.x, direccionPos.y + 25, direccionPos.cx, direccionPos.cy, hFormUserModify.container, NULL, NULL, NULL);
+
+        CreateWindowW(L"STATIC", L"Rif-Compañia:", WS_VISIBLE | WS_CHILD, rifPos.x, rifPos.y, 14 * 7, rifPos.cy, hFormUserModify.container, NULL, NULL, NULL);
+        hFormUserModify.rif_company = CreateWindowA("EDIT", currentUser.rif_company, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, rifPos.x, rifPos.y + 25, rifPos.cx, rifPos.cy, hFormUserModify.container, NULL, NULL, NULL);
+
+        CreateWindowA("BUTTON_P", "Registrar", WS_VISIBLE | WS_CHILD, buttonRegisterPos.x, buttonRegisterPos.y, buttonRegisterPos.cx, buttonRegisterPos.cy, hFormUserModify.container, MODIFY_USER, NULL, NULL);
+        CreateWindowA("BUTTON_P", "Cancelar", WS_VISIBLE | WS_CHILD, buttonClosePos.x, buttonClosePos.y, buttonClosePos.cx, buttonClosePos.cy, hFormUserModify.container, CLOSE_FORM_MODIFY_USER, NULL, NULL);
 }
 
 /*
@@ -644,7 +769,7 @@ void CreateRowTableClient(STRUCTCLIENTESDATA data, int i)
 }
 
 /*
-CreateTableClient. Esta funcion crea la tabla donde se veran los clientes almacenados en clientes.txt. Esta funcion contiene un bucle en el que llama a 
+CreateTableClient. Esta funcion crea la tabla donde se veran los clientes almacenados en clientes.txt. Esta funcion contiene un bucle en el que llama a
 la funcion CreateRowTableClient la cual esta encargada de crear las filas de la tabla.
 
 Parametros Ninguno
@@ -706,7 +831,6 @@ void loadImagesAdd()
         hImageAdd = (HBITMAP)LoadImageA(NULL, "img\\add.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 }
 
-
 /*
 Carga La image modificar.bmp para su uso en el componente tool. Esta funcion se usa en winProc.c
 */
@@ -715,7 +839,6 @@ void loadImagesModify()
 {
         hImageModify = (HBITMAP)LoadImageA(NULL, "img\\modificar.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 }
-
 
 /*
 Carga La image delete.bmp para su uso en el componente tool. Esta funcion se usa en winProc.c
@@ -735,7 +858,6 @@ void loadImagesHistorial()
         hImageHistorial = (HBITMAP)LoadImageA(NULL, "img\\lista.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 }
 
-
 /*
 Carga La image ver.bmp para su uso en el componente tool. Esta funcion se usa en winProc.c
 */
@@ -745,6 +867,20 @@ void loadImagesView()
         hImageVer = (HBITMAP)LoadImageA(NULL, "img\\ver.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 }
 
+void loadImagesAbout()
+{
+        hImageAbout = (HBITMAP)LoadImageA(NULL, "img\\about.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
+}
+
+void loadImagesCloseSesion()
+{
+        hImageCloseSesion = (HBITMAP)LoadImageA(NULL, "img\\changeuser.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
+}
+
+void loadImagesExit()
+{
+        hImageExit = (HBITMAP)LoadImageA(NULL, "img\\exit.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
+}
 
 /*
 CreateFormClient. Esta funcion crea un formulario que se utiliza para crear y modificar un cliente. Son tres tipos, nuevoCliente, nuevoCliente fuera de la pestaña clientes
@@ -910,7 +1046,7 @@ void CreateFormClient(BOOL newClient, UINT client, BOOL ventas)
 }
 
 /*
-CreateFormVentas. Crea el formulario de ventas, este se divide en tres partes, el cliente, los botones para registrar y 
+CreateFormVentas. Crea el formulario de ventas, este se divide en tres partes, el cliente, los botones para registrar y
 agregar productos a la venta, y la tabla que muestra los productos que se compraran. Al finalizar la funcion llama a la funcion CreateTableListOfProducts.
 
 Paramentros Ninguno
@@ -1145,10 +1281,10 @@ void CreateFooterTotalVentas(HWND hWnd, int x, int y, int cx)
 }
 
 /*
-CreateHeaderTableProductsVentas. Crea una fila en las que sus columnas sirven como guia para la tabla de productos que se encuentra en la ventana 
+CreateHeaderTableProductsVentas. Crea una fila en las que sus columnas sirven como guia para la tabla de productos que se encuentra en la ventana
 facturas o al inspeccionar la venta
 
-Parametros 
+Parametros
         HWND hWnd = Identificador del contenedor
         int x = posicion en x
         int y = posicion en y
@@ -1220,15 +1356,14 @@ void CreateWindowFactura()
         get_name_clients(rowCliente, nombre);
         get_dni_clients(rowCliente, dniCliente);
 
-
         sprintf(text, "Nombre: %s", nombre);
         get_zone_invoice(rowFactura, direccionCliente);
 
         CreateWindowA("S_TRANSPARENT", text, WS_CHILD | WS_VISIBLE, margin_left, datosCliente + 20, strlen(text) * 8, 20, hFacturaWindow, NULL, NULL, NULL);
-        
+
         sprintf(text, "Direccion: %s", direccionCliente);
         CreateWindowA("S_TRANSPARENT", text, WS_CHILD | WS_VISIBLE, margin_left, datosCliente + 40, strlen(text) * 8, 20, hFacturaWindow, NULL, NULL, NULL);
-        
+
         sprintf(text, "Cedula: %s", dniCliente);
         CreateWindowA("S_TRANSPARENT", text, WS_CHILD | WS_VISIBLE, margin_left, datosCliente + 60, strlen(text) * 8, 20, hFacturaWindow, NULL, NULL, NULL);
 
@@ -1351,7 +1486,6 @@ void CreateTableListofVentas(HWND hWnd, int xTable, int yTable, int cxTable, int
         CreateHeaderTableVentas(hBodyVentas, 0, 0);
 }
 
-
 /*
 GetDataTableListofVentas. Esta funcion se utiliza para crear de nuevo la lista de ventas
 
@@ -1469,7 +1603,7 @@ void CreateWindowProducts()
         CreateFormProduct. Crea el formulario para introducir un nuevo producto o para modificar uno ya existente.
 
         parametros
-                BOOL newProduct = si es TRUE se creara un formulario vacio para poder crear un nuevo producto, si es FALSE se creara el formulario con 
+                BOOL newProduct = si es TRUE se creara un formulario vacio para poder crear un nuevo producto, si es FALSE se creara el formulario con
                 los datos del producto a modificar
                 UINT product = Indica la posicion del producto en el array dataProducts
 */
@@ -1660,7 +1794,6 @@ void CreateHeaderWindowProducts(HWND hWnd, int cxHeader, int cyHeader)
         CreateWindowA("EDIT", "Search", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 340, yEdit, cxEdit, cyEdit, headerWindowProduct, NULL, NULL, NULL);
 }
 
-
 /*
 CreateTableProducts. Crea la tabla de productos.
 
@@ -1710,7 +1843,6 @@ void CreateHeaderTableProducts(HWND hWnd, int y)
         CreateWindowA("HEADER_CELL", "Precio Total", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 5), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
 }
-
 
 /*
 CreateRowTableClientPortable. Se encarga de crear filas en el contenedor. esta funcion fue echa para la ventana para elegir clientes

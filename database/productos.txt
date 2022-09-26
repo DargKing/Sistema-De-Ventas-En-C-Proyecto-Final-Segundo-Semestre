@@ -4,7 +4,8 @@
                                                  
                                                     
                                                     
-220916040703PM	19-09-2022	Doritos	50	0	Comida	2	T
+                                                 
                                                     
 220916040647PM	19-09-2022	Platanito	100	0	Comida	6	T
+220916040703PM	19-09-2022	Doritos	50	0	Comida	2	T
 

@@ -1,5 +1,7 @@
 #include <windows.h>
 
+#define NOMBRE_SISTEMA "SDAFO" // Se pronuncia esdafo
+
 #define DEFAULT_SORT 0
 #define DATE_SORT_ASD 1
 #define DATE_SORT_DES 2
@@ -15,6 +17,10 @@
 #define DNI_SORT_DES 12
 
 char main_class[5];
+
+
+void CreateToolBarOtros();
+void CreateToolsOtros();
 
 void CreateLoginWindow();
 void CreateSingupWindow();
@@ -60,9 +66,15 @@ void loadImagesModify();
 void loadImagesDelete();
 void loadImagesHistorial();
 void loadImagesView();
+void loadImagesAbout();
+void loadImagesCloseSesion();
+void loadImagesExit();
 
+
+void CreateWindowAbout();
 void CreateFormClient(BOOL newClient, UINT client, BOOL ventas);
 void CreateFormProduct(BOOL newProduct, UINT product);
+void CreateWindowFormUser();
 
 BOOL CreateClasses(HINSTANCE);
 BOOL InitProgram(HINSTANCE);

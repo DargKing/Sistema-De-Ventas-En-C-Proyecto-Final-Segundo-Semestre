@@ -1,3 +1,8 @@
-220814021209PM	Yorman	24092004	ADMIN	294675379	Chilemex
+                                                       
 220911110726AM	sdfsdf	fasdf	USER	234324	gdfg
+220911110723AM	yogert	123456	ADMIN	234324	gdfg
+220920083730PM	CAJA1	123456	USER	294675379	Avenida Guarapiche, CC Atlantico Local 7
+                                                     
+                                                   
+220814021209PM	CAJA2	123456	USER	294675379	Chilemex
 

@@ -2,6 +2,8 @@
 
 // Acciones del boton
 
+int cerrar;
+
 #define CLOSE_APP -1
 #define CLOSE_WINDOW 0
 #define LOGIN_USER 1
@@ -30,17 +32,20 @@
 #define VIEW_FACTURA 20
 #define OPEN_SINGUP_USER_WINDOW 21
 
+#define CLOSE_FORM_MODIFY_USER 22
+#define MODIFY_USER 23
 
 // Others
 
 #define NAV_INVENTARIO 1
 #define NAV_CLIENTES 2
 #define NAV_VENTAS 3
+#define NAV_OTROS 4
 
 #define LIST_CURRENT_PRODUCTS 1
 #define LIST_PRODUCTS 2
 #define LIST_CLIENTS 3
-#define LIST_VENTAS 4 
+#define LIST_VENTAS 4
 #define LIST_PRODUCTS_VENTAS 5
 
 #define TOOLBAR_IMAGE_NEW_INVENTARIO 1
@@ -57,6 +62,12 @@
 #define TOOLBAR_IMAGE_HISTORIAL_VENTAS 10
 #define TOOLBAR_IMAGE_VER_VENTAS 11
 
+#define TOOLBAR_IMAGE_ABOUT 12
+#define TOOLBAR_IMAGE_CHANGE_PASSWORD 13
+#define TOOLBAR_IMAGE_CLOSE_SESION 14
+#define TOOLBAR_IMAGE_DELETE_USER 15
+#define TOOLBAR_IMAGE_EXIT_PROGRAM 16
+
 int First;
 int yTabla;
 int rows_clients_table;
@@ -67,7 +78,7 @@ int rows_currentProduct_table;
 HWND hAlto, hAncho;
 
 // Headers
-HWND hMainHeader, hMainNav, hToolBarInventario, hToolBarClientes, hToolBarVentas;
+HWND hMainHeader, hMainNav, hToolBarInventario, hToolBarClientes, hToolBarVentas, hToolBarOtros;
 
 // Body
 HWND hBody, hBodyInventario, hBodyClientes, hBodyVentas;
@@ -76,7 +87,7 @@ HWND hBody, hBodyInventario, hBodyClientes, hBodyVentas;
 HWND hNavActual, hToolBarActual;
 
 // Ventanas
-HWND hMain, hLogin, hSingUp;
+HWND hMain, hLogin, hSingUp, hAbout;
 
 // Edits
 HWND hName, hPassword, hRifCompany, hDireccionCompany;
@@ -88,7 +99,7 @@ HWND hStatic1, hStatic2;
 HWND hButtonRed, hButtonGreen;
 
 // Main Buttons
-HWND hInventario, hClientes, hVentas;
+HWND hInventario, hClientes, hVentas, hOtros;
 
 // Inventario
 HWND hNuevoProducto, hEliminarProducto, hModificarProducto;
@@ -99,6 +110,10 @@ HWND hNuevoCliente, hEliminarCliente, hModificarCliente;
 // Ventas
 HWND hNuevaVenta, hEliminarVenta, hModificarVenta, hToolHistorialVenta, hToolVerVenta;
 HWND hWindowViewVenta;
+
+// Otros
+HWND hAbout, hChangePassword, hDeleteUser, hCloseSesion, hExit;
+
 // Forms
 
 typedef struct CLIENTESHWND
@@ -167,7 +182,8 @@ typedef struct CURRENTPRODUCTOSDATA
 
 // User
 
-typedef struct USERDATA{
+typedef struct USERDATA
+{
     char ID[20];
     char username[100];
     char range[100];
@@ -175,10 +191,19 @@ typedef struct USERDATA{
     char rif_company[100];
     char direccion[100];
 } STRUCTUSERDATA;
+typedef struct USERHWND
+{
+    HWND container;
+    HWND username;
+    HWND password;
+    HWND rif_company;
+    HWND direccion;
+    HWND range;
+} STRUCTUSERHWND;
 STRUCTUSERDATA currentUser;
+STRUCTUSERHWND hFormUserModify;
 
 // Tabla
-
 
 STRUCTCLIENTESHWND *hTableCliente;
 // HWND *hTableCliente;
@@ -206,8 +231,8 @@ HWND hTableCurrentProduct;
 STRUCTCLIENTESHWND hCurrentClientVentas;
 STRUCTCLIENTESDATA CurrentClientVentas;
 STRUCTCURRENTPRODUCTOSDATA *CurrentProducts;
-HWND* h_rows_currentProduct_table;
-HWND* h_rows_ventas_table;
+HWND *h_rows_currentProduct_table;
+HWND *h_rows_ventas_table;
 
 // Form
 STRUCTCLIENTESHWND hFormClient;
@@ -219,10 +244,13 @@ STRUCTPRODUCTOSDATA currentDataP;
 HWND hCurrentBody;
 
 // Images
-HBITMAP hImageModify, hImageAdd, hImageDelete, hImageHistorial, hImageVer;
+HBITMAP hImageModify, hImageAdd, hImageDelete, hImageHistorial, hImageVer, hImageAbout, hImageChangePassword,
+    hImageDeleteUser, hImageExit, hImageCloseSesion;
+
 HBITMAP hNuevoProductoImage, hEliminarProductoImage, hModificarProductoImage,
     hNuevoClienteImage, hModificarClienteImage, hEliminarClienteImage,
-    hNuevaVentaImage, hModificarVentaImage,  hHistorialVentaImage, hEliminarVentaImage, hVerVentaImage;
+    hNuevaVentaImage, hModificarVentaImage, hHistorialVentaImage, hEliminarVentaImage, hVerVentaImage,
+    hAboutImage, hChangePasswordImage, hDeleteUserImage, hCloseSesionImage, hExitImage;
 
 LRESULT CALLBACK DivWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK WinProc(HWND, UINT, WPARAM, LPARAM);
@@ -241,8 +269,6 @@ LRESULT CALLBACK ToolWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK STransparentWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
 LRESULT CALLBACK ButtonsWindowProcedure(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK ButtonGreenWindowProcedure(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK ButtonRedWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
 LRESULT CALLBACK BodyClientWindowProcedure(HWND, UINT, WPARAM, LPARAM);
 
