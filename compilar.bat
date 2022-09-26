@@ -1,0 +1,4 @@
+gcc -Wfatal-errors -Wno-nonnull -Wno-int-conversion main.c winProc.c modules/tabdb.c modules/productos.c modules/facturas.c modules/ventas.c functions/struct.c modules/user.c modules/caracteres.c modules/clientes.c functions/draw.c functions/error.c functions/windows.c -lgdi32 -luser32 -lkernel32 -lcomctl32 -lm -mwindows -o "Sistema_de_Ventas"
+@REM gcc pruebas.c modules/tabdb.c modules/clientes.c modules/productos.c modules/ventas.c modules/caracteres.c -o "Sistema_de_Ventas"
+@REM gcc main.c winProc.c modules/tabdb.c modules/user.c modules/caracteres.c modules/clientes.c functions/draw.c functions/error.c functions/windows.c -lgdi32 -luser32 -lkernel32 -lcomctl32 -lm -mwindows -o "Sistema_de_Ventas"
+Sistema_de_Ventas.exe
