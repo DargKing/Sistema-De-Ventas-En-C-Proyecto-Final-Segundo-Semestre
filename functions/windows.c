@@ -1,3 +1,25 @@
+/*
+windows.c es el archivo encargado de la creacion de ventanas y componentes de la aplicacion.
+
+Para la interfaz grafica usamos winapi32, en esta libreria los componentes como botones, texto y demas se llaman ventanas, a las ventanas se les puede 
+imaginar como cajas vacias las cuales se tienen que pintar con datos establecidos por el desarrollador
+
+Para crear una ventana se usa la funcion CreateWindowA(); Los argumentos de esta son
+
+CreateWindowA(Clase de la funcion, Texto, Estilo de la funcion, Posicion en x, posicion y, ancho, alto, ventana padre, codigo de menu, instancia de la ventana, lParam);
+
+Al usar esta funcion si funciona bien devuelve el identificador de la ventana, este identificador debe de guardarse en una variable HWND, en caso de que haya un error
+Devuelve NULL
+
+Los mas escenciales son la clase de la funcion y la ventana padre, la clase de la funcion en un campo 100% obligatorio, esta clase determinara su comportamiento
+y su aspecto, ademas de que tambien manejara los mensajes de la ventana (Esto se explicara en winProc.c), despues esta la ventana padre, en este campo va una
+estructura HWND que contendra el identificador de la ventana a la cual se acoplara la nueva ventana.
+
+Siguiendo con el tema de las clases, para crear una clase se tiene que crear una variable con la estructura WNDCLASS y despues rellenar los datos de esta,
+despues de rellenar los datos se pasa por la funcion RegisterClass, despues de eso la clase estara registrada
+Una cosa escencial en una clase es el manejador de mensajes, este manejador se explicara en winProc.c
+*/
+
 #include <windows.h>
 #include <wchar.h>
 #include <string.h>
@@ -18,6 +40,21 @@ FirstMalloc = 0;
 currentSort = DEFAULT_SORT;
 Window_product_is_open = 0;
 rows_currentProduct_table = 0;
+
+/*
+        CreateClasses es uno de los primeros procesos que se hacen en el programa, este sirve para crear las
+        clases de ventanas personalizadas, existen clases de ventanas ya preexistentes como STATIC o EDIT,
+        Las cuales se usan mucho durante el programa, pero las clases personalizadas son lo que mas abunda
+        ya que con esta se pueden crear controles y opciones fuera de la norma
+
+        Parametros
+        [INPUT] hInstance: Este parametro es la instancia de la ventana (No entiendo del todo bien que es pero se que
+        si no esta, no funciona)
+
+        Return BOOL (Este BOOL es una estructura de winapi, parecida al bool de stdbool.h)
+        Esta funcion si se completa con exito devuelve TRUE,
+        en caso de que suceda un error al registrar las clases devuelve FALSE
+*/
 
 BOOL CreateClasses(HINSTANCE hInstance)
 {
@@ -241,6 +278,17 @@ BOOL CreateClasses(HINSTANCE hInstance)
         return TRUE;
 }
 
+
+/*
+        CreateSingUp. Esta funcion se encarga de crear la ventana de crear usuario, en esta ventana se rellena el formulario y 
+        si no hay ningun error en los datos se crea el usuario, despues de crearse se oculta la ventana (No se cierra).
+        Si se preciona el boton Close, la ejecucion del programa completo termina
+
+        Parametros (No tiene)
+
+        Return void
+*/
+
 void CreateSingupWindow()
 {
         int cxWindow = 350;
@@ -270,6 +318,18 @@ void CreateSingupWindow()
         CreateWindowA("BUTTON_P", "Close", WS_CHILD | WS_VISIBLE | BS_CENTER | BS_VCENTER, 180, 230, cxButton, 30, hSingUp, CLOSE_WINDOW, NULL, NULL);
 }
 
+/*
+        CreateLoginWindow. Al llamar a esta funcion se crea la ventana de inicio de sesion, esta es la segunda funcion que se llama al
+        comenzar el programa. Despues de introducir los datos del usuario en el formulario se le da click en el boton Login, si los datos del usuario
+        son correctos se cierra la ventana e inicia el programa principal. Si se quiere crear un usuario se preciona el boton Nuevo Usuario,
+        al hacer esto se oculta (no se cierra) la ventana y se crea la ventana SingUp llamando a la funcion CreateSingupWindow().
+        Si se preciona el boton Close, la ejecucion del programa completo termina
+
+        Parametros (Ninguno)
+
+        Return void
+*/
+
 void CreateLoginWindow()
 {
         int CLoginWidth = 350;
@@ -294,6 +354,18 @@ void CreateLoginWindow()
 
         CreateWindowA("BUTTON_P", "Nuevo Usuario", WS_CHILD | WS_VISIBLE | BS_CENTER | BS_VCENTER, (CLoginWidth / 2) - (cxButton / 2), 170, cxButton, 30, hLogin, OPEN_SINGUP_USER_WINDOW, NULL, NULL);
 }
+
+/*
+CreateMainWindow. Despues de iniciar sesion se llama a la funcion CreateMainWindow, esta va a ser la ventana principal del programa. Esta Ventana estara 
+maximizada (No se debe salir de este modo ya que el programa no se le a agregado el rezise del contenido), despues de crearse esta ventana se llama a la funcion
+CreateHeader, el cual creara el Header Principal del programa.
+Esta funcion tambien tiene como objetivo el de poner en las variables puntero, que se encargaran de almacenar los datos de las tablas, un malloc para que puedan manipularse
+como arrays y poder cambiarles el tamaño despues
+
+Parametros Ninguno
+
+Return void
+*/
 
 void CreateMainWindow()
 {
@@ -326,53 +398,175 @@ void CreateMainWindow()
         CreateHeader();
 }
 
-void CreateHeaderTableClient()
-{
-        RECT rect;
-        GetClientRect(hBodyClientes, &rect);
-        int width = cxColumnTable;
+/*
+        CreateHeader. Esta funcion crea el contenedor para que los demas componentes se acoplen a esta.
+        Despues de crearse el contenedor se llama a CreateNavBar para que cree el la barra de navegacion
 
-        HWND temp = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, 0, cxColumnTable * nColumnsTable, ROW_TABLE_HEIGHT, hBodyClientes, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Nombre", WS_VISIBLE | WS_CHILD, 0, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Cedula", WS_VISIBLE | WS_CHILD, (width), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Telefono", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Naturaleza", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
-        CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        Parametros Ninguno
+
+        Return void
+*/
+
+void CreateHeader()
+{
+        RECT CRect;
+        GetClientRect(hMain, &CRect);
+        hMainHeader = CreateWindowA("HEADER", NULL, WS_VISIBLE | WS_CHILD, 0, 0, CRect.right, HeaderHeight, hMain, NULL, NULL, NULL);
+        CreateNavBar();
 }
 
-void CreateRowTableClient(STRUCTCLIENTESDATA data, int i)
+/*
+        CreateNavBar. Esta funcion Crea la barra de navegacion donde se viajara a los distintos aspectos de nuestro programa.
+        Esta funcion solo se usa una ves y es al crear la ventana principal. Despues de crear la barra de navegacion se llama a 4 funciones en el siguiente orden
+        CreateToolBarVentas, CreateToolBarInventario, CreateToolBarClientes y CreateBodyVentasMainWindow
+        Las funciones CreateTollBar sirven para crear la barra de herramientas con las que se podra ver la tabla de ventas, eliminar una fila de cualquier tabla, agregar fila
+        y modificar filas
+        la funcion CreateBodyVentasMainWindow crea el formulario para crear nuevas ventas. esta se explicara mas detalladamente mas tarde
+
+        Paramentros Ninguno
+
+        Return void
+*/
+
+void CreateNavBar()
 {
-        RECT rect;
-        GetClientRect(hBodyClientes, &rect);
-        int width = cxColumnTable * nColumnsTable;
-        hTableCliente[i].container = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, yTabla, width, ROW_TABLE_HEIGHT, hTableContainer, i, NULL, NULL);
-        yTabla += 20;
+        GetClientRect(hMain, &CRect);
+        hMainNav = CreateWindowA("MAIN_NAV", NULL, WS_VISIBLE | WS_CHILD, 0, 0, CRect.right, NavHeight, hMainHeader, NULL, NULL, NULL);
+
+        First = 0;
+        hVentas = CreateWindowA("TOOL_BAR", "Ventas", WS_VISIBLE | WS_CHILD, 20, 0, 100, NavHeight, hMainNav, NAV_VENTAS, NULL, NULL);
+        First = 1;
+        hInventario = CreateWindowA("TOOL_BAR", "Inventario", WS_VISIBLE | WS_CHILD, 120, 0, 100, NavHeight, hMainNav, NAV_INVENTARIO, NULL, NULL);
+        hClientes = CreateWindowA("TOOL_BAR", "Clientes", WS_VISIBLE | WS_CHILD, 220, 0, 100, NavHeight, hMainNav, NAV_CLIENTES, NULL, NULL);
+        hNavActual = hVentas;
+
+        CreateToolBarVentas();
+        CreateToolBarInventario();
+        CreateToolBarClientes();
+
+        hToolBarActual = hToolBarVentas;
+
+        CreateBodyVentasMainWindow(TRUE);
 }
 
-void CreateTableClient()
+/*
+CreateToolBarInventario. Esta funcion crea el contenedor para las herramientas, este contenedor seria la barra de tareas, al finalizar la funcion llama a la funcion
+CreateToolsInventario para crear las herramientas para manejar la table de inventario
+
+Parametros Ninguno
+
+Return void
+*/
+
+void CreateToolBarInventario()
 {
-        RECT rectBodyClientes;
-        RECT rectMainWindow;
-
-        GetClientRect(hBodyClientes, &rectBodyClientes);
-        GetClientRect(hMain, &rectMainWindow);
-
-        DWORD sTableContainer;
-
-        nColumnsTable = 5;
-        if (rows_clients_table > (rectMainWindow.bottom - HeaderHeight) / ROW_TABLE_HEIGHT)
-                sTableContainer = WS_VISIBLE | WS_CHILD | WS_VSCROLL;
-        else
-                sTableContainer = WS_VISIBLE | WS_CHILD;
-
-        hTableContainer = CreateWindowExA(0, "DIV", NULL, sTableContainer, 0, 20, rectBodyClientes.right, rectBodyClientes.bottom - ROW_TABLE_HEIGHT, hBodyClientes, LIST_CLIENTS, NULL, NULL);
-
-        int y = 0;
-        for (int i = 0; i < rows_clients_table; i++)
-        {
-                CreateRowTableClient(dataClient[i], i);
-        }
+        hToolBarInventario = CreateWindowA("TOOLBAR_CONTAINER", NULL, WS_VISIBLE | WS_CHILD, 0, 25, CRect.right, ToolBarHeight, hMainHeader, NULL, NULL, NULL);
+        ShowWindow(hToolBarInventario, SW_HIDE);
+        CreateToolsInventario();
 }
+
+/*
+        CreateToolsInventario. Esta funcion crea las herramientas para manejar la tabla de inventario. Estas herramientas son
+        Crear producto, eliminar producto y modificar producto. al hacer click en Nuevo Producto se crea un formulario en el que se debe de introducir
+        Los datos del producto. al precionar modificar producto se crea otro formulario en el que se modificaran los datos actuales del producto.
+        Eliminar Producto elimina la fila seleccionada
+
+        Parametros Ninguno
+
+        Return void
+*/
+
+void CreateToolsInventario()
+{
+        hNuevoProducto = CreateWindowA("TOOL", "Nuevo Producto", WS_VISIBLE | WS_CHILD, 20, 0, 100, 75, hToolBarInventario, TOOLBAR_IMAGE_NEW_INVENTARIO, NULL, NULL);
+        hModificarProducto = CreateWindowA("TOOL", "Modificar Producto", WS_VISIBLE | WS_CHILD, 120, 0, 100, 75, hToolBarInventario, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
+        hEliminarProducto = CreateWindowA("TOOL", "Eliminar Producto", WS_VISIBLE | WS_CHILD, 220, 0, 100, 75, hToolBarInventario, TOOLBAR_IMAGE_DELETE_INVENTARIO, NULL, NULL);
+}
+
+
+/*
+CreateToolBarClientes. Esta funcion crea el contenedor para las herramientas, este contenedor seria la barra de tareas, al finalizar la funcion llama a la funcion
+CreateToolsClientes para crear las herramientas para manejar la table de clientes.
+
+Parametros Ninguno
+
+Return void
+*/
+
+void CreateToolBarClientes()
+{
+        hToolBarClientes = CreateWindowA("TOOLBAR_CONTAINER", NULL, WS_VISIBLE | WS_CHILD, 0, 25, CRect.right, ToolBarHeight, hMainHeader, NULL, NULL, NULL);
+        ShowWindow(hToolBarClientes, SW_HIDE);
+        CreateToolsClientes();
+}
+
+/*
+        CreateToolsClientes. Esta funcion crea las herramientas para manejar la tabla de inventario. Estas herramientas son
+        Crear cliente, eliminar cliente y modificar cliente. al hacer click en Nuevo Cliente se crea un formulario en el que se debe de introducir
+        Los datos del Cliente. al precionar modificar producto mientras se tiene una fila seleccionada de la tabla se crea otro formulario en el que se modificaran los 
+        datos actuales del Cliente. Eliminar Cliente elimina la fila seleccionada
+
+        Parametros Ninguno
+
+        Return void
+*/
+
+void CreateToolsClientes()
+{
+        hNuevoCliente = CreateWindowA("TOOL", "Nuevo Cliente", WS_VISIBLE | WS_CHILD, 20, 0, 100, 75, hToolBarClientes, TOOLBAR_IMAGE_NEW_CLIENTE, NULL, NULL);
+        hModificarCliente = CreateWindowA("TOOL", "Modificar Cliente", WS_VISIBLE | WS_CHILD, 120, 0, 100, 75, hToolBarClientes, TOOLBAR_IMAGE_MODIFY_CLIENTE, NULL, NULL);
+        hEliminarCliente = CreateWindowA("TOOL", "Eliminar Cliente", WS_VISIBLE | WS_CHILD, 220, 0, 100, 75, hToolBarClientes, TOOLBAR_IMAGE_DELETE_CLIENTE, NULL, NULL);
+}
+
+
+
+/*
+CreateToolBarVentas. Esta funcion crea el contenedor para las herramientas, este contenedor seria la barra de tareas, al finalizar la funcion llama a la funcion
+CreateToolsVentas para crear las herramientas para manejar el formulario y tabla de ventas.
+
+Parametros Ninguno
+
+Return void
+*/
+
+void CreateToolBarVentas()
+{
+        hToolBarVentas = CreateWindowA("TOOLBAR_CONTAINER", NULL, WS_VISIBLE | WS_CHILD, 0, 25, CRect.right, ToolBarHeight, hMainHeader, NULL, NULL, NULL);
+        CreateToolsVentas();
+}
+
+/*
+        CreateToolsVentas. Esta funcion crea las herramientas para manejar el formulario de ventas y la tabla de ventas. Estas herramientas son
+        Nueva Venta, Historial de Ventas y Ver Venta. Al hacer click en nueva venta se crea un formulario donde se podra introducir las nuevas ventas,
+        si se preciona Historial de Ventas ese anterior formulario se cerrara y se abrira una tabla mostrando todas las ventas realizadas.
+        Si se tiene precionado una fila en la tabla de ventas y se preciona Ver Venta entonces se mostrara en pantalla otra ventana mostrando el contenido de la venta
+
+        Parametros Ninguno
+
+        Return void
+*/
+
+void CreateToolsVentas()
+{
+        hNuevaVenta = CreateWindowA("TOOL", "Nueva Venta", WS_VISIBLE | WS_CHILD, 20, 0, 80, 75, hToolBarVentas, TOOLBAR_IMAGE_NEW_VENTAS, NULL, NULL);
+        CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, 110, 10, 1, ToolBarHeight - 20, hToolBarVentas, TOOLBAR_IMAGE_HISTORIAL_VENTAS, NULL, NULL);
+        hToolHistorialVenta = CreateWindowA("TOOL", "Historial de Ventas", WS_VISIBLE | WS_CHILD, 120, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_HISTORIAL_VENTAS, NULL, NULL);
+        hToolVerVenta = CreateWindowA("TOOL", "Ver Venta", WS_VISIBLE | WS_CHILD, 210, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_VER_VENTAS, NULL, NULL);
+        // hModificarVenta = CreateWindowA("TOOL", "Modificar Venta", WS_VISIBLE | WS_CHILD, 300, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_MODIFY_VENTAS, NULL, NULL);
+        // hEliminarVenta = CreateWindowA("TOOL", "Eliminar Venta", WS_VISIBLE | WS_CHILD, 390, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_DELETE_VENTAS, NULL, NULL);
+}
+
+/*
+        CreateBodyClienteMainWindow(). Crea el contenedor de la tabla de clientes, este contenedor abarca la pantalla completa
+        Esta funcion tambien hace el trabajo de buscar y almacenar los datos de los clientes actuales en clientes.txt y guardarlos en los array dataClient y hTableCliente.
+        Estas dos variable son punteros que su tamaño se modificara con realloc y este dependera de la cantidad de clientes que haya en clientes.txt
+
+        Esta funcion llama a otras dos funciones las cuales son CreateTableClient y CreateHeaderTableClient
+
+        Parametros Ninguno
+
+        Return void
+*/
 
 void CreateBodyClienteMainWindow()
 {
@@ -429,120 +623,140 @@ void CreateBodyClienteMainWindow()
         CreateHeaderTableClient();
 }
 
+/*
+CreateRowTableClient. Esta funcion crea una fila en la tabla, en estas se mostraran los datos del cliente
+
+Parametros
+        STRUCTCLIENTESDATA data = Este parametro es un registro donde estan almacenados los datos del cliente (Este parametro ya no se usa, quedo obsoleto)
+        int i = El numero de fila actual, este parametro se introduce en la fila y se usa para identificar las filas.
+
+Return void
+
+*/
+
+void CreateRowTableClient(STRUCTCLIENTESDATA data, int i)
+{
+        RECT rect;
+        GetClientRect(hBodyClientes, &rect);
+        int width = cxColumnTable * nColumnsTable;
+        hTableCliente[i].container = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, yTabla, width, ROW_TABLE_HEIGHT, hTableContainer, i, NULL, NULL);
+        yTabla += 20;
+}
+
+/*
+CreateTableClient. Esta funcion crea la tabla donde se veran los clientes almacenados en clientes.txt. Esta funcion contiene un bucle en el que llama a 
+la funcion CreateRowTableClient la cual esta encargada de crear las filas de la tabla.
+
+Parametros Ninguno
+
+Return void
+*/
+
+void CreateTableClient()
+{
+        RECT rectBodyClientes;
+        RECT rectMainWindow;
+
+        GetClientRect(hBodyClientes, &rectBodyClientes);
+        GetClientRect(hMain, &rectMainWindow);
+
+        DWORD sTableContainer;
+
+        nColumnsTable = 5;
+        if (rows_clients_table > (rectMainWindow.bottom - HeaderHeight) / ROW_TABLE_HEIGHT)
+                sTableContainer = WS_VISIBLE | WS_CHILD | WS_VSCROLL;
+        else
+                sTableContainer = WS_VISIBLE | WS_CHILD;
+
+        hTableContainer = CreateWindowExA(0, "DIV", NULL, sTableContainer, 0, 20, rectBodyClientes.right, rectBodyClientes.bottom - ROW_TABLE_HEIGHT, hBodyClientes, LIST_CLIENTS, NULL, NULL);
+
+        int y = 0;
+        for (int i = 0; i < rows_clients_table; i++)
+        {
+                CreateRowTableClient(dataClient[i], i);
+        }
+}
+
+/*
+CreateHeaderTableClient. Se crea el header que identifica a las columnas de la tabla
+Parametros Ninguno
+Return void
+*/
+
+void CreateHeaderTableClient()
+{
+        RECT rect;
+        GetClientRect(hBodyClientes, &rect);
+        int width = cxColumnTable;
+
+        HWND temp = CreateWindowA("BODY_ROW_CELL", NULL, WS_CHILD | WS_VISIBLE, 0, 0, cxColumnTable * nColumnsTable, ROW_TABLE_HEIGHT, hBodyClientes, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Nombre", WS_VISIBLE | WS_CHILD, 0, 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Cedula", WS_VISIBLE | WS_CHILD, (width), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Telefono", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Naturaleza", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+        CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
+}
+
+/*
+Carga La image add.bmp para su uso en el componente tool. Esta funcion se usa en winProc.c
+*/
+
 void loadImagesAdd()
 {
         hImageAdd = (HBITMAP)LoadImageA(NULL, "img\\add.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 }
+
+
+/*
+Carga La image modificar.bmp para su uso en el componente tool. Esta funcion se usa en winProc.c
+*/
 
 void loadImagesModify()
 {
         hImageModify = (HBITMAP)LoadImageA(NULL, "img\\modificar.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 }
 
+
+/*
+Carga La image delete.bmp para su uso en el componente tool. Esta funcion se usa en winProc.c
+*/
+
 void loadImagesDelete()
 {
         hImageDelete = (HBITMAP)LoadImageA(NULL, "img\\delete.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 }
+
+/*
+Carga La image lista.bmp para su uso en el componente tool. Esta funcion se usa en winProc.c
+*/
 
 void loadImagesHistorial()
 {
         hImageHistorial = (HBITMAP)LoadImageA(NULL, "img\\lista.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 }
 
+
+/*
+Carga La image ver.bmp para su uso en el componente tool. Esta funcion se usa en winProc.c
+*/
+
 void loadImagesView()
 {
         hImageVer = (HBITMAP)LoadImageA(NULL, "img\\ver.bmp", IMAGE_BITMAP, 30, 30, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE);
 }
 
-void CreateHeader()
-{
-        RECT CRect;
-        GetClientRect(hMain, &CRect);
-        hMainHeader = CreateWindowA("HEADER", NULL, WS_VISIBLE | WS_CHILD, 0, 0, CRect.right, HeaderHeight, hMain, NULL, NULL, NULL);
-        CreateNavBar();
-}
 
-void CreateNavBar()
-{
-        GetClientRect(hMain, &CRect);
-        hMainNav = CreateWindowA("MAIN_NAV", NULL, WS_VISIBLE | WS_CHILD, 0, 0, CRect.right, NavHeight, hMainHeader, NULL, NULL, NULL);
+/*
+CreateFormClient. Esta funcion crea un formulario que se utiliza para crear y modificar un cliente. Son tres tipos, nuevoCliente, nuevoCliente fuera de la pestaña clientes
+y modificar clientes. La diferencia entre los nuevos clientes es el boton para registrar los cambios.
 
-        First = 0;
-        hVentas = CreateWindowA("TOOL_BAR", "Ventas", WS_VISIBLE | WS_CHILD, 20, 0, 100, NavHeight, hMainNav, NAV_VENTAS, NULL, NULL);
-        First = 1;
-        hInventario = CreateWindowA("TOOL_BAR", "Inventario", WS_VISIBLE | WS_CHILD, 120, 0, 100, NavHeight, hMainNav, NAV_INVENTARIO, NULL, NULL);
-        hClientes = CreateWindowA("TOOL_BAR", "Clientes", WS_VISIBLE | WS_CHILD, 220, 0, 100, NavHeight, hMainNav, NAV_CLIENTES, NULL, NULL);
-        hNavActual = hVentas;
+Parametros
+        BOOL newClient = Este marca si es un nuevo cliente, si es TRUE se mostrara el formulario para nuevo cliente
+        UINT cliente = Este marca la pocision del cliente en el array dataClient
+        BOOL ventas = este diferencia el lugar donde se llamo a esta funcion, para poder mostrar un formulario diferente en pantalla
 
-        CreateToolBarVentas();
-        CreateToolBarInventario();
-        CreateToolBarClientes();
-
-        hToolBarActual = hToolBarVentas;
-
-        CreateBodyVentasMainWindow(TRUE);
-}
-
-// Body
-
-void CreateBody()
-{
-        RECT CRect;
-        GetClientRect(hMain, &CRect);
-        hBody = CreateWindowA("BODY", NULL, WS_VISIBLE | WS_CHILD, 0, 100, CRect.right, CRect.bottom - HeaderHeight, hMain, NULL, NULL, NULL);
-}
-
-// Inventario
-
-void CreateToolBarInventario()
-{
-        hToolBarInventario = CreateWindowA("TOOLBAR_CONTAINER", NULL, WS_VISIBLE | WS_CHILD, 0, 25, CRect.right, ToolBarHeight, hMainHeader, NULL, NULL, NULL);
-        ShowWindow(hToolBarInventario, SW_HIDE);
-        CreateToolsInventario();
-}
-
-void CreateToolsInventario()
-{
-        hNuevoProducto = CreateWindowA("TOOL", "Nuevo Producto", WS_VISIBLE | WS_CHILD, 20, 0, 100, 75, hToolBarInventario, TOOLBAR_IMAGE_NEW_INVENTARIO, NULL, NULL);
-        hModificarProducto = CreateWindowA("TOOL", "Modificar Producto", WS_VISIBLE | WS_CHILD, 120, 0, 100, 75, hToolBarInventario, TOOLBAR_IMAGE_MODIFY_INVENTARIO, NULL, NULL);
-        hEliminarProducto = CreateWindowA("TOOL", "Eliminar Producto", WS_VISIBLE | WS_CHILD, 220, 0, 100, 75, hToolBarInventario, TOOLBAR_IMAGE_DELETE_INVENTARIO, NULL, NULL);
-}
-
-// Clientes
-
-void CreateToolBarClientes()
-{
-        hToolBarClientes = CreateWindowA("TOOLBAR_CONTAINER", NULL, WS_VISIBLE | WS_CHILD, 0, 25, CRect.right, ToolBarHeight, hMainHeader, NULL, NULL, NULL);
-        ShowWindow(hToolBarClientes, SW_HIDE);
-        CreateToolsClientes();
-}
-
-void CreateToolsClientes()
-{
-        hNuevoCliente = CreateWindowA("TOOL", "Nuevo Cliente", WS_VISIBLE | WS_CHILD, 20, 0, 100, 75, hToolBarClientes, TOOLBAR_IMAGE_NEW_CLIENTE, NULL, NULL);
-        hModificarCliente = CreateWindowA("TOOL", "Modificar Cliente", WS_VISIBLE | WS_CHILD, 120, 0, 100, 75, hToolBarClientes, TOOLBAR_IMAGE_MODIFY_CLIENTE, NULL, NULL);
-        hEliminarCliente = CreateWindowA("TOOL", "Eliminar Cliente", WS_VISIBLE | WS_CHILD, 220, 0, 100, 75, hToolBarClientes, TOOLBAR_IMAGE_DELETE_CLIENTE, NULL, NULL);
-}
-
-void CreateToolBarVentas()
-{
-        hToolBarVentas = CreateWindowA("TOOLBAR_CONTAINER", NULL, WS_VISIBLE | WS_CHILD, 0, 25, CRect.right, ToolBarHeight, hMainHeader, NULL, NULL, NULL);
-        CreateToolsVentas();
-}
-
-void CreateToolsVentas()
-{
-        hNuevaVenta = CreateWindowA("TOOL", "Nueva Venta", WS_VISIBLE | WS_CHILD, 20, 0, 80, 75, hToolBarVentas, TOOLBAR_IMAGE_NEW_VENTAS, NULL, NULL);
-        CreateWindowA("SEPARATOR", NULL, WS_CHILD | WS_VISIBLE, 110, 10, 1, ToolBarHeight - 20, hToolBarVentas, TOOLBAR_IMAGE_HISTORIAL_VENTAS, NULL, NULL);
-        hToolHistorialVenta = CreateWindowA("TOOL", "Historial de Ventas", WS_VISIBLE | WS_CHILD, 120, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_HISTORIAL_VENTAS, NULL, NULL);
-        hToolVerVenta = CreateWindowA("TOOL", "Ver Venta", WS_VISIBLE | WS_CHILD, 210, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_VER_VENTAS, NULL, NULL);
-        hModificarVenta = CreateWindowA("TOOL", "Modificar Venta", WS_VISIBLE | WS_CHILD, 300, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_MODIFY_VENTAS, NULL, NULL);
-        hEliminarVenta = CreateWindowA("TOOL", "Eliminar Venta", WS_VISIBLE | WS_CHILD, 390, 0, 90, 75, hToolBarVentas, TOOLBAR_IMAGE_DELETE_VENTAS, NULL, NULL);
-}
-
-void CreateTableProductosVentas(STRUCTPRODUCTOSDATA *data, int x)
-{
-}
+return void
+*/
 
 void CreateFormClient(BOOL newClient, UINT client, BOOL ventas)
 {
@@ -695,6 +909,16 @@ void CreateFormClient(BOOL newClient, UINT client, BOOL ventas)
         }
 }
 
+/*
+CreateFormVentas. Crea el formulario de ventas, este se divide en tres partes, el cliente, los botones para registrar y 
+agregar productos a la venta, y la tabla que muestra los productos que se compraran. Al finalizar la funcion llama a la funcion CreateTableListOfProducts.
+
+Paramentros Ninguno
+
+Return void
+
+*/
+
 void CreateFormVentas() // Cliente (DNI, Nombre, Telefono, TdP)
 {
 
@@ -780,6 +1004,18 @@ void CreateFormVentas() // Cliente (DNI, Nombre, Telefono, TdP)
         CreateTableListOfProducts(pTableCurrentProduct.x, pTableCurrentProduct.y, pTableCurrentProduct.cx, pTableCurrentProduct.cy);
 }
 
+/*
+CreateTableListOfProducts. Crea la lista de productos que se van a vender
+
+Parametros
+        int x = Esta es la posicion en x del componente
+        int y = Esta es la posicion en y del componente
+        int cx = Esta es la anchura del componente
+        int cy = Esta es la altura del componente
+
+return void
+*/
+
 void CreateTableListOfProducts(int x, int y, int cx, int cy)
 {
         hTableCurrentProduct = CreateWindowA("DIV", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER, x, y, cx, cy, hBodyVentas, LIST_CURRENT_PRODUCTS, NULL, NULL);
@@ -796,6 +1032,15 @@ void CreateTableListOfProducts(int x, int y, int cx, int cy)
         CreateHeaderTableCurrentProducts(hTableCurrentProduct);
 }
 
+/*
+CreateHeaderTableCurrentProducts. Crea el header que identificara las columnas de las tablas
+
+Parametros
+        HWND hWnd = Pasa el identificador del componente que servira como contenedor
+
+Return void
+*/
+
 void CreateHeaderTableCurrentProducts(HWND hWnd)
 {
         RECT rect;
@@ -810,6 +1055,15 @@ void CreateHeaderTableCurrentProducts(HWND hWnd)
         CreateWindowA("HEADER_CELL", "Precio", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Precio Total", WS_VISIBLE | WS_CHILD, (width * 5), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
 }
+
+/*
+CreateFooterTotalVentas. Crea un footer donde se mostrara el precio total de la venta
+Parametros
+        HWND hWnd = Identificador del contenedor
+        int x = posicion en x
+        int y = posicion en y
+        int cx = ancho del footer
+*/
 
 void CreateFooterTotalVentas(HWND hWnd, int x, int y, int cx)
 {
@@ -890,6 +1144,19 @@ void CreateFooterTotalVentas(HWND hWnd, int x, int y, int cx)
         SetWindowTextA(hPrecioTotal, precioFactura);
 }
 
+/*
+CreateHeaderTableProductsVentas. Crea una fila en las que sus columnas sirven como guia para la tabla de productos que se encuentra en la ventana 
+facturas o al inspeccionar la venta
+
+Parametros 
+        HWND hWnd = Identificador del contenedor
+        int x = posicion en x
+        int y = posicion en y
+        int cx = ancho del componente
+
+return void
+*/
+
 void CreateHeaderTableProductsVentas(HWND hWnd, int x, int y, int cx)
 {
         RECT rect;
@@ -902,6 +1169,15 @@ void CreateHeaderTableProductsVentas(HWND hWnd, int x, int y, int cx)
         CreateWindowA("HEADER_CELL", "Descuento", WS_VISIBLE | WS_CHILD, (width * 2), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Precio", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
 }
+
+/*
+CreateWindowFactura. Crea la ventana factura, esta se encarga de mostrar la factura de una venta. esta contiene rif de la empresa y direccion.
+Productos comprados, el total, nombre, domicilio y cedula del cliente, entre otros
+
+parametros ninguno
+
+return void
+*/
 
 void CreateWindowFactura()
 {
@@ -969,6 +1245,15 @@ void CreateWindowFactura()
         CreateFooterTotalVentas(hFacturaWindow, margin_left + (cxColumnTableProductsVentas * 2), yFooter, cxColumnTableProductsVentas);
 }
 
+/*
+Esta funcion crea una ventana que muestra los datos del cliente, los productos comprados y el precio, ademas de eso tambien contiene un boton que al hacer click
+llama a la funcion CreateWindowFactura
+
+Parametros ninguno
+
+return void
+*/
+
 void CreateWindowViewVenta()
 {
         int cxWindow = 500;
@@ -1016,6 +1301,15 @@ void CreateWindowViewVenta()
         CreateWindowA("BUTTON_P", "Ver Factura", WS_VISIBLE | WS_CHILD | WS_BORDER, margin_left, yFooter + 5, 150, 30, hWindowViewVenta, VIEW_FACTURA, NULL, NULL);
 }
 
+/*
+CreateHeaderTableVentas. Crea un header que sirve como guia para las columnas de la table de ventas
+
+parametros
+        HWND hWnd = identificador del contenedor
+        int x = posicion en x
+        int y = posicion en y
+*/
+
 void CreateHeaderTableVentas(HWND hWnd, int x, int y)
 {
         RECT rect;
@@ -1029,6 +1323,17 @@ void CreateHeaderTableVentas(HWND hWnd, int x, int y)
         CreateWindowA("HEADER_CELL", "Precio con IVA", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
 }
+
+/*
+CreateTableListOfVentas. Crea la tabla de ventas, en esta se mostraran todas las ventas realizadas
+
+parametros
+        HWND hWnd = identificador del contenedor
+        int xTable = posicion x respecto al contenedor
+        int yTable = posicion y respecto al contenedor
+        int cxTable = ancho de la tabla
+        int cyTable = altura de la tabla
+*/
 
 void CreateTableListofVentas(HWND hWnd, int xTable, int yTable, int cxTable, int cyTable)
 {
@@ -1045,6 +1350,15 @@ void CreateTableListofVentas(HWND hWnd, int xTable, int yTable, int cxTable, int
         }
         CreateHeaderTableVentas(hBodyVentas, 0, 0);
 }
+
+
+/*
+GetDataTableListofVentas. Esta funcion se utiliza para crear de nuevo la lista de ventas
+
+parametros
+        int cx, anchura del componente
+        int cy, altura del componente
+*/
 
 void GetDataTableListofVentas(int cx, int cy)
 {
@@ -1071,6 +1385,14 @@ void GetDataTableListofVentas(int cx, int cy)
         CreateTableListofVentas(hBodyVentas, 0, 20, cx, cy - ROW_TABLE_HEIGHT);
 }
 
+/*
+CreateBodyVentasMainWindow. Esta funcion crea la tabla de ventas.
+
+parametros
+        BOOL newSell = este se encarga de identificar si se esta creando el formulario de ventas o el historial de ventas, si es TRUE se crea el formulario de ventas
+        si no lo es se crea la tabla de ventas
+*/
+
 void CreateBodyVentasMainWindow(BOOL newSell)
 {
         RECT rectMainWindow;
@@ -1093,6 +1415,14 @@ void CreateBodyVentasMainWindow(BOOL newSell)
         else
                 GetDataTableListofVentas(cx, cy);
 }
+
+/*
+CreateWindowProducts. Esta funcion crea la ventana para elegir el producto a comprar.
+
+parametros ninguno
+
+return void
+*/
 
 void CreateWindowProducts()
 {
@@ -1134,6 +1464,15 @@ void CreateWindowProducts()
 
         CreateHeaderTableProducts(hWindowProduct, 60);
 }
+
+/*
+        CreateFormProduct. Crea el formulario para introducir un nuevo producto o para modificar uno ya existente.
+
+        parametros
+                BOOL newProduct = si es TRUE se creara un formulario vacio para poder crear un nuevo producto, si es FALSE se creara el formulario con 
+                los datos del producto a modificar
+                UINT product = Indica la posicion del producto en el array dataProducts
+*/
 
 void CreateFormProduct(BOOL newProduct, UINT product)
 {
@@ -1235,6 +1574,14 @@ void CreateFormProduct(BOOL newProduct, UINT product)
         }
 }
 
+/*
+CreateBodyProductos. Crea el contenedor de la tabla de productos, tambien tiene el trabajo de almacenar en el array dataProductos los datos del producto
+
+Parametros Ninguno
+
+Return void
+*/
+
 void CreateBodyProductos()
 {
         RECT rectMainWindow;
@@ -1280,6 +1627,17 @@ void CreateBodyProductos()
         CreateHeaderTableProducts(hBodyInventario, 0);
 }
 
+/*
+CreateHeaderWindowProducts. se encarga de crear una fila para poder identificar las columnas dde la tabla de productos
+
+Parametros
+        HWND hWnd = Identificador del contenedor
+        int cxHeader = Ancho del Header
+        int cyHeader = Alto del Header
+
+return void
+*/
+
 void CreateHeaderWindowProducts(HWND hWnd, int cxHeader, int cyHeader)
 {
         RECT rect;
@@ -1302,6 +1660,19 @@ void CreateHeaderWindowProducts(HWND hWnd, int cxHeader, int cyHeader)
         CreateWindowA("EDIT", "Search", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 340, yEdit, cxEdit, cyEdit, headerWindowProduct, NULL, NULL, NULL);
 }
 
+
+/*
+CreateTableProducts. Crea la tabla de productos.
+
+Parametros
+        HWND hWnd = el identificador del contenedor
+        int len = la cantidad de productos
+        int x = posicion en x respecto al contenedor
+        int y = posicion en y respecto al contenedor
+        int cx = Ancho de la tabla
+        int cy = alto de la tabla
+*/
+
 void CreateTableProducts(HWND hWnd, int len, int x, int y, int cx, int cy)
 {
         hTableProduct = CreateWindowA("DIV", NULL, WS_CHILD | WS_VISIBLE, x, y, cx, cy, hWnd, LIST_PRODUCTS, NULL, NULL);
@@ -1314,6 +1685,16 @@ void CreateTableProducts(HWND hWnd, int len, int x, int y, int cx, int cy)
                 yRows += ROW_TABLE_HEIGHT;
         }
 }
+
+/*
+CreateHeaderTableProducts. Crea El  header para la tabla de productos. este header sirve para identificar las columnas de la tabla
+
+parametros
+        HWND hWnd = identificador del contenedor
+        int y = posicion en y respecto al contenedor
+
+return voids=
+*/
 
 void CreateHeaderTableProducts(HWND hWnd, int y)
 {
@@ -1330,6 +1711,15 @@ void CreateHeaderTableProducts(HWND hWnd, int y)
         CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 5), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
 }
 
+
+/*
+CreateRowTableClientPortable. Se encarga de crear filas en el contenedor. esta funcion fue echa para la ventana para elegir clientes
+
+Parametros
+        HWND hWnd = identificador del contenedor
+        int width = anchura del componente
+*/
+
 void CreateRowTableClientPortable(HWND hWnd, int width)
 {
         char text[100];
@@ -1340,6 +1730,19 @@ void CreateRowTableClientPortable(HWND hWnd, int width)
                 yTabla += 20;
         }
 }
+
+/*
+CreateTableListOfClients. Crea la lista de clientes, esta funcion esta hecha para la ventana de elegir clientes
+
+parametros
+        HWND hWnd = identificador del contenedor
+        int x = posicion en x
+        int y = posicion en y
+        int cxTable = Ancho de la tabla
+        int cyTable = Alto de la tabla
+
+return void
+*/
 
 void CreateTableListOfClients(HWND hWnd, int x, int y, int cxTable, int cyTable)
 {
@@ -1359,6 +1762,14 @@ void CreateTableListOfClients(HWND hWnd, int x, int y, int cxTable, int cyTable)
         CreateRowTableClientPortable(hTableContainer, cxColumnTable * 5);
 }
 
+/*
+CreateHeaderTableClients. Crear el header de la tabla de clientes, esta diseñada para la ventana de elegir clientes
+
+parametros
+        HWND hWnd = identificador del contenedor
+        int y = posicion en y
+*/
+
 void CreateHeaderTableClients(HWND hWnd, int y)
 {
         RECT rect;
@@ -1372,6 +1783,18 @@ void CreateHeaderTableClients(HWND hWnd, int y)
         CreateWindowA("HEADER_CELL", "Naturaleza", WS_VISIBLE | WS_CHILD, (width * 3), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
         CreateWindowA("HEADER_CELL", "Fecha", WS_VISIBLE | WS_CHILD, (width * 4), 0, width, ROW_TABLE_HEIGHT, temp, NULL, NULL, NULL);
 }
+
+/*
+CreateHeaderClientsVentas. Crea el header de la ventana de seleccionar clientes, este header contiene distintos botones donde se podra crear un usuario, seleccionar un
+usuario y cerrar la ventana
+
+parametros
+        HWND hWnd = identificador del contenedor
+        int cxHeader = ancho del header
+        int cyHeader = alto del header
+
+return void
+*/
 
 void CreateHeaderClientsVentas(HWND hWnd, int cxHeader, int cyHeader)
 {
@@ -1395,6 +1818,14 @@ void CreateHeaderClientsVentas(HWND hWnd, int cxHeader, int cyHeader)
         CreateWindowA("BUTTON_P", "Cancelar", WS_CHILD | WS_VISIBLE, 360, yButton, cxButton, cyButton, headerWindowProduct, CLOSE_WINDOW_CLIENTS_VENTAS, NULL, NULL);
         CreateWindowA("EDIT", "Search", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL, 480, yEdit, cxEdit, cyEdit, headerWindowProduct, NULL, NULL, NULL);
 }
+
+/*
+CreateWindowClients. Crea la ventana para seleccionar un cliente, esto es necesario para poder realizar una compra
+
+parametros ninguno
+
+return void
+*/
 
 void CreateWindowClients()
 {
